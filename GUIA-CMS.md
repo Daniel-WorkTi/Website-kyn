@@ -71,11 +71,17 @@ Fazer commit/push. Pronto — o painel funciona em `/admin`.
 
 - **Fotos:** exportar em ~2000px de largura e comprimir (ex.: [squoosh.app](https://squoosh.app)). Manda para o painel diretamente.
 - **Vídeos:** o GitHub **não** é bom para vídeos grandes (limite 100 MB por ficheiro).
-  Recomendação para vídeos:
-  - **Opção simples:** subir o vídeo ao **YouTube/Vimeo** e usar o link.
-  - **Opção profissional:** ligar o **Cloudinary** (grátis) ao painel para otimizar e servir vídeos por CDN.
+  O painel já está preparado para o **Cloudinary** (grátis, otimiza e serve por CDN).
 
-Quando decidires a via dos vídeos, é só avisar que ligo no `config.yml`.
+### Ligar o Cloudinary (1 vez)
+1. Criar conta grátis em [cloudinary.com](https://cloudinary.com).
+2. No **Dashboard**, copiar o **Cloud name** e a **API Key**.
+3. Em `admin/config.yml`, na secção `media_library`, substituir:
+   - `CLOUD_NAME` → o cloud name
+   - `API_KEY` → a API key
+   (Não pôr aqui o *API Secret* — não é necessário e é privado.)
+4. Commit/push. A partir daí, ao adicionar mídia no painel, o Kym envia para o
+   Cloudinary e o site recebe o link otimizado automaticamente — vídeo incluído.
 
 ---
 

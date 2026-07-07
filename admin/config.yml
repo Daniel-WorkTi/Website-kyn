@@ -12,9 +12,18 @@ backend:
   base_url: https://SEU-SITE.vercel.app   # domínio do site no Vercel
   auth_endpoint: api/auth
 
-# Onde as fotos/vídeos enviados pelo painel são guardados
+# Onde as fotos/vídeos enviados pelo painel são guardados (fallback)
 media_folder: "assets/uploads"
 public_folder: "/assets/uploads"
+
+# Mídia via Cloudinary (otimização + CDN para vídeos pesados).
+# Substituir CLOUD_NAME e API_KEY pelos dados da conta Cloudinary.
+# A API key aqui é pública (só serve o seletor de mídia) — o segredo NUNCA vai aqui.
+media_library:
+  name: cloudinary
+  config:
+    cloud_name: CLOUD_NAME
+    api_key: API_KEY
 
 # Idioma do painel
 locale: "pt"
