@@ -1,0 +1,41 @@
+{
+  "brand": "Proimagem.pt",
+  "email": "hello@proimagem.pt",
+  "socials": {
+    "instagram": "",
+    "vimeo": "",
+    "youtube": ""
+  },
+  "nav": [
+    { "label": "Home", "href": "index.html" },
+    { "label": "Studio Space", "href": "studio-space.html" },
+    { "label": "Multicam", "href": "multicam.html" },
+    { "label": "Aftermovie", "href": "aftermovie.html" },
+    { "label": "Photography", "href": "photography.html" },
+    { "label": "FPV/Drone", "href": "fpv-drone.html" },
+    { "label": "Social Media", "href": "social-media.html" },
+    { "label": "Meet the Team", "href": "team.html" },
+    { "label": "Parceiros", "href": "parceiros.html" }
+  ],
+  "hero": {
+    "title": "Proimagem.pt",
+    "subtitleLines": [
+      "Multicam | Aftermovie | Photography",
+      "FPV/Drone | Social Media | Studio Space"
+    ],
+    "videos": [
+      {
+        "src": "https://supdmick.com/_assets/video/3375f32436dd6788e60db7fa947e519a.mp4",
+        "poster": "https://supdmick.com/_assets/video/71d67c33cfa966760c88adbe5e62ed9e.jpg"
+      },
+      {
+        "src": "https://supdmick.com/_assets/video/154aa043c0b3a8839c47822d1d17993d.mp4",
+        "poster": "https://supdmick.com/_assets/video/8414d0ba0697b5a91a14de18bbbe8727.jpg"
+      }
+    ]
+  },
+  "homeStack": [
+    { "type": "image", "src": "https://supdmick.com/_assets/video/71d67c33cfa966760c88adbe5e62ed9e.jpg", "alt": "Proimagem.pt" },
+    { "type": "image", "src": "https://supdmick.com/_assets/video/8414d0ba0697b5a91a14de18bbbe8727.jpg", "alt": "Proimagem.pt" }
+  ]
+}

@@ -1,0 +1,11 @@
+{
+  "title": "Aftermovie",
+  "items": [
+    { "type": "video", "featured": true, "src": "https://supdmick.com/_assets/video/2aade7a774443b9f3cfb819326c44924.mp4", "poster": "https://supdmick.com/_assets/video/0ae7c9e5a6122daa83ead7cbf134cc89.jpg", "alt": "Aftermovie" },
+    { "type": "video", "featured": true, "src": "https://supdmick.com/_assets/video/a19469f527130b52ede3d23d67351dd5.mp4", "poster": "", "alt": "Aftermovie" },
+    { "type": "image", "featured": false, "src": "https://supdmick.com/_assets/video/0ae7c9e5a6122daa83ead7cbf134cc89.jpg", "alt": "Aftermovie" },
+    { "type": "image", "featured": false, "src": "https://supdmick.com/_assets/video/7b085c6bf017adeb6de4461647df9be7.jpg", "alt": "Aftermovie" },
+    { "type": "image", "featured": false, "src": "https://supdmick.com/_assets/video/61bb4077d9f21c970d02814c3016405b.jpg", "alt": "Aftermovie" },
+    { "type": "image", "featured": false, "src": "https://supdmick.com/_assets/video/a2aa62f3c081a7e1c7094d253a17f6b1.jpg", "alt": "Aftermovie" }
+  ]
+}

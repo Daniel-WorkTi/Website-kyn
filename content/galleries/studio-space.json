@@ -1,0 +1,11 @@
+{
+  "title": "Studio Space",
+  "items": [
+    { "type": "video", "featured": true, "src": "https://supdmick.com/_assets/video/3375f32436dd6788e60db7fa947e519a.mp4", "poster": "", "alt": "Studio Space" },
+    { "type": "video", "featured": true, "src": "https://supdmick.com/_assets/video/4dfcd497b624f7751bc5bcdf63618fbd.mp4", "poster": "", "alt": "Studio Space" },
+    { "type": "image", "featured": false, "src": "https://supdmick.com/_assets/video/43166b48acdaceb2a734b7828edb3bf5.jpg", "alt": "Studio Space" },
+    { "type": "image", "featured": false, "src": "https://supdmick.com/_assets/video/81d94ac62adb6eee5a5883f40f28d5eb.jpg", "alt": "Studio Space" },
+    { "type": "image", "featured": false, "src": "https://supdmick.com/_assets/video/13a148686049320fb9753234e9bead8a.jpg", "alt": "Studio Space" },
+    { "type": "image", "featured": false, "src": "https://supdmick.com/_assets/video/56c910f3bfdb6142a5c838e0c5806572.jpg", "alt": "Studio Space" }
+  ]
+}

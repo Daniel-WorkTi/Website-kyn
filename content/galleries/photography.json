@@ -1,0 +1,11 @@
+{
+  "title": "Photography",
+  "items": [
+    { "type": "image", "featured": false, "src": "https://supdmick.com/_assets/video/8414d0ba0697b5a91a14de18bbbe8727.jpg", "alt": "Photography" },
+    { "type": "image", "featured": false, "src": "https://supdmick.com/_assets/video/71d67c33cfa966760c88adbe5e62ed9e.jpg", "alt": "Photography" },
+    { "type": "image", "featured": false, "src": "https://supdmick.com/_assets/video/46e00b27837179847be796f082a53cc9.jpg", "alt": "Photography" },
+    { "type": "image", "featured": false, "src": "https://supdmick.com/_assets/video/80f1afeb068ebb0887f7ac2cfb2712d0.jpg", "alt": "Photography" },
+    { "type": "image", "featured": false, "src": "https://supdmick.com/_assets/video/a2aa62f3c081a7e1c7094d253a17f6b1.jpg", "alt": "Photography" },
+    { "type": "image", "featured": false, "src": "https://supdmick.com/_assets/video/61bb4077d9f21c970d02814c3016405b.jpg", "alt": "Photography" }
+  ]
+}

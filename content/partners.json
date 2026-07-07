@@ -1,0 +1,17 @@
+{
+  "title": "Parceiros",
+  "main": [
+    { "name": "Bdprod", "logo": "" },
+    { "name": "Ursa Company", "logo": "" },
+    { "name": "Studio Space Produtora", "logo": "" },
+    { "name": "Kapturs", "logo": "" },
+    { "name": "R² | Produtora Audiovisual", "logo": "" },
+    { "name": "Marten Lou", "logo": "" }
+  ],
+  "secondary": [
+    { "name": "Voyage", "logo": "" },
+    { "name": "Kayo", "logo": "" },
+    { "name": "Bloom .pt", "logo": "" },
+    { "name": "Lavenue", "logo": "" }
+  ]
+}
