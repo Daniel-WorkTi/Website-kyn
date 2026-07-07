@@ -7,9 +7,9 @@
 
 backend:
   name: github
-  repo: OWNER/REPO            # ex.: kymwiller/proimagem-site
+  repo: Daniel-WorkTi/Website-kyn
   branch: main
-  base_url: https://SEU-SITE.vercel.app   # domínio do site no Vercel
+  base_url: https://website-kyn.vercel.app
   auth_endpoint: api/auth
 
 # Onde as fotos/vídeos enviados pelo painel são guardados (fallback)
