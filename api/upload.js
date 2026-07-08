@@ -1,4 +1,4 @@
-// Envia imagens para assets/uploads/ via GitHub.
+import { requireAdmin, getGithubToken } from "../lib/auth.js";
 
 const REPO = "Daniel-WorkTi/Website-kyn";
 const BRANCH = "main";
@@ -10,9 +10,12 @@ export default async function handler(req, res) {
     return;
   }
 
-  const token = req.headers.authorization?.replace(/^Bearer\s+/i, "");
+  const admin = requireAdmin(req, res);
+  if (!admin) return;
+
+  const token = getGithubToken();
   if (!token) {
-    res.status(401).json({ error: "Sessão expirada. Entra outra vez." });
+    res.status(500).json({ error: "Servidor não configurado (GITHUB_TOKEN)." });
     return;
   }
 
@@ -40,7 +43,7 @@ export default async function handler(req, res) {
         "Content-Type": "application/json"
       },
       body: JSON.stringify({
-        message: message || `Adicionar mídia ${safeName}`,
+        message: message || `Adicionar mídia ${safeName} (${admin})`,
         content: contentBase64,
         branch: BRANCH
       })

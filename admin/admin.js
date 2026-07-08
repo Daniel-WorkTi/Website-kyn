@@ -1,8 +1,8 @@
 /* Painel de gestão Proimagem.pt */
 
-const TOKEN_KEY = "proimagem_github_token";
 const API = "/api/content";
 const UPLOAD_API = "/api/upload";
+const FETCH_OPTS = { credentials: "include" };
 
 const SECTIONS = [
   {
@@ -94,18 +94,6 @@ let dirty = false;
 
 const $ = (sel) => document.querySelector(sel);
 
-function getToken() {
-  return sessionStorage.getItem(TOKEN_KEY);
-}
-
-function setToken(token) {
-  sessionStorage.setItem(TOKEN_KEY, token);
-}
-
-function clearToken() {
-  sessionStorage.removeItem(TOKEN_KEY);
-}
-
 function showToast(msg, type = "ok") {
   const el = $("#toast");
   el.textContent = msg;
@@ -154,28 +142,51 @@ function escapeHtml(str) {
 
 /* ── Auth ── */
 
-function openLogin() {
-  const w = 600;
-  const h = 700;
-  const left = window.screenX + (window.outerWidth - w) / 2;
-  const top = window.screenY + (window.outerHeight - h) / 2;
-  window.open("/api/auth", "github-login", `width=${w},height=${h},left=${left},top=${top}`);
-}
-
-window.addEventListener("message", (e) => {
-  if (typeof e.data !== "string") return;
-  if (!e.data.startsWith("authorization:github:")) return;
-  const parts = e.data.split(":");
-  const status = parts[2];
-  if (status !== "success") return;
+async function checkSession() {
   try {
-    const payload = JSON.parse(parts.slice(3).join(":"));
-    if (payload.token) {
-      setToken(payload.token);
-      showPanel();
+    const res = await fetch("/api/session", FETCH_OPTS);
+    if (res.ok) {
+      const data = await res.json();
+      if (data.authenticated) {
+        showPanel();
+        return;
+      }
     }
   } catch (_) {}
-});
+  showLogin();
+}
+
+async function handleLogin(e) {
+  e.preventDefault();
+  const username = $("#login-user").value.trim();
+  const password = $("#login-pass").value;
+  const errEl = $("#login-error");
+  const btn = $("#login-form button[type=submit]");
+  errEl.textContent = "";
+  btn.disabled = true;
+
+  try {
+    const res = await fetch("/api/login", {
+      method: "POST",
+      ...FETCH_OPTS,
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ username, password })
+    });
+    const data = await res.json();
+    if (!res.ok) throw new Error(data.error || "Erro ao entrar.");
+    $("#login-pass").value = "";
+    showPanel();
+  } catch (err) {
+    errEl.textContent = err.message;
+  } finally {
+    btn.disabled = false;
+  }
+}
+
+async function handleLogout() {
+  await fetch("/api/logout", { method: "POST", ...FETCH_OPTS });
+  showLogin();
+}
 
 function showLogin() {
   $("#login-screen").classList.remove("is-hidden");
@@ -196,33 +207,23 @@ async function loadContent(section) {
   if (!res.ok) throw new Error("Não foi possível carregar o conteúdo.");
   const data = await res.json();
 
-  const token = getToken();
   let sha = null;
-  if (token) {
-    try {
-      const meta = await fetch(`${API}?path=${encodeURIComponent(section.file)}`, {
-        headers: { Authorization: `Bearer ${token}` }
-      });
-      if (meta.ok) {
-        const m = await meta.json();
-        sha = m.sha;
-      }
-    } catch (_) {}
-  }
+  try {
+    const meta = await fetch(`${API}?path=${encodeURIComponent(section.file)}`, FETCH_OPTS);
+    if (meta.ok) {
+      const m = await meta.json();
+      sha = m.sha;
+    }
+  } catch (_) {}
 
   return { data, sha };
 }
 
 async function saveContent(section, data, sha) {
-  const token = getToken();
-  if (!token) throw new Error("Sessão expirada.");
-
   const res = await fetch(API, {
     method: "POST",
-    headers: {
-      Authorization: `Bearer ${token}`,
-      "Content-Type": "application/json"
-    },
+    ...FETCH_OPTS,
+    headers: { "Content-Type": "application/json" },
     body: JSON.stringify({
       path: section.file,
       content: JSON.stringify(data, null, 2) + "\n",
@@ -237,9 +238,6 @@ async function saveContent(section, data, sha) {
 }
 
 async function uploadFile(file) {
-  const token = getToken();
-  if (!token) throw new Error("Sessão expirada.");
-
   const base64 = await new Promise((resolve, reject) => {
     const reader = new FileReader();
     reader.onload = () => resolve(reader.result.split(",")[1]);
@@ -249,10 +247,8 @@ async function uploadFile(file) {
 
   const res = await fetch(UPLOAD_API, {
     method: "POST",
-    headers: {
-      Authorization: `Bearer ${token}`,
-      "Content-Type": "application/json"
-    },
+    ...FETCH_OPTS,
+    headers: { "Content-Type": "application/json" },
     body: JSON.stringify({ filename: file.name, contentBase64: base64 })
   });
 
@@ -824,15 +820,10 @@ async function handleSave() {
 /* ── Boot ── */
 
 function init() {
-  $("#btn-login")?.addEventListener("click", openLogin);
-  $("#btn-logout")?.addEventListener("click", () => {
-    clearToken();
-    showLogin();
-  });
+  $("#login-form")?.addEventListener("submit", handleLogin);
+  $("#btn-logout")?.addEventListener("click", handleLogout);
   $("#btn-save")?.addEventListener("click", handleSave);
-
-  if (getToken()) showPanel();
-  else showLogin();
+  checkSession();
 }
 
 document.addEventListener("DOMContentLoaded", init);

@@ -75,6 +75,25 @@ body {
 
 .login__back:hover { color: var(--text); }
 
+.login__form {
+  text-align: left;
+  margin-bottom: 0.5rem;
+}
+
+.login__form .field { margin-bottom: 1rem; }
+
+.login__submit {
+  width: 100%;
+  margin-top: 0.5rem;
+}
+
+.login__error {
+  font-size: 0.8rem;
+  color: var(--danger);
+  min-height: 1.2rem;
+  margin-bottom: 0.25rem;
+}
+
 /* ── Botões ── */
 
 .btn {

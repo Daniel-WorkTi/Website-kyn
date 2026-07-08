@@ -1,4 +1,4 @@
-// Lê e grava ficheiros de conteúdo no GitHub (painel admin).
+import { requireAdmin, getGithubToken } from "../lib/auth.js";
 
 const REPO = "Daniel-WorkTi/Website-kyn";
 const BRANCH = "main";
@@ -8,10 +8,17 @@ function isAllowed(path) {
   return ALLOWED_PREFIXES.some((p) => path.startsWith(p));
 }
 
+function githubHeaders(token) {
+  return { Authorization: `Bearer ${token}`, Accept: "application/vnd.github+json" };
+}
+
 export default async function handler(req, res) {
-  const token = req.headers.authorization?.replace(/^Bearer\s+/i, "");
+  const admin = requireAdmin(req, res);
+  if (!admin) return;
+
+  const token = getGithubToken();
   if (!token) {
-    res.status(401).json({ error: "Sessão expirada. Entra outra vez." });
+    res.status(500).json({ error: "Servidor não configurado (GITHUB_TOKEN)." });
     return;
   }
 
@@ -23,10 +30,10 @@ export default async function handler(req, res) {
     }
 
     try {
-      const url = `https://api.github.com/repos/${REPO}/contents/${path}?ref=${BRANCH}`;
-      const gh = await fetch(url, {
-        headers: { Authorization: `Bearer ${token}`, Accept: "application/vnd.github+json" }
-      });
+      const gh = await fetch(
+        `https://api.github.com/repos/${REPO}/contents/${path}?ref=${BRANCH}`,
+        { headers: githubHeaders(token) }
+      );
       if (!gh.ok) {
         res.status(gh.status).json({ error: "Não foi possível ler o ficheiro." });
         return;
@@ -52,7 +59,7 @@ export default async function handler(req, res) {
       if (!fileSha) {
         const meta = await fetch(
           `https://api.github.com/repos/${REPO}/contents/${path}?ref=${BRANCH}`,
-          { headers: { Authorization: `Bearer ${token}`, Accept: "application/vnd.github+json" } }
+          { headers: githubHeaders(token) }
         );
         if (meta.ok) {
           const metaData = await meta.json();
@@ -61,7 +68,7 @@ export default async function handler(req, res) {
       }
 
       const body = {
-        message: message || `Atualizar ${path}`,
+        message: message || `Atualizar ${path} (${admin})`,
         content: Buffer.from(content, "utf8").toString("base64"),
         branch: BRANCH
       };
@@ -69,11 +76,7 @@ export default async function handler(req, res) {
 
       const gh = await fetch(`https://api.github.com/repos/${REPO}/contents/${path}`, {
         method: "PUT",
-        headers: {
-          Authorization: `Bearer ${token}`,
-          Accept: "application/vnd.github+json",
-          "Content-Type": "application/json"
-        },
+        headers: { ...githubHeaders(token), "Content-Type": "application/json" },
         body: JSON.stringify(body)
       });
 
