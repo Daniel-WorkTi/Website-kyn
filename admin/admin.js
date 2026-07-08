@@ -26,7 +26,11 @@ const ICONS = {
   arrowUp: '<svg viewBox="0 0 24 24"><line x1="12" y1="19" x2="12" y2="5"/><polyline points="5 12 12 5 19 12"/></svg>',
   arrowDown: '<svg viewBox="0 0 24 24"><line x1="12" y1="5" x2="12" y2="19"/><polyline points="19 12 12 19 5 12"/></svg>',
   trash: '<svg viewBox="0 0 24 24"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 01-2 2H7a2 2 0 01-2-2V6m3 0V4a2 2 0 012-2h4a2 2 0 012 2v2"/></svg>',
-  plus: '<svg viewBox="0 0 24 24"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>'
+  plus: '<svg viewBox="0 0 24 24"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>',
+  text: '<svg viewBox="0 0 24 24"><polyline points="4 7 4 4 20 4 20 7"/><line x1="9" y1="20" x2="15" y2="20"/><line x1="12" y1="4" x2="12" y2="20"/></svg>',
+  chevron: '<svg viewBox="0 0 24 24"><polyline points="9 18 15 12 9 6"/></svg>',
+  more: '<svg viewBox="0 0 24 24"><circle cx="12" cy="5" r="1" fill="currentColor" stroke="none"/><circle cx="12" cy="12" r="1" fill="currentColor" stroke="none"/><circle cx="12" cy="19" r="1" fill="currentColor" stroke="none"/></svg>',
+  external: '<svg viewBox="0 0 24 24"><path d="M18 13v6a2 2 0 01-2 2H5a2 2 0 01-2-2V8a2 2 0 012-2h6"/><polyline points="15 3 21 3 21 9"/><line x1="10" y1="14" x2="21" y2="3"/></svg>'
 };
 
 function icon(name, extraClass = "") {
@@ -35,7 +39,14 @@ function icon(name, extraClass = "") {
 }
 
 function sectionTitle(text, iconName) {
-  return `<h2 class="section-block__title">${iconName ? icon(iconName) : ""}${escapeHtml(text)}</h2>`;
+  const ic = iconName ? `<span class="icon-box">${icon(iconName)}</span>` : "";
+  return `<div class="section-block__head"><h2 class="section-block__title">${ic}${escapeHtml(text)}</h2></div>`;
+}
+
+function fileBtn(label, done, inputAttrs) {
+  const cls = done ? "file-btn is-done" : "file-btn";
+  const ic = done ? icon("success") : icon("upload");
+  return `<label class="${cls}">${ic}<span>${escapeHtml(label)}</span><input type="file" hidden ${inputAttrs}></label>`;
 }
 
 function emptyState(iconName, title, text) {
@@ -175,7 +186,7 @@ const SECTIONS = [
     file: "content/site.json",
     type: "home",
     sidebarIcon: "home",
-    hint: "Textos e imagens da página principal do site."
+    hint: "Edite os textos e imagens da página principal do site."
   },
   {
     id: "studio-space",
@@ -342,6 +353,7 @@ function injectStaticIcons() {
   $("#logout-icon").innerHTML = ICONS.logout;
   $("#save-icon").innerHTML = ICONS.save;
   $("#banner-icon").innerHTML = ICONS.warning;
+  $("#external-icon").innerHTML = ICONS.external;
 }
 
 /* ── Auth ── */
@@ -660,27 +672,22 @@ function renderHomeEditor(data) {
   const videoBlocks = videos
     .map(
       (v, i) => `
-    <article class="media-card" data-hero-video="${i}">
-      <div class="media-card__preview">
-        ${v.poster ? `<img src="${escapeHtml(v.poster)}" alt="">` : `<div class="media-card__preview-placeholder">${icon("video")}<span>Vídeo ${i + 1}</span></div>`}
-        <span class="media-card__badge">${icon("video")}Vídeo ${i + 1}${i === 0 ? " (inicial)" : " (no scroll)"}</span>
+    <article class="video-card" data-hero-video="${i}">
+      <div class="video-card__preview">
+        ${v.poster ? `<img src="${escapeHtml(v.poster)}" alt="">` : `<div class="video-card__preview-placeholder">${icon("video")}<span>Sem capa</span></div>`}
+        <span class="video-card__badge">Vídeo ${i + 1}${i === 0 ? " (inicial)" : " (no scroll)"}</span>
       </div>
-      <div class="media-card__body">
+      <div class="video-card__body">
         <div class="field">
           <label class="field__label">Ficheiro de vídeo</label>
-          <label class="btn btn--sm upload-row__btn">
-            ${icon("upload")} ${v.src ? "Vídeo carregado · Trocar" : "Carregar vídeo"}
-            <input type="file" accept="video/*" data-hero-upload="src" hidden>
-          </label>
+          ${fileBtn(v.src ? "Vídeo carregado · Trocar" : "Carregar vídeo", !!v.src, 'accept="video/*" data-hero-upload="src"')}
         </div>
         <div class="field">
           <label class="field__label">Imagem de capa</label>
-          <label class="btn btn--sm upload-row__btn">
-            ${icon("upload")} ${v.poster ? "Capa carregada · Trocar" : "Carregar capa"}
-            <input type="file" accept="image/*" data-hero-upload="poster" hidden>
-          </label>
+          ${fileBtn(v.poster ? "Capa carregada · Trocar" : "Carregar capa", !!v.poster, 'accept="image/*" data-hero-upload="poster"')}
         </div>
       </div>
+      <button type="button" class="video-card__menu" data-hero-menu="${i}" aria-label="Opções">${ICONS.more}</button>
     </article>`
     )
     .join("");
@@ -708,7 +715,7 @@ function renderHomeEditor(data) {
 
   return `
     <section class="section-block">
-      ${sectionTitle("Texto do cabeçalho", "home")}
+      ${sectionTitle("Texto do cabeçalho", "text")}
       <div class="field">
         <label class="field__label" for="hero-title">Título principal</label>
         <input class="field__input" id="hero-title" type="text" value="${escapeHtml(hero.title || data.brand)}">
@@ -766,6 +773,17 @@ function bindHomeEvents() {
           showToast(err.message, "error");
         }
       });
+    });
+  });
+
+  document.querySelectorAll("[data-hero-menu]").forEach((btn) => {
+    btn.addEventListener("click", () => {
+      const i = Number(btn.dataset.heroMenu);
+      if (confirm("Queres limpar este vídeo e a capa?")) {
+        currentData.hero.videos[i] = { src: "", poster: "" };
+        rerenderWorkspace();
+        markDirty();
+      }
     });
   });
 
@@ -1071,7 +1089,11 @@ function buildSidebar() {
         if (!s) return "";
         const active = s.id === currentSection.id ? " is-active" : "";
         const sIcon = s.sidebarIcon || group.icon;
-        return `<button type="button" class="sidebar__btn${active}" data-id="${s.id}">${icon(sIcon)}${escapeHtml(s.label)}</button>`;
+        return `<button type="button" class="sidebar__btn${active}" data-id="${s.id}">
+          ${icon(sIcon)}
+          <span class="sidebar__btn-label">${escapeHtml(s.label)}</span>
+          <span class="sidebar__chevron" aria-hidden="true">${ICONS.chevron}</span>
+        </button>`;
       })
       .join("");
     return `
@@ -1108,6 +1130,7 @@ async function handleSave() {
 /* ── Boot ── */
 
 function init() {
+  injectStaticIcons();
   $("#login-form")?.addEventListener("submit", handleLogin);
   $("#btn-logout")?.addEventListener("click", handleLogout);
   $("#btn-save")?.addEventListener("click", handleSave);

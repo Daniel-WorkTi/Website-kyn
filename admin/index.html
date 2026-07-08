@@ -6,17 +6,18 @@
   <title>Gestão — Proimagem.pt</title>
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="/admin/admin.css">
 </head>
 <body>
 
-  <!-- Ecrã de login -->
+  <!-- Login -->
   <div class="login" id="login-screen">
     <div class="login__card">
+      <div class="login__logo">P</div>
       <p class="login__brand">Proimagem.pt</p>
       <h1 class="login__title">Gestão do site</h1>
-      <p class="login__text">Entra com o teu utilizador e palavra-passe para gerir fotos, vídeos e textos do site.</p>
+      <p class="login__text">Entra com o teu utilizador e palavra-passe para gerir fotos, vídeos e textos.</p>
       <form class="login__form" id="login-form">
         <div class="field">
           <label class="field__label" for="login-user">Utilizador</label>
@@ -33,53 +34,63 @@
     </div>
   </div>
 
-  <!-- Painel principal -->
-  <div class="panel is-hidden" id="panel">
-    <header class="panel__header">
-      <div class="panel__header-left">
-        <span class="panel__brand">Proimagem.pt</span>
-        <span class="panel__badge">Gestão</span>
+  <!-- Painel -->
+  <div class="app is-hidden" id="panel">
+
+    <aside class="sidebar" aria-label="Menu do painel">
+      <div class="sidebar__brand">
+        <span class="sidebar__logo" aria-hidden="true">P</span>
+        <div class="sidebar__brand-text">
+          <span class="sidebar__name">Proimagem.pt</span>
+          <span class="sidebar__badge">Gestão</span>
+        </div>
       </div>
-      <div class="panel__header-right">
-        <a class="panel__link" href="/" target="_blank" rel="noopener">Ver site ↗</a>
-        <button class="btn btn--ghost" id="btn-logout" type="button">
+
+      <nav class="sidebar__nav" id="sidebar-nav"></nav>
+
+      <div class="sidebar__footer">
+        <a class="sidebar__footer-link" href="/" target="_blank" rel="noopener">
+          <span class="icon" id="external-icon" aria-hidden="true"></span>
+          Ver site
+        </a>
+        <button class="sidebar__footer-btn" id="btn-logout" type="button">
           <span class="icon" id="logout-icon" aria-hidden="true"></span>
           Sair
         </button>
       </div>
-    </header>
+    </aside>
 
-    <div class="panel__body">
-      <aside class="sidebar" aria-label="Navegação do painel">
-        <nav class="sidebar__nav" id="sidebar-nav"></nav>
-      </aside>
-
-      <main class="workspace">
-        <div class="workspace__top">
-          <div class="workspace__heading">
-            <h1 class="workspace__title" id="page-title">—</h1>
-            <p class="workspace__hint" id="page-hint"></p>
-          </div>
-          <div class="workspace__actions">
-            <span class="status" id="save-status" aria-live="polite"></span>
-            <button class="btn btn--primary" id="btn-save" type="button">
-              <span class="icon" id="save-icon" aria-hidden="true"></span>
-              <span id="save-label">Guardar alterações</span>
-            </button>
-          </div>
+    <main class="workspace">
+      <header class="workspace__header">
+        <div class="workspace__heading">
+          <h1 class="workspace__title" id="page-title">—</h1>
+          <p class="workspace__hint" id="page-hint"></p>
         </div>
+        <div class="workspace__actions">
+          <span class="status" id="save-status" aria-live="polite"></span>
+          <button class="btn btn--primary" id="btn-save" type="button">
+            <span class="icon" id="save-icon" aria-hidden="true"></span>
+            <span id="save-label">Guardar alterações</span>
+          </button>
+        </div>
+      </header>
 
-        <aside class="upload-banner" id="upload-banner" aria-label="Informação sobre envio de ficheiros">
-          <span class="icon upload-banner__icon" id="banner-icon" aria-hidden="true"></span>
-          <div class="upload-banner__text">
-            <p class="upload-banner__title">Como funcionam os ficheiros</p>
-            <p class="upload-banner__desc">Podes enviar fotos e vídeos até <strong>4 MB</strong> cada. Os ficheiros ficam guardados na pasta <code>assets/uploads/</code> do site. Depois de carregar ou alterar algo, clica em <strong>Guardar alterações</strong> para publicar no site.</p>
+      <div class="workspace__scroll">
+        <aside class="info-banner" id="upload-banner" aria-label="Informação sobre ficheiros">
+          <span class="icon info-banner__icon" id="banner-icon" aria-hidden="true"></span>
+          <div class="info-banner__body">
+            <p class="info-banner__title">Como funcionam os ficheiros</p>
+            <p class="info-banner__desc">
+              Podes enviar fotos e vídeos até <strong>4 MB</strong> cada. Os ficheiros ficam guardados na pasta
+              <code>assets/uploads/</code> do site. Depois de carregar ou alterar algo, clica em
+              <strong>Guardar alterações</strong> para publicar no site.
+            </p>
           </div>
         </aside>
 
         <div class="workspace__content" id="workspace-content"></div>
-      </main>
-    </div>
+      </div>
+    </main>
   </div>
 
   <div class="toast is-hidden" id="toast" role="status" aria-live="polite"></div>
