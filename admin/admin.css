@@ -458,6 +458,96 @@ body {
   flex-wrap: wrap;
 }
 
+.empty-msg {
+  color: var(--text-muted);
+  font-size: 0.85rem;
+  font-weight: 300;
+}
+
+/* ── Upload / dropzone ── */
+
+.dropzone {
+  border: 2px dashed var(--border);
+  border-radius: var(--radius);
+  padding: 2.5rem 1.5rem;
+  text-align: center;
+  cursor: pointer;
+  transition: border-color 0.2s, background 0.2s;
+  margin-bottom: 1.5rem;
+}
+
+.dropzone:hover,
+.dropzone.is-dragover {
+  border-color: rgba(255, 255, 255, 0.4);
+  background: var(--bg-hover);
+}
+
+.dropzone__icon {
+  font-size: 2rem;
+  font-weight: 300;
+  line-height: 1;
+  margin-bottom: 0.5rem;
+  color: var(--text-muted);
+}
+
+.dropzone__title {
+  font-size: 0.95rem;
+  font-weight: 300;
+  margin-bottom: 0.35rem;
+}
+
+.dropzone__hint {
+  font-size: 0.75rem;
+  color: var(--text-muted);
+  font-weight: 300;
+}
+
+.media-card__preview--upload,
+.person-card__avatar--upload,
+.partner-card-edit__logo--upload {
+  cursor: pointer;
+  position: relative;
+}
+
+.media-card__upload-overlay {
+  position: absolute;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.6);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  opacity: 0;
+  transition: opacity 0.2s;
+  font-size: 0.7rem;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  font-weight: 400;
+}
+
+.media-card__preview--upload:hover .media-card__upload-overlay,
+.person-card__avatar--upload:hover .media-card__upload-overlay,
+.partner-card-edit__logo--upload:hover .media-card__upload-overlay {
+  opacity: 1;
+}
+
+.upload-row {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  flex-wrap: wrap;
+}
+
+.upload-row__thumb {
+  width: 48px;
+  height: 48px;
+  object-fit: cover;
+  border-radius: 4px;
+}
+
+.upload-row__btn {
+  cursor: pointer;
+}
+
 /* ── Equipa / Parceiros ── */
 
 .person-card,

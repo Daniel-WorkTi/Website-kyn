@@ -2,7 +2,7 @@ import { requireAdmin, getGithubToken } from "../lib/auth.js";
 
 const REPO = "Daniel-WorkTi/Website-kyn";
 const BRANCH = "main";
-const MAX_BYTES = 8 * 1024 * 1024;
+const MAX_BYTES = 4 * 1024 * 1024;
 
 export default async function handler(req, res) {
   if (req.method !== "POST") {
@@ -30,7 +30,7 @@ export default async function handler(req, res) {
 
   const bytes = Buffer.from(contentBase64, "base64");
   if (bytes.length > MAX_BYTES) {
-    res.status(400).json({ error: "Ficheiro demasiado grande (máx. 8 MB)." });
+    res.status(400).json({ error: "Ficheiro demasiado grande (máx. 4 MB)." });
     return;
   }
 

@@ -2,7 +2,94 @@
 
 const API = "/api/content";
 const UPLOAD_API = "/api/upload";
+const MAX_UPLOAD_MB = 4;
+const MAX_UPLOAD_BYTES = MAX_UPLOAD_MB * 1024 * 1024;
 const FETCH_OPTS = { credentials: "include" };
+
+function renderDropZone(id, accept = "image/*,video/*", multiple = true) {
+  const multi = multiple ? "multiple" : "";
+  return `
+    <div class="dropzone" id="${id}" data-dropzone>
+      <input type="file" accept="${accept}" ${multi} hidden>
+      <p class="dropzone__icon">+</p>
+      <p class="dropzone__title">Arrasta ficheiros aqui</p>
+      <p class="dropzone__hint">ou clica para escolher do computador · máx. ${MAX_UPLOAD_MB} MB</p>
+    </div>`;
+}
+
+function bindDropZone(el, onFiles) {
+  if (!el) return;
+  const input = el.querySelector('input[type="file"]');
+
+  el.addEventListener("click", (e) => {
+    if (e.target.tagName !== "INPUT") input?.click();
+  });
+
+  input?.addEventListener("change", () => {
+    const files = [...(input.files || [])];
+    if (files.length) onFiles(files);
+    input.value = "";
+  });
+
+  el.addEventListener("dragover", (e) => {
+    e.preventDefault();
+    el.classList.add("is-dragover");
+  });
+  el.addEventListener("dragleave", () => el.classList.remove("is-dragover"));
+  el.addEventListener("drop", (e) => {
+    e.preventDefault();
+    el.classList.remove("is-dragover");
+    const files = [...e.dataTransfer.files];
+    if (files.length) onFiles(files);
+  });
+}
+
+function bindPreviewUpload(previewEl, accept, onUploaded) {
+  if (!previewEl) return;
+  const input = document.createElement("input");
+  input.type = "file";
+  input.accept = accept;
+  input.hidden = true;
+  previewEl.appendChild(input);
+
+  previewEl.addEventListener("click", () => input.click());
+  input.addEventListener("change", async () => {
+    const file = input.files?.[0];
+    input.value = "";
+    if (!file) return;
+    try {
+      await processUpload(file, onUploaded);
+    } catch (err) {
+      showToast(err.message, "error");
+    }
+  });
+}
+
+async function processUpload(file, onSuccess) {
+  if (file.size > MAX_UPLOAD_BYTES) {
+    throw new Error(`Ficheiro demasiado grande (máx. ${MAX_UPLOAD_MB} MB). Comprime antes de enviar.`);
+  }
+  showToast(`A enviar ${file.name}…`);
+  $("#btn-save").disabled = true;
+  try {
+    const url = await uploadFile(file);
+    onSuccess(url, file);
+    markDirty();
+    showToast("Ficheiro enviado!");
+  } finally {
+    $("#btn-save").disabled = false;
+  }
+}
+
+async function uploadManyFiles(files, onEach) {
+  for (const file of files) {
+    try {
+      await processUpload(file, onEach);
+    } catch (err) {
+      showToast(`${file.name}: ${err.message}`, "error");
+    }
+  }
+}
 
 const SECTIONS = [
   {
@@ -18,7 +105,7 @@ const SECTIONS = [
     file: "content/galleries/studio-space.json",
     type: "gallery",
     page: "studio-space.html",
-    hint: "Fotos e vídeos desta secção. «Destaque» = ocupa a largura toda no site."
+    hint: "Arrasta fotos ou vídeos para carregar. Clica numa imagem para trocar."
   },
   {
     id: "multicam",
@@ -262,7 +349,7 @@ async function uploadFile(file) {
 function renderMediaPreview(item) {
   const url = previewUrl(item);
   if (!url) {
-    return `<div class="media-card__preview-placeholder">Sem pré-visualização<br><small>Cola o link do ficheiro</small></div>`;
+    return `<div class="media-card__preview-placeholder">Clica para carregar<br><small>foto ou vídeo</small></div>`;
   }
   if (item.type === "video" && !item.poster) {
     return `<video src="${escapeHtml(item.src)}" muted playsinline></video>`;
@@ -276,9 +363,10 @@ function renderGalleryEditor(data) {
     .map(
       (item, i) => `
     <div class="media-card" data-index="${i}">
-      <div class="media-card__preview">
+      <div class="media-card__preview media-card__preview--upload" data-preview="${i}">
         ${renderMediaPreview(item)}
         <span class="media-card__badge">${item.type === "video" ? "Vídeo" : "Foto"}${item.featured ? " · Destaque" : ""}</span>
+        <span class="media-card__upload-overlay">Trocar ficheiro</span>
       </div>
       <div class="media-card__body">
         <p class="media-card__num">#${i + 1}</p>
@@ -297,13 +385,15 @@ function renderGalleryEditor(data) {
             </label>
           </div>
         </div>
-        <div class="field">
-          <label class="field__label">Link do ficheiro</label>
-          <input class="field__input" type="text" data-field="src" value="${escapeHtml(item.src)}" placeholder="https://... ou /assets/uploads/foto.jpg">
-        </div>
         <div class="field" ${item.type === "video" ? "" : 'style="display:none"'} data-poster-field>
-          <label class="field__label">Capa do vídeo (imagem)</label>
-          <input class="field__input" type="text" data-field="poster" value="${escapeHtml(item.poster || "")}" placeholder="https://...">
+          <label class="field__label">Capa do vídeo</label>
+          <div class="upload-row">
+            ${item.poster ? `<img class="upload-row__thumb" src="${escapeHtml(item.poster)}" alt="">` : ""}
+            <label class="btn btn--sm upload-row__btn">
+              Carregar capa
+              <input type="file" accept="image/*" data-action="upload-poster" hidden>
+            </label>
+          </div>
         </div>
         <div class="field">
           <label class="field__label">Descrição (opcional)</label>
@@ -312,10 +402,6 @@ function renderGalleryEditor(data) {
         <div class="media-card__actions">
           <button type="button" class="btn btn--sm" data-action="up" ${i === 0 ? "disabled" : ""}>↑ Subir</button>
           <button type="button" class="btn btn--sm" data-action="down" ${i === items.length - 1 ? "disabled" : ""}>↓ Descer</button>
-          <label class="btn btn--sm" style="cursor:pointer">
-            📁 Carregar ficheiro
-            <input type="file" accept="image/*,video/*" data-action="upload" hidden>
-          </label>
           <button type="button" class="btn btn--sm btn--danger" data-action="remove">Remover</button>
         </div>
       </div>
@@ -324,18 +410,39 @@ function renderGalleryEditor(data) {
     .join("");
 
   return `
+    ${renderDropZone("gallery-dropzone")}
     <div class="section-block">
       <p class="section-block__title">${items.length} ${items.length === 1 ? "mídia" : "mídias"} nesta página</p>
-      <div class="media-list" id="media-list">${cards || '<p style="color:var(--text-muted);font-size:0.85rem">Ainda não há mídias. Clica em «Adicionar foto ou vídeo».</p>'}</div>
-      <div class="add-bar">
-        <button type="button" class="btn" id="btn-add-media">+ Adicionar foto ou vídeo</button>
-      </div>
+      <div class="media-list" id="media-list">${cards || '<p class="empty-msg">Ainda não há mídias. Usa a área acima para carregar ficheiros.</p>'}</div>
     </div>`;
 }
 
 function bindGalleryEvents() {
   const list = $("#media-list");
   if (!list) return;
+
+  bindDropZone($("#gallery-dropzone"), async (files) => {
+    for (const file of files) {
+      await processUpload(file, (url, f) => {
+        currentData.items.push({
+          type: f.type.startsWith("video/") ? "video" : "image",
+          featured: false,
+          src: url,
+          alt: f.name.replace(/\.[^.]+$/, "")
+        });
+      });
+    }
+    rerenderWorkspace();
+  });
+
+  list.querySelectorAll("[data-preview]").forEach((preview) => {
+    const i = Number(preview.dataset.preview);
+    bindPreviewUpload(preview, "image/*,video/*", (url, file) => {
+      currentData.items[i].src = url;
+      currentData.items[i].type = file.type.startsWith("video/") ? "video" : "image";
+      rerenderWorkspace();
+    });
+  });
 
   list.addEventListener("input", (e) => {
     const card = e.target.closest(".media-card");
@@ -358,7 +465,7 @@ function bindGalleryEvents() {
     markDirty();
   });
 
-  list.addEventListener("click", async (e) => {
+  list.addEventListener("click", (e) => {
     const card = e.target.closest(".media-card");
     if (!card) return;
     const i = Number(card.dataset.index);
@@ -383,39 +490,24 @@ function bindGalleryEvents() {
       [currentData.items[i], currentData.items[i + 1]] = [currentData.items[i + 1], currentData.items[i]];
       rerenderWorkspace();
       markDirty();
-      return;
     }
   });
 
   list.addEventListener("change", async (e) => {
-    if (e.target.dataset.action !== "upload") return;
+    if (e.target.dataset.action !== "upload-poster") return;
     const file = e.target.files?.[0];
+    e.target.value = "";
     if (!file) return;
     const card = e.target.closest(".media-card");
     const i = Number(card.dataset.index);
-
     try {
-      $("#btn-save").disabled = true;
-      showToast("A enviar ficheiro…");
-      const url = await uploadFile(file);
-      currentData.items[i].src = url;
-      if (file.type.startsWith("video/")) currentData.items[i].type = "video";
-      else currentData.items[i].type = "image";
-      rerenderWorkspace();
-      markDirty();
-      showToast("Ficheiro enviado!");
+      await processUpload(file, (url) => {
+        currentData.items[i].poster = url;
+        rerenderWorkspace();
+      });
     } catch (err) {
       showToast(err.message, "error");
-    } finally {
-      $("#btn-save").disabled = false;
-      e.target.value = "";
     }
-  });
-
-  $("#btn-add-media")?.addEventListener("click", () => {
-    currentData.items.push({ type: "image", featured: false, src: "", alt: "" });
-    rerenderWorkspace();
-    markDirty();
   });
 }
 
@@ -443,12 +535,18 @@ function renderHomeEditor(data) {
       </div>
       <div class="media-card__body">
         <div class="field">
-          <label class="field__label">Link do vídeo</label>
-          <input class="field__input" type="text" data-hero-vid="src" value="${escapeHtml(v.src)}">
+          <label class="field__label">Ficheiro de vídeo</label>
+          <label class="btn btn--sm upload-row__btn">
+            ${v.src ? "✓ Vídeo carregado · Trocar" : "Carregar vídeo"}
+            <input type="file" accept="video/*" data-hero-upload="src" hidden>
+          </label>
         </div>
         <div class="field">
           <label class="field__label">Imagem de capa</label>
-          <input class="field__input" type="text" data-hero-vid="poster" value="${escapeHtml(v.poster || "")}">
+          <label class="btn btn--sm upload-row__btn">
+            ${v.poster ? "✓ Capa carregada · Trocar" : "Carregar capa"}
+            <input type="file" accept="image/*" data-hero-upload="poster" hidden>
+          </label>
         </div>
       </div>
     </div>`
@@ -459,14 +557,11 @@ function renderHomeEditor(data) {
     .map(
       (item, i) => `
     <div class="media-card" data-home-stack="${i}">
-      <div class="media-card__preview">
-        ${item.src ? `<img src="${escapeHtml(item.src)}" alt="">` : `<div class="media-card__preview-placeholder">Sem imagem</div>`}
+      <div class="media-card__preview media-card__preview--upload" data-stack-preview="${i}">
+        ${item.src ? `<img src="${escapeHtml(item.src)}" alt="">` : `<div class="media-card__preview-placeholder">Clica para carregar</div>`}
+        <span class="media-card__upload-overlay">Trocar ficheiro</span>
       </div>
       <div class="media-card__body">
-        <div class="field">
-          <label class="field__label">Link da imagem</label>
-          <input class="field__input" type="text" data-stack="src" value="${escapeHtml(item.src)}">
-        </div>
         <div class="field">
           <label class="field__label">Descrição</label>
           <input class="field__input" type="text" data-stack="alt" value="${escapeHtml(item.alt || "")}">
@@ -497,10 +592,8 @@ function renderHomeEditor(data) {
     </div>
     <div class="section-block">
       <p class="section-block__title">Imagens abaixo do cabeçalho</p>
+      ${renderDropZone("home-stack-dropzone", "image/*", true)}
       <div class="media-list" id="home-stack-list">${stackBlocks}</div>
-      <div class="add-bar">
-        <button type="button" class="btn" id="btn-add-stack">+ Adicionar imagem</button>
-      </div>
     </div>`;
 }
 
@@ -517,18 +610,45 @@ function bindHomeEvents() {
 
   document.querySelectorAll("[data-hero-video]").forEach((card) => {
     const i = Number(card.dataset.heroVideo);
-    card.querySelectorAll("[data-hero-vid]").forEach((input) => {
-      input.addEventListener("input", (e) => {
-        const key = e.target.dataset.heroVid;
-        currentData.hero.videos[i][key] = e.target.value;
-        if (key === "poster") {
-          const preview = card.querySelector(".media-card__preview");
-          preview.innerHTML = e.target.value
-            ? `<img src="${escapeHtml(e.target.value)}" alt=""><span class="media-card__badge">Vídeo ${i + 1}</span>`
-            : `<div class="media-card__preview-placeholder">Vídeo ${i + 1}</div><span class="media-card__badge">Vídeo ${i + 1}</span>`;
+    card.querySelectorAll("[data-hero-upload]").forEach((input) => {
+      input.addEventListener("change", async () => {
+        const file = input.files?.[0];
+        input.value = "";
+        if (!file) return;
+        const key = input.dataset.heroUpload;
+        const accept = key === "src" ? "video/*" : "image/*";
+        if (!file.type.match(key === "src" ? /^video\// : /^image\//)) {
+          showToast(key === "src" ? "Escolhe um ficheiro de vídeo." : "Escolhe uma imagem.", "error");
+          return;
         }
-        markDirty();
+        try {
+          await processUpload(file, (url) => {
+            currentData.hero.videos[i][key] = url;
+            rerenderWorkspace();
+          });
+        } catch (err) {
+          showToast(err.message, "error");
+        }
       });
+    });
+  });
+
+  bindDropZone($("#home-stack-dropzone"), async (files) => {
+    for (const file of files) {
+      if (!file.type.startsWith("image/")) continue;
+      await processUpload(file, (url, f) => {
+        currentData.homeStack.push({ type: "image", src: url, alt: f.name.replace(/\.[^.]+$/, "") });
+      });
+    }
+    rerenderWorkspace();
+  });
+
+  document.querySelectorAll("[data-stack-preview]").forEach((preview) => {
+    const i = Number(preview.dataset.stackPreview);
+    bindPreviewUpload(preview, "image/*", (url, file) => {
+      currentData.homeStack[i].src = url;
+      currentData.homeStack[i].alt = currentData.homeStack[i].alt || file.name.replace(/\.[^.]+$/, "");
+      rerenderWorkspace();
     });
   });
 
@@ -537,12 +657,6 @@ function bindHomeEvents() {
     card.querySelectorAll("[data-stack]").forEach((input) => {
       input.addEventListener("input", (e) => {
         currentData.homeStack[i][e.target.dataset.stack] = e.target.value;
-        if (e.target.dataset.stack === "src") {
-          const preview = card.querySelector(".media-card__preview");
-          preview.innerHTML = e.target.value
-            ? `<img src="${escapeHtml(e.target.value)}" alt="">`
-            : `<div class="media-card__preview-placeholder">Sem imagem</div>`;
-        }
         markDirty();
       });
     });
@@ -550,17 +664,10 @@ function bindHomeEvents() {
 
   document.querySelectorAll("[data-stack-remove]").forEach((btn) => {
     btn.addEventListener("click", () => {
-      const i = Number(btn.dataset.stackRemove);
-      currentData.homeStack.splice(i, 1);
+      currentData.homeStack.splice(Number(btn.dataset.stackRemove), 1);
       rerenderWorkspace();
       markDirty();
     });
-  });
-
-  $("#btn-add-stack")?.addEventListener("click", () => {
-    currentData.homeStack.push({ type: "image", src: "", alt: "" });
-    rerenderWorkspace();
-    markDirty();
   });
 }
 
@@ -571,11 +678,13 @@ function renderTeamEditor(data) {
     .map(
       (m, i) => `
     <div class="person-card" data-featured="${i}">
-      <div class="person-card__avatar">${m.photo ? `<img src="${escapeHtml(m.photo)}" alt="">` : initials(m.name)}</div>
+      <div class="person-card__avatar person-card__avatar--upload" data-photo-target="featured:${i}">
+        ${m.photo ? `<img src="${escapeHtml(m.photo)}" alt="">` : initials(m.name)}
+        <span class="media-card__upload-overlay">Carregar foto</span>
+      </div>
       <div class="person-card__fields">
         <input class="field__input" data-f="name" value="${escapeHtml(m.name)}" placeholder="Nome">
         <input class="field__input" data-f="roles" value="${escapeHtml(m.roles)}" placeholder="Funções (ex.: Cam OP · Editor)">
-        <input class="field__input" data-f="photo" value="${escapeHtml(m.photo || "")}" placeholder="Link da foto (opcional)">
       </div>
     </div>`
     )
@@ -595,11 +704,13 @@ function renderTeamEditor(data) {
 
       return `
       <div class="person-card" data-member="${i}">
-        <div class="person-card__avatar">${m.photo ? `<img src="${escapeHtml(m.photo)}" alt="">` : initials(m.name)}</div>
+        <div class="person-card__avatar person-card__avatar--upload" data-photo-target="member:${i}">
+          ${m.photo ? `<img src="${escapeHtml(m.photo)}" alt="">` : initials(m.name)}
+          <span class="media-card__upload-overlay">Carregar foto</span>
+        </div>
         <div class="person-card__fields">
           <input class="field__input" data-f="name" value="${escapeHtml(m.name)}" placeholder="Nome">
           <input class="field__input" data-f="roles" value="${escapeHtml(m.roles)}" placeholder="Funções">
-          <input class="field__input" data-f="photo" value="${escapeHtml(m.photo || "")}" placeholder="Link da foto">
           <div class="skills-row">${skills}</div>
         </div>
         <button type="button" class="btn btn--sm btn--danger" data-member-remove="${i}">Remover</button>
@@ -622,15 +733,29 @@ function renderTeamEditor(data) {
 }
 
 function bindTeamEvents() {
+  document.querySelectorAll("[data-photo-target]").forEach((avatar) => {
+    const [group, i] = avatar.dataset.photoTarget.split(":");
+    bindPreviewUpload(avatar, "image/*", (url) => {
+      if (group === "featured") currentData.featured[i].photo = url;
+      else currentData.members[i].photo = url;
+      rerenderWorkspace();
+    });
+  });
+
   document.querySelectorAll("[data-featured]").forEach((card) => {
     const i = Number(card.dataset.featured);
     card.querySelectorAll("[data-f]").forEach((input) => {
       input.addEventListener("input", (e) => {
         currentData.featured[i][e.target.dataset.f] = e.target.value;
-        if (e.target.dataset.f === "photo" || e.target.dataset.f === "name") {
+        if (e.target.dataset.f === "name") {
           const av = card.querySelector(".person-card__avatar");
-          const photo = currentData.featured[i].photo;
-          av.innerHTML = photo ? `<img src="${escapeHtml(photo)}" alt="">` : initials(currentData.featured[i].name);
+          if (!currentData.featured[i].photo) {
+            av.innerHTML = `<span>${initials(e.target.value)}</span><span class="media-card__upload-overlay">Carregar foto</span>`;
+            bindPreviewUpload(av, "image/*", (url) => {
+              currentData.featured[i].photo = url;
+              rerenderWorkspace();
+            });
+          }
         }
         markDirty();
       });
@@ -642,11 +767,6 @@ function bindTeamEvents() {
     card.querySelectorAll("[data-f]").forEach((input) => {
       input.addEventListener("input", (e) => {
         currentData.members[i][e.target.dataset.f] = e.target.value;
-        if (e.target.dataset.f === "photo" || e.target.dataset.f === "name") {
-          const av = card.querySelector(".person-card__avatar");
-          const photo = currentData.members[i].photo;
-          av.innerHTML = photo ? `<img src="${escapeHtml(photo)}" alt="">` : initials(currentData.members[i].name);
-        }
         markDirty();
       });
     });
@@ -680,10 +800,12 @@ function renderPartnerList(items, dataAttr) {
     .map(
       (p, i) => `
     <div class="partner-card-edit" data-${dataAttr}="${i}">
-      <div class="partner-card-edit__logo">${p.logo ? `<img src="${escapeHtml(p.logo)}" alt="">` : escapeHtml(p.name).slice(0, 2)}</div>
+      <div class="partner-card-edit__logo partner-card-edit__logo--upload" data-logo-target="${dataAttr}:${i}">
+        ${p.logo ? `<img src="${escapeHtml(p.logo)}" alt="">` : escapeHtml(p.name).slice(0, 2)}
+        <span class="media-card__upload-overlay">Carregar logo</span>
+      </div>
       <div class="partner-card-edit__fields">
         <input class="field__input" data-f="name" value="${escapeHtml(p.name)}" placeholder="Nome">
-        <input class="field__input" data-f="logo" value="${escapeHtml(p.logo || "")}" placeholder="Link do logótipo (opcional)">
       </div>
       <button type="button" class="btn btn--sm btn--danger" data-partner-remove="${dataAttr}:${i}">Remover</button>
     </div>`
@@ -706,16 +828,27 @@ function renderPartnersEditor(data) {
 }
 
 function bindPartnersEvents() {
+  document.querySelectorAll("[data-logo-target]").forEach((logoEl) => {
+    const [group, i] = logoEl.dataset.logoTarget.split(":");
+    bindPreviewUpload(logoEl, "image/*", (url) => {
+      currentData[group][i].logo = url;
+      rerenderWorkspace();
+    });
+  });
+
   ["main", "secondary"].forEach((group) => {
     document.querySelectorAll(`[data-${group}]`).forEach((card) => {
       const i = Number(card.dataset[group]);
       card.querySelectorAll("[data-f]").forEach((input) => {
         input.addEventListener("input", (e) => {
           currentData[group][i][e.target.dataset.f] = e.target.value;
-          if (e.target.dataset.f === "logo" || e.target.dataset.f === "name") {
+          if (e.target.dataset.f === "name" && !currentData[group][i].logo) {
             const logo = card.querySelector(".partner-card-edit__logo");
-            const l = currentData[group][i].logo;
-            logo.innerHTML = l ? `<img src="${escapeHtml(l)}" alt="">` : escapeHtml(currentData[group][i].name).slice(0, 2);
+            logo.innerHTML = `${escapeHtml(e.target.value).slice(0, 2)}<span class="media-card__upload-overlay">Carregar logo</span>`;
+            bindPreviewUpload(logo, "image/*", (url) => {
+              currentData[group][i].logo = url;
+              rerenderWorkspace();
+            });
           }
           markDirty();
         });
