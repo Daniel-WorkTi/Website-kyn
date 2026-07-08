@@ -6,14 +6,59 @@ const MAX_UPLOAD_MB = 4;
 const MAX_UPLOAD_BYTES = MAX_UPLOAD_MB * 1024 * 1024;
 const FETCH_OPTS = { credentials: "include" };
 
+/* ── Ícones SVG inline ── */
+
+const ICONS = {
+  upload: '<svg viewBox="0 0 24 24"><path d="M12 16V4M12 4l-4 4M12 4l4 4"/><path d="M4 17v2a2 2 0 002 2h12a2 2 0 002-2v-2"/></svg>',
+  save: '<svg viewBox="0 0 24 24"><path d="M19 21H5a2 2 0 01-2-2V5a2 2 0 012-2h11l5 5v11a2 2 0 01-2 2z"/><polyline points="17 21 17 13 7 13 7 21"/><polyline points="7 3 7 8 15 8"/></svg>',
+  logout: '<svg viewBox="0 0 24 24"><path d="M9 21H5a2 2 0 01-2-2V5a2 2 0 012-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/></svg>',
+  pages: '<svg viewBox="0 0 24 24"><rect x="3" y="3" width="7" height="9" rx="1"/><rect x="14" y="3" width="7" height="5" rx="1"/><rect x="14" y="12" width="7" height="9" rx="1"/><rect x="3" y="16" width="7" height="5" rx="1"/></svg>',
+  photo: '<svg viewBox="0 0 24 24"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><polyline points="21 15 16 10 5 21"/></svg>',
+  video: '<svg viewBox="0 0 24 24"><polygon points="23 7 16 12 23 17 23 7"/><rect x="1" y="5" width="15" height="14" rx="2"/></svg>',
+  team: '<svg viewBox="0 0 24 24"><path d="M17 21v-2a4 4 0 00-4-4H5a4 4 0 00-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 00-3-3.87"/><path d="M16 3.13a4 4 0 010 7.75"/></svg>',
+  partners: '<svg viewBox="0 0 24 24"><path d="M16 21v-2a4 4 0 00-4-4H6a4 4 0 00-4 4v2"/><circle cx="9" cy="7" r="4"/><line x1="19" y1="8" x2="19" y2="14"/><line x1="22" y1="11" x2="16" y2="11"/></svg>',
+  dragDrop: '<svg viewBox="0 0 24 24"><path d="M12 3v12"/><path d="M8 7l4-4 4 4"/><rect x="4" y="17" width="16" height="4" rx="1"/></svg>',
+  success: '<svg viewBox="0 0 24 24"><path d="M22 11.08V12a10 10 0 11-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg>',
+  warning: '<svg viewBox="0 0 24 24"><path d="M10.29 3.86L1.82 18a2 2 0 001.71 3h16.94a2 2 0 001.71-3L13.71 3.86a2 2 0 00-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>',
+  spinner: '<svg viewBox="0 0 24 24"><path d="M12 2v4M12 18v4M4.93 4.93l2.83 2.83M16.24 16.24l2.83 2.83M2 12h4M18 12h4M4.93 19.07l2.83-2.83M16.24 7.76l2.83-2.83"/></svg>',
+  home: '<svg viewBox="0 0 24 24"><path d="M3 9l9-7 9 7v11a2 2 0 01-2 2H5a2 2 0 01-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg>',
+  gallery: '<svg viewBox="0 0 24 24"><rect x="2" y="2" width="20" height="20" rx="2"/><circle cx="8" cy="8" r="2"/><path d="M21 15l-5-5L5 21"/></svg>',
+  arrowUp: '<svg viewBox="0 0 24 24"><line x1="12" y1="19" x2="12" y2="5"/><polyline points="5 12 12 5 19 12"/></svg>',
+  arrowDown: '<svg viewBox="0 0 24 24"><line x1="12" y1="5" x2="12" y2="19"/><polyline points="19 12 12 19 5 12"/></svg>',
+  trash: '<svg viewBox="0 0 24 24"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 01-2 2H7a2 2 0 01-2-2V6m3 0V4a2 2 0 012-2h4a2 2 0 012 2v2"/></svg>',
+  plus: '<svg viewBox="0 0 24 24"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>'
+};
+
+function icon(name, extraClass = "") {
+  const svg = ICONS[name] || "";
+  return `<span class="icon${extraClass ? " " + extraClass : ""}" aria-hidden="true">${svg}</span>`;
+}
+
+function sectionTitle(text, iconName) {
+  return `<h2 class="section-block__title">${iconName ? icon(iconName) : ""}${escapeHtml(text)}</h2>`;
+}
+
+function emptyState(iconName, title, text) {
+  return `
+    <div class="empty-state">
+      <span class="empty-state__icon">${ICONS[iconName] || ""}</span>
+      <p class="empty-state__title">${escapeHtml(title)}</p>
+      <p class="empty-state__text">${escapeHtml(text)}</p>
+    </div>`;
+}
+
+function loadingHtml(text = "A carregar…") {
+  return `<div class="loading-state">${icon("spinner", "icon--spin")}<span>${escapeHtml(text)}</span></div>`;
+}
+
 function renderDropZone(id, accept = "image/*,video/*", multiple = true) {
   const multi = multiple ? "multiple" : "";
   return `
     <div class="dropzone" id="${id}" data-dropzone>
       <input type="file" accept="${accept}" ${multi} hidden>
-      <p class="dropzone__icon">+</p>
-      <p class="dropzone__title">Arrasta ficheiros aqui</p>
-      <p class="dropzone__hint">ou clica para escolher do computador · máx. ${MAX_UPLOAD_MB} MB</p>
+      <div class="dropzone__icon">${icon("dragDrop", "icon--lg")}</div>
+      <p class="dropzone__title">Arrasta ficheiros para aqui</p>
+      <p class="dropzone__hint">ou clica para escolher do teu computador · máximo ${MAX_UPLOAD_MB} MB por ficheiro</p>
     </div>`;
 }
 
@@ -65,19 +110,28 @@ function bindPreviewUpload(previewEl, accept, onUploaded) {
   });
 }
 
+let uploadCount = 0;
+
+function setUploading(active) {
+  if (active) uploadCount++;
+  else uploadCount = Math.max(0, uploadCount - 1);
+  const saving = $("#btn-save")?.classList.contains("is-loading");
+  $("#btn-save").disabled = uploadCount > 0 || saving;
+}
+
 async function processUpload(file, onSuccess) {
   if (file.size > MAX_UPLOAD_BYTES) {
-    throw new Error(`Ficheiro demasiado grande (máx. ${MAX_UPLOAD_MB} MB). Comprime antes de enviar.`);
+    throw new Error(`Este ficheiro é demasiado grande (máximo ${MAX_UPLOAD_MB} MB). Tenta comprimir antes de enviar.`);
   }
-  showToast(`A enviar ${file.name}…`);
-  $("#btn-save").disabled = true;
+  showToast(`A enviar ${file.name}…`, "pending");
+  setUploading(true);
   try {
     const url = await uploadFile(file);
     onSuccess(url, file);
     markDirty();
-    showToast("Ficheiro enviado!");
+    showToast("Ficheiro enviado! Não te esqueças de guardar.", "ok");
   } finally {
-    $("#btn-save").disabled = false;
+    setUploading(false);
   }
 }
 
@@ -91,13 +145,37 @@ async function uploadManyFiles(files, onEach) {
   }
 }
 
+const SIDEBAR_GROUPS = [
+  {
+    label: "Site",
+    icon: "home",
+    sections: ["home"]
+  },
+  {
+    label: "Galerias",
+    icon: "gallery",
+    sections: ["studio-space", "multicam", "aftermovie", "photography", "fpv-drone", "social-media"]
+  },
+  {
+    label: "Equipa",
+    icon: "team",
+    sections: ["team"]
+  },
+  {
+    label: "Parceiros",
+    icon: "partners",
+    sections: ["partners"]
+  }
+];
+
 const SECTIONS = [
   {
     id: "home",
     label: "Página Inicial",
     file: "content/site.json",
     type: "home",
-    hint: "Título, subtítulo e vídeos de fundo da página principal."
+    sidebarIcon: "home",
+    hint: "Textos e imagens da página principal do site."
   },
   {
     id: "studio-space",
@@ -105,7 +183,8 @@ const SECTIONS = [
     file: "content/galleries/studio-space.json",
     type: "gallery",
     page: "studio-space.html",
-    hint: "Arrasta fotos ou vídeos para carregar. Clica numa imagem para trocar."
+    sidebarIcon: "photo",
+    hint: "Fotos e vídeos da galeria Studio Space."
   },
   {
     id: "multicam",
@@ -113,7 +192,8 @@ const SECTIONS = [
     file: "content/galleries/multicam.json",
     type: "gallery",
     page: "multicam.html",
-    hint: "Galeria Multicam — cada cartão mostra a imagem tal como aparece no site."
+    sidebarIcon: "video",
+    hint: "Conteúdo da galeria Multicam."
   },
   {
     id: "aftermovie",
@@ -121,6 +201,7 @@ const SECTIONS = [
     file: "content/galleries/aftermovie.json",
     type: "gallery",
     page: "aftermovie.html",
+    sidebarIcon: "video",
     hint: "Vídeos e fotos de aftermovies."
   },
   {
@@ -129,6 +210,7 @@ const SECTIONS = [
     file: "content/galleries/photography.json",
     type: "gallery",
     page: "photography.html",
+    sidebarIcon: "photo",
     hint: "Fotografias da secção Photography."
   },
   {
@@ -137,6 +219,7 @@ const SECTIONS = [
     file: "content/galleries/fpv-drone.json",
     type: "gallery",
     page: "fpv-drone.html",
+    sidebarIcon: "video",
     hint: "Conteúdo FPV e drone."
   },
   {
@@ -145,6 +228,7 @@ const SECTIONS = [
     file: "content/galleries/social-media.json",
     type: "gallery",
     page: "social-media.html",
+    sidebarIcon: "photo",
     hint: "Conteúdo para redes sociais."
   },
   {
@@ -153,7 +237,8 @@ const SECTIONS = [
     file: "content/team.json",
     type: "team",
     page: "team.html",
-    hint: "Membros da equipa, funções e fotos."
+    sidebarIcon: "team",
+    hint: "Membros da equipa, funções e fotos de perfil."
   },
   {
     id: "partners",
@@ -161,6 +246,7 @@ const SECTIONS = [
     file: "content/partners.json",
     type: "partners",
     page: "parceiros.html",
+    sidebarIcon: "partners",
     hint: "Logótipos e nomes dos parceiros."
   }
 ];
@@ -183,23 +269,48 @@ const $ = (sel) => document.querySelector(sel);
 
 function showToast(msg, type = "ok") {
   const el = $("#toast");
-  el.textContent = msg;
-  el.className = `toast is-${type}`;
-  setTimeout(() => el.classList.add("is-hidden"), 3500);
+  const toastIcon = type === "error" ? "warning" : type === "pending" ? "spinner" : "success";
+  const spinClass = type === "pending" ? " icon--spin" : "";
+  el.innerHTML = `${icon(toastIcon, spinClass)}<span>${escapeHtml(msg)}</span>`;
+  el.className = `toast is-${type === "pending" ? "ok" : type}`;
+  el.classList.remove("is-hidden");
+  if (type !== "pending") {
+    setTimeout(() => el.classList.add("is-hidden"), 3500);
+  }
 }
 
 function markDirty() {
   dirty = true;
   const st = $("#save-status");
-  st.textContent = "Alterações por guardar";
-  st.className = "status";
+  st.innerHTML = `${icon("warning")} Alterações por guardar`;
+  st.className = "status is-pending";
 }
 
 function markClean() {
   dirty = false;
   const st = $("#save-status");
-  st.textContent = "Tudo guardado";
+  st.innerHTML = `${icon("success")} Tudo guardado`;
   st.className = "status is-ok";
+}
+
+function setSaveLoading(loading) {
+  const btn = $("#btn-save");
+  const label = $("#save-label");
+  const saveIcon = $("#save-icon");
+  if (!btn || !label || !saveIcon) return;
+  if (loading) {
+    btn.classList.add("is-loading");
+    btn.disabled = true;
+    label.textContent = "A guardar…";
+    saveIcon.innerHTML = ICONS.spinner;
+    saveIcon.classList.add("icon--spin");
+  } else {
+    btn.classList.remove("is-loading");
+    btn.disabled = uploadCount > 0;
+    label.textContent = "Guardar alterações";
+    saveIcon.innerHTML = ICONS.save;
+    saveIcon.classList.remove("icon--spin");
+  }
 }
 
 function initials(name) {
@@ -227,6 +338,12 @@ function escapeHtml(str) {
     .replace(/"/g, "&quot;");
 }
 
+function injectStaticIcons() {
+  $("#logout-icon").innerHTML = ICONS.logout;
+  $("#save-icon").innerHTML = ICONS.save;
+  $("#banner-icon").innerHTML = ICONS.warning;
+}
+
 /* ── Auth ── */
 
 async function checkSession() {
@@ -251,6 +368,7 @@ async function handleLogin(e) {
   const btn = $("#login-form button[type=submit]");
   errEl.textContent = "";
   btn.disabled = true;
+  btn.textContent = "A entrar…";
 
   try {
     const res = await fetch("/api/login", {
@@ -260,13 +378,14 @@ async function handleLogin(e) {
       body: JSON.stringify({ username, password })
     });
     const data = await res.json();
-    if (!res.ok) throw new Error(data.error || "Erro ao entrar.");
+    if (!res.ok) throw new Error(data.error || "Não foi possível entrar. Verifica os dados.");
     $("#login-pass").value = "";
     showPanel();
   } catch (err) {
     errEl.textContent = err.message;
   } finally {
     btn.disabled = false;
+    btn.textContent = "Entrar";
   }
 }
 
@@ -283,6 +402,7 @@ function showLogin() {
 function showPanel() {
   $("#login-screen").classList.add("is-hidden");
   $("#panel").classList.remove("is-hidden");
+  injectStaticIcons();
   buildSidebar();
   loadSection(currentSection);
 }
@@ -349,7 +469,7 @@ async function uploadFile(file) {
 function renderMediaPreview(item) {
   const url = previewUrl(item);
   if (!url) {
-    return `<div class="media-card__preview-placeholder">Clica para carregar<br><small>foto ou vídeo</small></div>`;
+    return `<div class="media-card__preview-placeholder">${icon("photo")}<span>Clica para carregar<br><small>foto ou vídeo</small></span></div>`;
   }
   if (item.type === "video" && !item.poster) {
     return `<video src="${escapeHtml(item.src)}" muted playsinline></video>`;
@@ -362,14 +482,14 @@ function renderGalleryEditor(data) {
   const cards = items
     .map(
       (item, i) => `
-    <div class="media-card" data-index="${i}">
+    <article class="media-card" data-index="${i}">
       <div class="media-card__preview media-card__preview--upload" data-preview="${i}">
         ${renderMediaPreview(item)}
-        <span class="media-card__badge">${item.type === "video" ? "Vídeo" : "Foto"}${item.featured ? " · Destaque" : ""}</span>
-        <span class="media-card__upload-overlay">Trocar ficheiro</span>
+        <span class="media-card__badge">${icon(item.type === "video" ? "video" : "photo")}${item.type === "video" ? "Vídeo" : "Foto"}${item.featured ? " · Destaque" : ""}</span>
+        <span class="media-card__upload-overlay">${icon("upload")} Trocar ficheiro</span>
       </div>
       <div class="media-card__body">
-        <p class="media-card__num">#${i + 1}</p>
+        <p class="media-card__num">Item ${i + 1}</p>
         <div class="field-row">
           <div class="field">
             <label class="field__label">Tipo</label>
@@ -390,7 +510,7 @@ function renderGalleryEditor(data) {
           <div class="upload-row">
             ${item.poster ? `<img class="upload-row__thumb" src="${escapeHtml(item.poster)}" alt="">` : ""}
             <label class="btn btn--sm upload-row__btn">
-              Carregar capa
+              ${icon("upload")} Carregar capa
               <input type="file" accept="image/*" data-action="upload-poster" hidden>
             </label>
           </div>
@@ -400,21 +520,26 @@ function renderGalleryEditor(data) {
           <input class="field__input" type="text" data-field="alt" value="${escapeHtml(item.alt || "")}" placeholder="Ex.: Concerto ao vivo">
         </div>
         <div class="media-card__actions">
-          <button type="button" class="btn btn--sm" data-action="up" ${i === 0 ? "disabled" : ""}>↑ Subir</button>
-          <button type="button" class="btn btn--sm" data-action="down" ${i === items.length - 1 ? "disabled" : ""}>↓ Descer</button>
-          <button type="button" class="btn btn--sm btn--danger" data-action="remove">Remover</button>
+          <button type="button" class="btn btn--sm" data-action="up" ${i === 0 ? "disabled" : ""}>${icon("arrowUp")} Subir</button>
+          <button type="button" class="btn btn--sm" data-action="down" ${i === items.length - 1 ? "disabled" : ""}>${icon("arrowDown")} Descer</button>
+          <button type="button" class="btn btn--sm btn--danger" data-action="remove">${icon("trash")} Remover</button>
         </div>
       </div>
-    </div>`
+    </article>`
     )
     .join("");
 
+  const countLabel = items.length === 1 ? "1 item" : `${items.length} itens`;
+
   return `
     ${renderDropZone("gallery-dropzone")}
-    <div class="section-block">
-      <p class="section-block__title">${items.length} ${items.length === 1 ? "mídia" : "mídias"} nesta página</p>
-      <div class="media-list" id="media-list">${cards || '<p class="empty-msg">Ainda não há mídias. Usa a área acima para carregar ficheiros.</p>'}</div>
-    </div>`;
+    <section class="section-block">
+      ${sectionTitle(`Conteúdo desta galeria (${countLabel})`, "gallery")}
+      <div class="media-list" id="media-list">${
+        cards ||
+        emptyState("photo", "Ainda não há conteúdo", "Usa a área acima para carregar fotos ou vídeos. Depois clica em Guardar alterações.")
+      }</div>
+    </section>`;
 }
 
 function bindGalleryEvents() {
@@ -422,6 +547,8 @@ function bindGalleryEvents() {
   if (!list) return;
 
   bindDropZone($("#gallery-dropzone"), async (files) => {
+    const dz = $("#gallery-dropzone");
+    dz?.classList.add("is-uploading");
     for (const file of files) {
       await processUpload(file, (url, f) => {
         currentData.items.push({
@@ -432,6 +559,7 @@ function bindGalleryEvents() {
         });
       });
     }
+    dz?.classList.remove("is-uploading");
     rerenderWorkspace();
   });
 
@@ -472,7 +600,7 @@ function bindGalleryEvents() {
     const action = e.target.dataset.action || e.target.closest("[data-action]")?.dataset.action;
 
     if (action === "remove") {
-      if (!confirm("Remover esta mídia?")) return;
+      if (!confirm("Queres remover este item?")) return;
       currentData.items.splice(i, 1);
       rerenderWorkspace();
       markDirty();
@@ -514,8 +642,12 @@ function bindGalleryEvents() {
 function updateCardPreview(card, item) {
   const preview = card.querySelector(".media-card__preview");
   if (!preview) return;
+  const badgeIcon = item.type === "video" ? icon("video") : icon("photo");
   const badgeText = `${item.type === "video" ? "Vídeo" : "Foto"}${item.featured ? " · Destaque" : ""}`;
-  preview.innerHTML = renderMediaPreview(item) + `<span class="media-card__badge">${badgeText}</span>`;
+  preview.innerHTML =
+    renderMediaPreview(item) +
+    `<span class="media-card__badge">${badgeIcon}${badgeText}</span>` +
+    `<span class="media-card__upload-overlay">${icon("upload")} Trocar ficheiro</span>`;
 }
 
 /* ── Render: home ── */
@@ -528,73 +660,78 @@ function renderHomeEditor(data) {
   const videoBlocks = videos
     .map(
       (v, i) => `
-    <div class="media-card" data-hero-video="${i}">
+    <article class="media-card" data-hero-video="${i}">
       <div class="media-card__preview">
-        ${v.poster ? `<img src="${escapeHtml(v.poster)}" alt="">` : `<div class="media-card__preview-placeholder">Vídeo ${i + 1}</div>`}
-        <span class="media-card__badge">Vídeo ${i + 1}${i === 0 ? " (inicial)" : " (no scroll)"}</span>
+        ${v.poster ? `<img src="${escapeHtml(v.poster)}" alt="">` : `<div class="media-card__preview-placeholder">${icon("video")}<span>Vídeo ${i + 1}</span></div>`}
+        <span class="media-card__badge">${icon("video")}Vídeo ${i + 1}${i === 0 ? " (inicial)" : " (no scroll)"}</span>
       </div>
       <div class="media-card__body">
         <div class="field">
           <label class="field__label">Ficheiro de vídeo</label>
           <label class="btn btn--sm upload-row__btn">
-            ${v.src ? "✓ Vídeo carregado · Trocar" : "Carregar vídeo"}
+            ${icon("upload")} ${v.src ? "Vídeo carregado · Trocar" : "Carregar vídeo"}
             <input type="file" accept="video/*" data-hero-upload="src" hidden>
           </label>
         </div>
         <div class="field">
           <label class="field__label">Imagem de capa</label>
           <label class="btn btn--sm upload-row__btn">
-            ${v.poster ? "✓ Capa carregada · Trocar" : "Carregar capa"}
+            ${icon("upload")} ${v.poster ? "Capa carregada · Trocar" : "Carregar capa"}
             <input type="file" accept="image/*" data-hero-upload="poster" hidden>
           </label>
         </div>
       </div>
-    </div>`
+    </article>`
     )
     .join("");
 
   const stackBlocks = stack
     .map(
       (item, i) => `
-    <div class="media-card" data-home-stack="${i}">
+    <article class="media-card" data-home-stack="${i}">
       <div class="media-card__preview media-card__preview--upload" data-stack-preview="${i}">
-        ${item.src ? `<img src="${escapeHtml(item.src)}" alt="">` : `<div class="media-card__preview-placeholder">Clica para carregar</div>`}
-        <span class="media-card__upload-overlay">Trocar ficheiro</span>
+        ${item.src ? `<img src="${escapeHtml(item.src)}" alt="">` : `<div class="media-card__preview-placeholder">${icon("photo")}<span>Clica para carregar</span></div>`}
+        <span class="media-card__upload-overlay">${icon("upload")} Trocar ficheiro</span>
       </div>
       <div class="media-card__body">
         <div class="field">
           <label class="field__label">Descrição</label>
-          <input class="field__input" type="text" data-stack="alt" value="${escapeHtml(item.alt || "")}">
+          <input class="field__input" type="text" data-stack="alt" value="${escapeHtml(item.alt || "")}" placeholder="Descrição da imagem">
         </div>
-        <button type="button" class="btn btn--sm btn--danger" data-stack-remove="${i}">Remover</button>
+        <button type="button" class="btn btn--sm btn--danger" data-stack-remove="${i}">${icon("trash")} Remover</button>
       </div>
-    </div>`
+    </article>`
     )
     .join("");
 
   const subtitleLines = (hero.subtitleLines || []).join("\n");
 
   return `
-    <div class="section-block">
-      <p class="section-block__title">Texto do cabeçalho</p>
+    <section class="section-block">
+      ${sectionTitle("Texto do cabeçalho", "home")}
       <div class="field">
-        <label class="field__label">Título principal</label>
+        <label class="field__label" for="hero-title">Título principal</label>
         <input class="field__input" id="hero-title" type="text" value="${escapeHtml(hero.title || data.brand)}">
       </div>
       <div class="field">
-        <label class="field__label">Subtítulo (uma linha por linha no site)</label>
+        <label class="field__label" for="hero-subtitle">Subtítulo</label>
+        <p class="section-block__subtitle">Cada linha aparece numa linha separada no site.</p>
         <textarea class="field__textarea" id="hero-subtitle">${escapeHtml(subtitleLines)}</textarea>
       </div>
-    </div>
-    <div class="section-block">
-      <p class="section-block__title">Vídeos de fundo (troca ao fazer scroll)</p>
+    </section>
+    <section class="section-block">
+      ${sectionTitle("Vídeos de fundo", "video")}
+      <p class="section-block__subtitle">Estes vídeos mudam quando o visitante faz scroll na página.</p>
       <div class="media-list">${videoBlocks}</div>
-    </div>
-    <div class="section-block">
-      <p class="section-block__title">Imagens abaixo do cabeçalho</p>
+    </section>
+    <section class="section-block">
+      ${sectionTitle("Imagens abaixo do cabeçalho", "photo")}
       ${renderDropZone("home-stack-dropzone", "image/*", true)}
-      <div class="media-list" id="home-stack-list">${stackBlocks}</div>
-    </div>`;
+      <div class="media-list" id="home-stack-list">${
+        stackBlocks ||
+        emptyState("photo", "Sem imagens", "Carrega fotos na área acima para as mostrar na página inicial.")
+      }</div>
+    </section>`;
 }
 
 function bindHomeEvents() {
@@ -616,7 +753,6 @@ function bindHomeEvents() {
         input.value = "";
         if (!file) return;
         const key = input.dataset.heroUpload;
-        const accept = key === "src" ? "video/*" : "image/*";
         if (!file.type.match(key === "src" ? /^video\// : /^image\//)) {
           showToast(key === "src" ? "Escolhe um ficheiro de vídeo." : "Escolhe uma imagem.", "error");
           return;
@@ -634,12 +770,15 @@ function bindHomeEvents() {
   });
 
   bindDropZone($("#home-stack-dropzone"), async (files) => {
+    const dz = $("#home-stack-dropzone");
+    dz?.classList.add("is-uploading");
     for (const file of files) {
       if (!file.type.startsWith("image/")) continue;
       await processUpload(file, (url, f) => {
         currentData.homeStack.push({ type: "image", src: url, alt: f.name.replace(/\.[^.]+$/, "") });
       });
     }
+    dz?.classList.remove("is-uploading");
     rerenderWorkspace();
   });
 
@@ -677,16 +816,16 @@ function renderTeamEditor(data) {
   const featured = (data.featured || [])
     .map(
       (m, i) => `
-    <div class="person-card" data-featured="${i}">
+    <article class="person-card" data-featured="${i}">
       <div class="person-card__avatar person-card__avatar--upload" data-photo-target="featured:${i}">
         ${m.photo ? `<img src="${escapeHtml(m.photo)}" alt="">` : initials(m.name)}
-        <span class="media-card__upload-overlay">Carregar foto</span>
+        <span class="media-card__upload-overlay">${icon("upload")} Carregar foto</span>
       </div>
       <div class="person-card__fields">
         <input class="field__input" data-f="name" value="${escapeHtml(m.name)}" placeholder="Nome">
         <input class="field__input" data-f="roles" value="${escapeHtml(m.roles)}" placeholder="Funções (ex.: Cam OP · Editor)">
       </div>
-    </div>`
+    </article>`
     )
     .join("");
 
@@ -703,33 +842,34 @@ function renderTeamEditor(data) {
         .join("");
 
       return `
-      <div class="person-card" data-member="${i}">
+      <article class="person-card" data-member="${i}">
         <div class="person-card__avatar person-card__avatar--upload" data-photo-target="member:${i}">
           ${m.photo ? `<img src="${escapeHtml(m.photo)}" alt="">` : initials(m.name)}
-          <span class="media-card__upload-overlay">Carregar foto</span>
+          <span class="media-card__upload-overlay">${icon("upload")} Carregar foto</span>
         </div>
         <div class="person-card__fields">
           <input class="field__input" data-f="name" value="${escapeHtml(m.name)}" placeholder="Nome">
           <input class="field__input" data-f="roles" value="${escapeHtml(m.roles)}" placeholder="Funções">
           <div class="skills-row">${skills}</div>
         </div>
-        <button type="button" class="btn btn--sm btn--danger" data-member-remove="${i}">Remover</button>
-      </div>`;
+        <button type="button" class="btn btn--sm btn--danger" data-member-remove="${i}">${icon("trash")} Remover</button>
+      </article>`;
     })
     .join("");
 
   return `
-    <div class="section-block">
-      <p class="section-block__title">Destaques (topo da página)</p>
-      ${featured}
-    </div>
-    <div class="section-block">
-      <p class="section-block__title">Todos os membros</p>
-      ${members}
+    <section class="section-block">
+      ${sectionTitle("Destaques no topo", "team")}
+      <p class="section-block__subtitle">Membros em destaque no início da página da equipa.</p>
+      ${featured || emptyState("team", "Sem destaques", "Os membros em destaque aparecem no topo da página.")}
+    </section>
+    <section class="section-block">
+      ${sectionTitle("Todos os membros", "team")}
+      ${members || emptyState("team", "Sem membros", "Adiciona o primeiro membro da equipa abaixo.")}
       <div class="add-bar">
-        <button type="button" class="btn" id="btn-add-member">+ Adicionar membro</button>
+        <button type="button" class="btn" id="btn-add-member">${icon("plus")} Adicionar membro</button>
       </div>
-    </div>`;
+    </section>`;
 }
 
 function bindTeamEvents() {
@@ -750,7 +890,7 @@ function bindTeamEvents() {
         if (e.target.dataset.f === "name") {
           const av = card.querySelector(".person-card__avatar");
           if (!currentData.featured[i].photo) {
-            av.innerHTML = `<span>${initials(e.target.value)}</span><span class="media-card__upload-overlay">Carregar foto</span>`;
+            av.innerHTML = `<span>${initials(e.target.value)}</span><span class="media-card__upload-overlay">${icon("upload")} Carregar foto</span>`;
             bindPreviewUpload(av, "image/*", (url) => {
               currentData.featured[i].photo = url;
               rerenderWorkspace();
@@ -799,32 +939,34 @@ function renderPartnerList(items, dataAttr) {
   return (items || [])
     .map(
       (p, i) => `
-    <div class="partner-card-edit" data-${dataAttr}="${i}">
+    <article class="partner-card-edit" data-${dataAttr}="${i}">
       <div class="partner-card-edit__logo partner-card-edit__logo--upload" data-logo-target="${dataAttr}:${i}">
         ${p.logo ? `<img src="${escapeHtml(p.logo)}" alt="">` : escapeHtml(p.name).slice(0, 2)}
-        <span class="media-card__upload-overlay">Carregar logo</span>
+        <span class="media-card__upload-overlay">${icon("upload")} Carregar logo</span>
       </div>
       <div class="partner-card-edit__fields">
-        <input class="field__input" data-f="name" value="${escapeHtml(p.name)}" placeholder="Nome">
+        <input class="field__input" data-f="name" value="${escapeHtml(p.name)}" placeholder="Nome do parceiro">
       </div>
-      <button type="button" class="btn btn--sm btn--danger" data-partner-remove="${dataAttr}:${i}">Remover</button>
-    </div>`
+      <button type="button" class="btn btn--sm btn--danger" data-partner-remove="${dataAttr}:${i}">${icon("trash")} Remover</button>
+    </article>`
     )
     .join("");
 }
 
 function renderPartnersEditor(data) {
   return `
-    <div class="section-block">
-      <p class="section-block__title">Parceiros principais</p>
-      ${renderPartnerList(data.main, "main")}
-      <div class="add-bar"><button type="button" class="btn" data-add-partner="main">+ Adicionar principal</button></div>
-    </div>
-    <div class="section-block">
-      <p class="section-block__title">Parceiros secundários</p>
-      ${renderPartnerList(data.secondary, "secondary")}
-      <div class="add-bar"><button type="button" class="btn" data-add-partner="secondary">+ Adicionar secundário</button></div>
-    </div>`;
+    <section class="section-block">
+      ${sectionTitle("Parceiros principais", "partners")}
+      <p class="section-block__subtitle">Logótipos em destaque no topo da página.</p>
+      ${renderPartnerList(data.main, "main") || emptyState("partners", "Sem parceiros principais", "Adiciona o primeiro parceiro abaixo.")}
+      <div class="add-bar"><button type="button" class="btn" data-add-partner="main">${icon("plus")} Adicionar parceiro</button></div>
+    </section>
+    <section class="section-block">
+      ${sectionTitle("Parceiros secundários", "partners")}
+      <p class="section-block__subtitle">Logótipos adicionais na parte inferior.</p>
+      ${renderPartnerList(data.secondary, "secondary") || emptyState("partners", "Sem parceiros secundários", "Adiciona parceiros secundários abaixo.")}
+      <div class="add-bar"><button type="button" class="btn" data-add-partner="secondary">${icon("plus")} Adicionar parceiro</button></div>
+    </section>`;
 }
 
 function bindPartnersEvents() {
@@ -844,7 +986,7 @@ function bindPartnersEvents() {
           currentData[group][i][e.target.dataset.f] = e.target.value;
           if (e.target.dataset.f === "name" && !currentData[group][i].logo) {
             const logo = card.querySelector(".partner-card-edit__logo");
-            logo.innerHTML = `${escapeHtml(e.target.value).slice(0, 2)}<span class="media-card__upload-overlay">Carregar logo</span>`;
+            logo.innerHTML = `${escapeHtml(e.target.value).slice(0, 2)}<span class="media-card__upload-overlay">${icon("upload")} Carregar logo</span>`;
             bindPreviewUpload(logo, "image/*", (url) => {
               currentData[group][i].logo = url;
               rerenderWorkspace();
@@ -895,17 +1037,18 @@ function rerenderWorkspace() {
 }
 
 async function loadSection(section) {
-  if (dirty && !confirm("Tens alterações por guardar. Continuar sem guardar?")) return;
+  if (dirty && !confirm("Tens alterações por guardar. Queres continuar sem guardar?")) return;
 
   currentSection = section;
   $("#page-title").textContent = section.label;
-  $("#page-hint").textContent = section.hint + (section.page ? ` · Ver: /${section.page}` : "");
+  const pageLink = section.page ? ` · <a href="/${section.page}" target="_blank" rel="noopener" style="color:inherit">Ver no site ↗</a>` : "";
+  $("#page-hint").innerHTML = escapeHtml(section.hint) + pageLink;
 
   document.querySelectorAll(".sidebar__btn").forEach((btn) => {
     btn.classList.toggle("is-active", btn.dataset.id === section.id);
   });
 
-  $("#workspace-content").innerHTML = '<p style="color:var(--text-muted)">A carregar…</p>';
+  $("#workspace-content").innerHTML = loadingHtml("A carregar conteúdo…");
 
   try {
     const { data, sha } = await loadContent(section);
@@ -915,15 +1058,28 @@ async function loadSection(section) {
     markClean();
     rerenderWorkspace();
   } catch (err) {
-    $("#workspace-content").innerHTML = `<p style="color:var(--danger)">${err.message}</p>`;
+    $("#workspace-content").innerHTML = `<div class="empty-state"><span class="empty-state__icon">${ICONS.warning}</span><p class="empty-state__title">Não foi possível carregar</p><p class="empty-state__text">${escapeHtml(err.message)}</p></div>`;
   }
 }
 
 function buildSidebar() {
   const nav = $("#sidebar-nav");
-  nav.innerHTML = SECTIONS.map(
-    (s) => `<button type="button" class="sidebar__btn${s.id === currentSection.id ? " is-active" : ""}" data-id="${s.id}">${s.label}</button>`
-  ).join("");
+  nav.innerHTML = SIDEBAR_GROUPS.map((group) => {
+    const buttons = group.sections
+      .map((id) => {
+        const s = SECTIONS.find((sec) => sec.id === id);
+        if (!s) return "";
+        const active = s.id === currentSection.id ? " is-active" : "";
+        const sIcon = s.sidebarIcon || group.icon;
+        return `<button type="button" class="sidebar__btn${active}" data-id="${s.id}">${icon(sIcon)}${escapeHtml(s.label)}</button>`;
+      })
+      .join("");
+    return `
+      <div class="sidebar__group">
+        <p class="sidebar__label">${icon(group.icon)} ${escapeHtml(group.label)}</p>
+        ${buttons}
+      </div>`;
+  }).join("");
 
   nav.querySelectorAll(".sidebar__btn").forEach((btn) => {
     btn.addEventListener("click", () => {
@@ -936,17 +1092,16 @@ function buildSidebar() {
 /* ── Save ── */
 
 async function handleSave() {
-  const btn = $("#btn-save");
-  btn.disabled = true;
+  setSaveLoading(true);
   try {
     currentSha = await saveContent(currentSection, currentData, currentSha);
     markClean();
-    showToast("Alterações guardadas! O site atualiza em ~1 minuto.");
+    showToast("Alterações guardadas! O site atualiza em cerca de 1 minuto.", "ok");
   } catch (err) {
     showToast(err.message, "error");
     if (err.message.includes("Sessão")) showLogin();
   } finally {
-    btn.disabled = false;
+    setSaveLoading(false);
   }
 }
 

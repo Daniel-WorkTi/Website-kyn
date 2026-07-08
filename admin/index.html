@@ -26,7 +26,7 @@
           <label class="field__label" for="login-pass">Palavra-passe</label>
           <input class="field__input" id="login-pass" type="password" name="password" autocomplete="current-password" required>
         </div>
-        <p class="login__error" id="login-error"></p>
+        <p class="login__error" id="login-error" role="alert"></p>
         <button class="btn btn--primary login__submit" type="submit">Entrar</button>
       </form>
       <a class="login__back" href="/">← Voltar ao site</a>
@@ -42,33 +42,47 @@
       </div>
       <div class="panel__header-right">
         <a class="panel__link" href="/" target="_blank" rel="noopener">Ver site ↗</a>
-        <button class="btn btn--ghost" id="btn-logout" type="button">Sair</button>
+        <button class="btn btn--ghost" id="btn-logout" type="button">
+          <span class="icon" id="logout-icon" aria-hidden="true"></span>
+          Sair
+        </button>
       </div>
     </header>
 
     <div class="panel__body">
-      <aside class="sidebar">
-        <p class="sidebar__label">Páginas</p>
+      <aside class="sidebar" aria-label="Navegação do painel">
         <nav class="sidebar__nav" id="sidebar-nav"></nav>
       </aside>
 
       <main class="workspace">
         <div class="workspace__top">
-          <div>
+          <div class="workspace__heading">
             <h1 class="workspace__title" id="page-title">—</h1>
             <p class="workspace__hint" id="page-hint"></p>
           </div>
           <div class="workspace__actions">
-            <span class="status" id="save-status"></span>
-            <button class="btn btn--primary" id="btn-save" type="button">Guardar alterações</button>
+            <span class="status" id="save-status" aria-live="polite"></span>
+            <button class="btn btn--primary" id="btn-save" type="button">
+              <span class="icon" id="save-icon" aria-hidden="true"></span>
+              <span id="save-label">Guardar alterações</span>
+            </button>
           </div>
         </div>
+
+        <aside class="upload-banner" id="upload-banner" aria-label="Informação sobre envio de ficheiros">
+          <span class="icon upload-banner__icon" id="banner-icon" aria-hidden="true"></span>
+          <div class="upload-banner__text">
+            <p class="upload-banner__title">Como funcionam os ficheiros</p>
+            <p class="upload-banner__desc">Podes enviar fotos e vídeos até <strong>4 MB</strong> cada. Os ficheiros ficam guardados na pasta <code>assets/uploads/</code> do site. Depois de carregar ou alterar algo, clica em <strong>Guardar alterações</strong> para publicar no site.</p>
+          </div>
+        </aside>
+
         <div class="workspace__content" id="workspace-content"></div>
       </main>
     </div>
   </div>
 
-  <div class="toast is-hidden" id="toast"></div>
+  <div class="toast is-hidden" id="toast" role="status" aria-live="polite"></div>
 
   <script src="/admin/admin.js"></script>
 </body>
