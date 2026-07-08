@@ -1,13 +1,67 @@
 <!DOCTYPE html>
 <html lang="pt">
 <head>
-  <meta charset="utf-8">
+  <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Proimagem.pt — Gestão de Conteúdo</title>
-  <link href="/admin/config.yml" type="text/yaml" rel="cms-config-url">
-  <link rel="stylesheet" href="https://unpkg.com/decap-cms@^3.0.0/dist/main.css">
+  <title>Gestão — Proimagem.pt</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="admin.css">
 </head>
 <body>
-  <script src="https://unpkg.com/decap-cms@^3.0.0/dist/decap-cms.js"></script>
+
+  <!-- Ecrã de login -->
+  <div class="login" id="login-screen">
+    <div class="login__card">
+      <p class="login__brand">Proimagem.pt</p>
+      <h1 class="login__title">Gestão do site</h1>
+      <p class="login__text">Entra com a tua conta GitHub para adicionar fotos, vídeos e alterar textos. As alterações publicam-se automaticamente no site.</p>
+      <button class="btn btn--primary" id="btn-login" type="button">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M12 0C5.37 0 0 5.37 0 12c0 5.31 3.435 9.795 8.205 11.385.6.105.825-.255.825-.57 0-.285-.015-1.23-.015-2.235-3.015.555-3.795-.735-4.035-1.41-.135-.345-.72-1.41-1.23-1.695-.42-.225-1.02-.78-.015-.795.945-.015 1.62.87 1.845 1.23 1.08 1.815 2.805 1.305 3.495.99.105-.78.42-1.305.765-1.605-2.67-.3-5.46-1.335-5.46-5.925 0-1.305.465-2.385 1.23-3.225-.12-.3-.54-1.53.12-3.18 0 0 1.005-.315 3.3 1.23.96-.27 1.98-.405 3-.405s2.04.135 3 .405c2.295-1.56 3.3-1.23 3.3-1.23.66 1.65.24 2.88.12 3.18.765.84 1.23 1.905 1.23 3.225 0 4.605-2.805 5.625-5.475 5.925.435.375.81 1.095.81 2.22 0 1.605-.015 2.895-.015 3.3 0 .315.225.69.825.57A12.02 12.02 0 0 0 24 12c0-6.63-5.37-12-12-12z"/></svg>
+        Entrar com GitHub
+      </button>
+      <a class="login__back" href="/">← Voltar ao site</a>
+    </div>
+  </div>
+
+  <!-- Painel principal -->
+  <div class="panel is-hidden" id="panel">
+    <header class="panel__header">
+      <div class="panel__header-left">
+        <span class="panel__brand">Proimagem.pt</span>
+        <span class="panel__badge">Gestão</span>
+      </div>
+      <div class="panel__header-right">
+        <a class="panel__link" href="/" target="_blank" rel="noopener">Ver site ↗</a>
+        <button class="btn btn--ghost" id="btn-logout" type="button">Sair</button>
+      </div>
+    </header>
+
+    <div class="panel__body">
+      <aside class="sidebar">
+        <p class="sidebar__label">Páginas</p>
+        <nav class="sidebar__nav" id="sidebar-nav"></nav>
+      </aside>
+
+      <main class="workspace">
+        <div class="workspace__top">
+          <div>
+            <h1 class="workspace__title" id="page-title">—</h1>
+            <p class="workspace__hint" id="page-hint"></p>
+          </div>
+          <div class="workspace__actions">
+            <span class="status" id="save-status"></span>
+            <button class="btn btn--primary" id="btn-save" type="button">Guardar alterações</button>
+          </div>
+        </div>
+        <div class="workspace__content" id="workspace-content"></div>
+      </main>
+    </div>
+  </div>
+
+  <div class="toast is-hidden" id="toast"></div>
+
+  <script src="admin.js"></script>
 </body>
 </html>

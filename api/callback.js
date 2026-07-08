@@ -1,5 +1,5 @@
 // Recebe o código do GitHub, troca-o por um token de acesso
-// e devolve-o à janela do painel Decap CMS.
+// e devolve-o à janela do painel de gestão.
 
 export default async function handler(req, res) {
   const clientId = process.env.OAUTH_GITHUB_CLIENT_ID;
