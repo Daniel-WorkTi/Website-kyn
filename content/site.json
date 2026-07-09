@@ -7,21 +7,52 @@
     "youtube": ""
   },
   "nav": [
-    { "label": "Home", "href": "/" },
-    { "label": "Studio Space", "href": "/studio-space" },
-    { "label": "Multicam", "href": "/multicam" },
-    { "label": "Aftermovie", "href": "/aftermovie" },
-    { "label": "Photography", "href": "/photography" },
-    { "label": "FPV/Drone", "href": "/fpv-drone" },
-    { "label": "Social Media", "href": "/social-media" },
-    { "label": "Meet the Team", "href": "/team" },
-    { "label": "Parceiros", "href": "/parceiros" }
+    {
+      "label": "Home",
+      "href": "/"
+    },
+    {
+      "label": "Studio Space",
+      "href": "/studio-space"
+    },
+    {
+      "label": "Multicam",
+      "href": "/multicam"
+    },
+    {
+      "label": "Aftermovie",
+      "href": "/aftermovie"
+    },
+    {
+      "label": "Photography",
+      "href": "/photography"
+    },
+    {
+      "label": "FPV/Drone",
+      "href": "/fpv-drone"
+    },
+    {
+      "label": "Social Media",
+      "href": "/social-media"
+    },
+    {
+      "label": "Meet the Team",
+      "href": "/team"
+    },
+    {
+      "label": "Parceiros",
+      "href": "/parceiros"
+    }
   ],
   "hero": {
-    "title": "Proimagem.pt",
+    "title": "PROIMAGEM.PT",
     "subtitleLines": [
-      "MULTICAM | AFTERMOVIE | PHOTOGRAPHY",
-      "FPV/DRONE | SOCIAL MEDIA | STUDIO SPACE"
+      "MULTICAM",
+      "AFTERMOVIE",
+      "PHOTOGRAPHY",
+      "FPV/DRONE",
+      "SOCIAL MEDIA",
+      "STUDIO SPACE"
     ],
     "videos": [
       {
@@ -45,8 +76,26 @@
     "titleColor": "#ffffff"
   },
   "homeStack": [
-    { "type": "image", "src": "https://supdmick.com/_assets/video/71d67c33cfa966760c88adbe5e62ed9e.jpg", "alt": "Proimagem.pt" },
-    { "type": "image", "src": "https://supdmick.com/_assets/video/8414d0ba0697b5a91a14de18bbbe8727.jpg", "alt": "Proimagem.pt" }
+    {
+      "type": "image",
+      "src": "https://supdmick.com/_assets/video/71d67c33cfa966760c88adbe5e62ed9e.jpg",
+      "alt": "Studio Space"
+    },
+    {
+      "type": "image",
+      "src": "https://supdmick.com/_assets/video/8414d0ba0697b5a91a14de18bbbe8727.jpg",
+      "alt": "Aftermovie"
+    },
+    {
+      "type": "image",
+      "src": "https://supdmick.com/_assets/video/71d67c33cfa966760c88adbe5e62ed9e.jpg",
+      "alt": "Multicam"
+    },
+    {
+      "type": "image",
+      "src": "https://supdmick.com/_assets/video/8414d0ba0697b5a91a14de18bbbe8727.jpg",
+      "alt": "FPV / Drone"
+    }
   ],
   "featured": {
     "sectionTitle": "ÚLTIMOS TRABALHOS",
@@ -83,9 +132,25 @@
     ]
   },
   "stats": [
-    { "id": "events", "label": "Eventos", "value": "500+" },
-    { "id": "clients", "label": "Clientes", "value": "120+" },
-    { "id": "years", "label": "Anos", "value": "10+" },
-    { "id": "hours", "label": "Horas de filmagem", "value": "5k+" }
+    {
+      "id": "events",
+      "label": "Eventos",
+      "value": "500+"
+    },
+    {
+      "id": "clients",
+      "label": "Clientes",
+      "value": "120+"
+    },
+    {
+      "id": "years",
+      "label": "Anos",
+      "value": "10+"
+    },
+    {
+      "id": "hours",
+      "label": "Horas de filmagem",
+      "value": "5k+"
+    }
   ]
 }
