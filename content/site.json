@@ -7,35 +7,150 @@
     "youtube": ""
   },
   "nav": [
-    { "label": "Home", "href": "index.html" },
-    { "label": "Studio Space", "href": "studio-space.html" },
-    { "label": "Multicam", "href": "multicam.html" },
-    { "label": "Aftermovie", "href": "aftermovie.html" },
-    { "label": "Photography", "href": "photography.html" },
-    { "label": "FPV/Drone", "href": "fpv-drone.html" },
-    { "label": "Social Media", "href": "social-media.html" },
-    { "label": "Meet the Team", "href": "team.html" },
-    { "label": "Parceiros", "href": "parceiros.html" }
+    {
+      "label": "Home",
+      "href": "/"
+    },
+    {
+      "label": "Studio Space",
+      "href": "/studio-space"
+    },
+    {
+      "label": "Multicam",
+      "href": "/multicam"
+    },
+    {
+      "label": "Aftermovie",
+      "href": "/aftermovie"
+    },
+    {
+      "label": "Photography",
+      "href": "/photography"
+    },
+    {
+      "label": "FPV/Drone",
+      "href": "/fpv-drone"
+    },
+    {
+      "label": "Social Media",
+      "href": "/social-media"
+    },
+    {
+      "label": "Meet the Team",
+      "href": "/team"
+    },
+    {
+      "label": "Parceiros",
+      "href": "/parceiros"
+    }
   ],
   "hero": {
-    "title": "Proimagem.pt",
+    "title": "PROIMAGEM.P",
     "subtitleLines": [
-      "Multicam | Aftermovie | Photography",
-      "FPV/Drone | Social Media | Studio Space"
+      "MULTICAM",
+      "AFTERMOVIE",
+      "PHOTOGRAPHY",
+      "FPV/DRONE",
+      "SOCIAL MEDIA",
+      "STUDIO SPACE"
     ],
     "videos": [
       {
-        "src": "https://supdmick.com/_assets/video/3375f32436dd6788e60db7fa947e519a.mp4",
-        "poster": "https://supdmick.com/_assets/video/71d67c33cfa966760c88adbe5e62ed9e.jpg"
+        "src": "https://res.cloudinary.com/zk5df6k0/video/upload/v1783618992/VID1_1_2_tf9chs.mp4",
+        "poster": ""
       },
       {
-        "src": "https://supdmick.com/_assets/video/154aa043c0b3a8839c47822d1d17993d.mp4",
-        "poster": "https://supdmick.com/_assets/video/8414d0ba0697b5a91a14de18bbbe8727.jpg"
+        "src": "https://res.cloudinary.com/zk5df6k0/video/upload/v1783465685/VID2_zlwavi.mov",
+        "poster": ""
+      }
+    ],
+    "buttonText": "VER TRABALHOS",
+    "buttonLink": "/studio-space",
+    "buttonStyle": "primary",
+    "buttonVisible": true,
+    "mediaType": "video",
+    "imageSrc": "https://supdmick.com/_assets/video/71d67c33cfa966760c88adbe5e62ed9e.jpg",
+    "visible": true,
+    "titleSize": "lg",
+    "titleAlign": "center",
+    "titleColor": "#ffffff"
+  },
+  "homeStack": [
+    {
+      "type": "image",
+      "src": "https://supdmick.com/_assets/video/71d67c33cfa966760c88adbe5e62ed9e.jpg",
+      "alt": "Proimagem.pt"
+    },
+    {
+      "type": "image",
+      "src": "https://supdmick.com/_assets/video/8414d0ba0697b5a91a14de18bbbe8727.jpg",
+      "alt": "Proimagem.pt"
+    },
+    {
+      "type": "image",
+      "src": "https://supdmick.com/_assets/video/71d67c33cfa966760c88adbe5e62ed9e.jpg",
+      "alt": "Multicam"
+    },
+    {
+      "type": "image",
+      "src": "https://supdmick.com/_assets/video/8414d0ba0697b5a91a14de18bbbe8727.jpg",
+      "alt": "FPV / Drone"
+    }
+  ],
+  "featured": {
+    "sectionTitle": "ÚLTIMOS TRABALHOS",
+    "visible": true,
+    "cards": [
+      {
+        "id": "studio-space",
+        "title": "Proimagem.pt",
+        "image": "https://supdmick.com/_assets/video/71d67c33cfa966760c88adbe5e62ed9e.jpg",
+        "link": "/studio-space",
+        "visible": true
+      },
+      {
+        "id": "aftermovie",
+        "title": "Proimagem.pt",
+        "image": "https://supdmick.com/_assets/video/8414d0ba0697b5a91a14de18bbbe8727.jpg",
+        "link": "/aftermovie",
+        "visible": true
+      },
+      {
+        "id": "multicam",
+        "title": "Multicam",
+        "image": "https://supdmick.com/_assets/video/71d67c33cfa966760c88adbe5e62ed9e.jpg",
+        "link": "/multicam",
+        "visible": true
+      },
+      {
+        "id": "fpv-drone",
+        "title": "FPV / Drone",
+        "image": "https://supdmick.com/_assets/video/8414d0ba0697b5a91a14de18bbbe8727.jpg",
+        "link": "/fpv-drone",
+        "visible": true
       }
     ]
   },
-  "homeStack": [
-    { "type": "image", "src": "https://supdmick.com/_assets/video/71d67c33cfa966760c88adbe5e62ed9e.jpg", "alt": "Proimagem.pt" },
-    { "type": "image", "src": "https://supdmick.com/_assets/video/8414d0ba0697b5a91a14de18bbbe8727.jpg", "alt": "Proimagem.pt" }
+  "stats": [
+    {
+      "id": "events",
+      "label": "Eventos",
+      "value": "500+"
+    },
+    {
+      "id": "clients",
+      "label": "Clientes",
+      "value": "120+"
+    },
+    {
+      "id": "years",
+      "label": "Anos",
+      "value": "10+"
+    },
+    {
+      "id": "hours",
+      "label": "Horas de filmagem",
+      "value": "5k+"
+    }
   ]
 }
