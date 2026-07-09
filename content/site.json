@@ -7,52 +7,21 @@
     "youtube": ""
   },
   "nav": [
-    {
-      "label": "Home",
-      "href": "/"
-    },
-    {
-      "label": "Studio Space",
-      "href": "/studio-space"
-    },
-    {
-      "label": "Multicam",
-      "href": "/multicam"
-    },
-    {
-      "label": "Aftermovie",
-      "href": "/aftermovie"
-    },
-    {
-      "label": "Photography",
-      "href": "/photography"
-    },
-    {
-      "label": "FPV/Drone",
-      "href": "/fpv-drone"
-    },
-    {
-      "label": "Social Media",
-      "href": "/social-media"
-    },
-    {
-      "label": "Meet the Team",
-      "href": "/team"
-    },
-    {
-      "label": "Parceiros",
-      "href": "/parceiros"
-    }
+    { "label": "Home", "href": "/" },
+    { "label": "Studio Space", "href": "/studio-space" },
+    { "label": "Multicam", "href": "/multicam" },
+    { "label": "Aftermovie", "href": "/aftermovie" },
+    { "label": "Photography", "href": "/photography" },
+    { "label": "FPV/Drone", "href": "/fpv-drone" },
+    { "label": "Social Media", "href": "/social-media" },
+    { "label": "Meet the Team", "href": "/team" },
+    { "label": "Parceiros", "href": "/parceiros" }
   ],
   "hero": {
-    "title": "PROIMAGEM.P",
+    "title": "Proimagem.pt",
     "subtitleLines": [
-      "MULTICAM",
-      "AFTERMOVIE",
-      "PHOTOGRAPHY",
-      "FPV/DRONE",
-      "SOCIAL MEDIA",
-      "STUDIO SPACE"
+      "MULTICAM | AFTERMOVIE | PHOTOGRAPHY",
+      "FPV/DRONE | SOCIAL MEDIA | STUDIO SPACE"
     ],
     "videos": [
       {
@@ -60,7 +29,7 @@
         "poster": ""
       },
       {
-        "src": "https://res.cloudinary.com/zk5df6k0/video/upload/v1783465685/VID2_zlwavi.mov",
+        "src": "https://res.cloudinary.com/zk5df6k0/video/upload/f_mp4,vc_h264,q_auto/v1783465685/VID2_zlwavi.mp4",
         "poster": ""
       }
     ],
@@ -71,31 +40,13 @@
     "mediaType": "video",
     "imageSrc": "https://supdmick.com/_assets/video/71d67c33cfa966760c88adbe5e62ed9e.jpg",
     "visible": true,
-    "titleSize": "lg",
+    "titleSize": "large",
     "titleAlign": "center",
     "titleColor": "#ffffff"
   },
   "homeStack": [
-    {
-      "type": "image",
-      "src": "https://supdmick.com/_assets/video/71d67c33cfa966760c88adbe5e62ed9e.jpg",
-      "alt": "Proimagem.pt"
-    },
-    {
-      "type": "image",
-      "src": "https://supdmick.com/_assets/video/8414d0ba0697b5a91a14de18bbbe8727.jpg",
-      "alt": "Proimagem.pt"
-    },
-    {
-      "type": "image",
-      "src": "https://supdmick.com/_assets/video/71d67c33cfa966760c88adbe5e62ed9e.jpg",
-      "alt": "Multicam"
-    },
-    {
-      "type": "image",
-      "src": "https://supdmick.com/_assets/video/8414d0ba0697b5a91a14de18bbbe8727.jpg",
-      "alt": "FPV / Drone"
-    }
+    { "type": "image", "src": "https://supdmick.com/_assets/video/71d67c33cfa966760c88adbe5e62ed9e.jpg", "alt": "Proimagem.pt" },
+    { "type": "image", "src": "https://supdmick.com/_assets/video/8414d0ba0697b5a91a14de18bbbe8727.jpg", "alt": "Proimagem.pt" }
   ],
   "featured": {
     "sectionTitle": "ÚLTIMOS TRABALHOS",
@@ -103,14 +54,14 @@
     "cards": [
       {
         "id": "studio-space",
-        "title": "Proimagem.pt",
+        "title": "Studio Space",
         "image": "https://supdmick.com/_assets/video/71d67c33cfa966760c88adbe5e62ed9e.jpg",
         "link": "/studio-space",
         "visible": true
       },
       {
         "id": "aftermovie",
-        "title": "Proimagem.pt",
+        "title": "Aftermovie",
         "image": "https://supdmick.com/_assets/video/8414d0ba0697b5a91a14de18bbbe8727.jpg",
         "link": "/aftermovie",
         "visible": true
@@ -132,25 +83,9 @@
     ]
   },
   "stats": [
-    {
-      "id": "events",
-      "label": "Eventos",
-      "value": "500+"
-    },
-    {
-      "id": "clients",
-      "label": "Clientes",
-      "value": "120+"
-    },
-    {
-      "id": "years",
-      "label": "Anos",
-      "value": "10+"
-    },
-    {
-      "id": "hours",
-      "label": "Horas de filmagem",
-      "value": "5k+"
-    }
+    { "id": "events", "label": "Eventos", "value": "500+" },
+    { "id": "clients", "label": "Clientes", "value": "120+" },
+    { "id": "years", "label": "Anos", "value": "10+" },
+    { "id": "hours", "label": "Horas de filmagem", "value": "5k+" }
   ]
 }

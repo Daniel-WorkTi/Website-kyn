@@ -1,12 +1,5 @@
 {
   "title": "FPV/Drone",
-  "items": [
-    { "type": "video", "featured": true, "src": "https://supdmick.com/_assets/video/154aa043c0b3a8839c47822d1d17993d.mp4", "poster": "https://supdmick.com/_assets/video/da1f4a7bc6c218e25776a100b28e0f12.jpg", "alt": "FPV Drone" },
-    { "type": "image", "featured": false, "src": "https://supdmick.com/_assets/video/da1f4a7bc6c218e25776a100b28e0f12.jpg", "alt": "FPV Drone" },
-    { "type": "image", "featured": false, "src": "https://supdmick.com/_assets/video/5eca6a58e2fd06d15e14f48c3381b755.jpg", "alt": "FPV Drone" },
-    { "type": "image", "featured": false, "src": "https://supdmick.com/_assets/video/ffb1d83afd1d87c71e8b3165d32ab051.jpg", "alt": "FPV Drone" },
-    { "type": "image", "featured": false, "src": "https://supdmick.com/_assets/video/c3516fd148a9b664f8a9832a3a6be7b7.jpg", "alt": "FPV Drone" },
-    { "type": "image", "featured": false, "src": "https://supdmick.com/_assets/video/03713a1acf17b33cae64d0c66587b5ad.jpg", "alt": "FPV Drone" },
-    { "type": "image", "featured": false, "src": "https://supdmick.com/_assets/video/636aa0604e2b774759474c3b95e24f01.jpg", "alt": "FPV Drone" }
-  ]
+  "note": "Imagens em breve — o cliente vai enviar o conteúdo.",
+  "items": []
 }

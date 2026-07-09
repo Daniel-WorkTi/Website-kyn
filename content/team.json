@@ -1,19 +1,61 @@
 {
   "title": "Meet the Team",
   "featured": [
-    { "name": "Kym Willer", "roles": "Cam OP · Photographer", "photo": "" },
-    { "name": "Ruan Costa", "roles": "Cam OP · Drone OP · Editor", "photo": "" },
-    { "name": "Henrique Monteiro", "roles": "Cam OP · Editor", "photo": "" }
+    {
+      "name": "Kym Willer",
+      "roles": "Cam OP · Photographer",
+      "photo": "",
+      "skills": ["videographer", "photography"]
+    },
+    {
+      "name": "Ruan Costa",
+      "roles": "Cam OP · Drone OP · Editor",
+      "photo": "",
+      "skills": ["videographer", "drone", "editor"]
+    },
+    {
+      "name": "Henrique Monteiro",
+      "roles": "Cam OP · Editor",
+      "photo": "",
+      "skills": ["videographer", "editor"]
+    }
   ],
   "members": [
-    { "name": "Alexandre Balas", "roles": "FPV / Drone OP", "skills": ["fpv", "drone"], "photo": "" },
-    { "name": "Eduardo Lima", "roles": "Cam OP · Drone OP", "skills": ["videographer", "drone"], "photo": "" },
-    { "name": "Eduardo Ramos", "roles": "Photographer", "skills": ["photography"], "photo": "" },
-    { "name": "Francisco Santos", "roles": "Cam OP", "skills": ["videographer"], "photo": "" },
-    { "name": "Henrique Monteiro", "roles": "Cam OP · Editor", "skills": ["videographer", "editor"], "photo": "" },
-    { "name": "Ikaro Fonseca", "roles": "Photographer · Cam OP", "skills": ["photography", "videographer"], "photo": "" },
-    { "name": "Isabelli Raso", "roles": "Editor · Social Media Management", "skills": ["editor", "social-media"], "photo": "" },
-    { "name": "Kym Willer", "roles": "Cam OP · Photographer", "skills": ["videographer", "photography"], "photo": "" },
-    { "name": "Ruan Costa", "roles": "Cam OP · Drone OP · Editor", "skills": ["videographer", "drone", "editor"], "photo": "" }
+    {
+      "name": "Alexandre Balas",
+      "roles": "FPV / Drone OP",
+      "skills": ["fpv", "drone"],
+      "photo": ""
+    },
+    {
+      "name": "Eduardo Lima",
+      "roles": "Cam OP · Drone OP",
+      "skills": ["videographer", "drone"],
+      "photo": ""
+    },
+    {
+      "name": "Eduardo Ramos",
+      "roles": "Photographer",
+      "skills": ["photography"],
+      "photo": ""
+    },
+    {
+      "name": "Francisco Santos",
+      "roles": "Cam OP",
+      "skills": ["videographer"],
+      "photo": ""
+    },
+    {
+      "name": "Ikaro Fonseca",
+      "roles": "Photographer · Cam OP",
+      "skills": ["photography", "videographer"],
+      "photo": ""
+    },
+    {
+      "name": "Isabelli Raso",
+      "roles": "Editor · Social Media Management",
+      "skills": ["editor", "social-media"],
+      "photo": ""
+    }
   ]
 }

@@ -1,9 +1,5 @@
 {
   "title": "Social Media",
-  "note": "Conteúdo em definição — em breve",
-  "items": [
-    { "type": "image", "featured": false, "src": "https://supdmick.com/_assets/video/80f1afeb068ebb0887f7ac2cfb2712d0.jpg", "alt": "Social Media" },
-    { "type": "image", "featured": false, "src": "https://supdmick.com/_assets/video/a2aa62f3c081a7e1c7094d253a17f6b1.jpg", "alt": "Social Media" },
-    { "type": "image", "featured": false, "src": "https://supdmick.com/_assets/video/7b085c6bf017adeb6de4461647df9be7.jpg", "alt": "Social Media" }
-  ]
+  "note": "Conteúdo em definição — em breve.",
+  "items": []
 }
