@@ -16,18 +16,10 @@ export default function Hero({ hero, brand }: HeroProps) {
   const textExitingRef = useRef(false);
   const [showingSecond, setShowingSecond] = useState(false);
   const [textExiting, setTextExiting] = useState(false);
-  const [textVisible, setTextVisible] = useState(false);
 
   const videos = hero.videos || [];
   const title = (hero.title || brand).toUpperCase();
   const lines = (hero.subtitleLines || []).map((line) => line.toUpperCase());
-
-  useEffect(() => {
-    const frame = requestAnimationFrame(() => {
-      requestAnimationFrame(() => setTextVisible(true));
-    });
-    return () => cancelAnimationFrame(frame);
-  }, []);
 
   useEffect(() => {
     const swapVideo = (toSecond: boolean) => {
@@ -48,11 +40,10 @@ export default function Hero({ hero, brand }: HeroProps) {
       const vh = window.innerHeight;
       swapVideo(y > vh * 0.08);
 
-      const shouldExit = y > vh * 0.12;
+      const shouldExit = y > vh * 0.35;
       if (shouldExit !== textExitingRef.current) {
         textExitingRef.current = shouldExit;
         setTextExiting(shouldExit);
-        setTextVisible(!shouldExit);
       }
     };
 
@@ -76,7 +67,7 @@ export default function Hero({ hero, brand }: HeroProps) {
 
   const contentClass = [
     "hero__content",
-    textVisible && !textExiting ? "is-visible" : "",
+    "is-visible",
     textExiting ? "is-exiting" : ""
   ]
     .filter(Boolean)
@@ -124,10 +115,14 @@ export default function Hero({ hero, brand }: HeroProps) {
                 <span
                   key={i}
                   className={`hero__line hero-animate hero-animate--${i + 1}`}
-                  dangerouslySetInnerHTML={{
-                    __html: line.replace(/\|/g, "&nbsp;|&nbsp;")
-                  }}
-                />
+                >
+                  {line.split("|").map((part) => part.trim()).filter(Boolean).map((topic, j, arr) => (
+                    <span key={`${i}-${j}`} className="hero__topic">
+                      {j > 0 && <span className="hero__sep" aria-hidden="true">|</span>}
+                      {topic}
+                    </span>
+                  ))}
+                </span>
               ))}
             </p>
           )}
