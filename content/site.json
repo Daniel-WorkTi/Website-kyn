@@ -41,7 +41,7 @@
     }
   ],
   "hero": {
-    "title": "PROIMAGEM.P",
+    "title": "PROIMAGEM.PT",
     "subtitleLines": [
       "MULTICAM | AFTERMOVIE | PHOTOGRAPHY",
       "FPV/DRONE | SOCIAL MEDIA | STUDIO SPACE"
@@ -77,6 +77,11 @@
       "type": "video",
       "src": "https://res.cloudinary.com/zk5df6k0/video/upload/f_mp4,vc_h264,q_auto/v1783465685/VID2_zlwavi.mp4",
       "alt": "Vídeo 02"
+    },
+    {
+      "type": "image",
+      "src": "",
+      "alt": ""
     }
   ],
   "featured": {
