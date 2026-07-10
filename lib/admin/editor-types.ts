@@ -233,13 +233,7 @@ export function pageEditorToHomeData(page: PageEditorData, original: HomeData): 
         ]
       : original.hero?.videos ?? [];
 
-  const homeStack = page.featured.cards
-    .filter((c) => c.visible)
-    .map((card) => ({
-      type: "image" as const,
-      src: card.image,
-      alt: card.title
-    }));
+  const homeStack = original.homeStack ?? [];
 
   return {
     ...original,
@@ -266,7 +260,7 @@ export function pageEditorToHomeData(page: PageEditorData, original: HomeData): 
       cards: page.featured.cards
     },
     stats: page.stats,
-    homeStack: homeStack.length ? homeStack : original.homeStack
+    homeStack
   };
 }
 

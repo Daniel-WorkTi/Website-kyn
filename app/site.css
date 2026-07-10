@@ -249,17 +249,21 @@ body.site-theme {
 .hero__subtitle {
   display: flex;
   flex-direction: column;
-  gap: 0.4rem;
+  align-items: center;
+  gap: 0.55rem;
   margin: 0;
   font-size: clamp(0.52rem, 1.25vw, 0.7rem);
   font-weight: 300;
   letter-spacing: 0.38em;
   text-transform: uppercase;
   color: rgba(255, 255, 255, 0.92);
+  text-align: center;
 }
 
 .hero__line {
   display: block;
+  white-space: nowrap;
+  line-height: 1.5;
 }
 
 /* Hero text — entrada / saída com blur (supdmick) */
@@ -974,7 +978,13 @@ body.site-theme {
   }
 
   .hero__subtitle {
-    letter-spacing: 0.28em;
+    letter-spacing: 0.22em;
+    gap: 0.45rem;
+  }
+
+  .hero__line {
+    white-space: normal;
+    letter-spacing: 0.2em;
   }
 
   .page-heading,

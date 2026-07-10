@@ -139,7 +139,7 @@ export type HeroVideo = {
 };
 
 export type HomeStackItem = {
-  type: "image";
+  type: "image" | "video";
   src: string;
   alt: string;
 };

@@ -22,7 +22,7 @@ export default function GalleryView({ data }: GalleryViewProps) {
           {items.map((item, i) => (
             <div
               key={`grid-${item.src}-${i}`}
-              className="supd-grid__cell"
+              className={`supd-grid__cell${item.featured ? " supd-grid__cell--wide" : ""}`}
               role="button"
               tabIndex={0}
               onClick={() => open(item)}

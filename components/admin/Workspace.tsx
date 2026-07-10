@@ -2,8 +2,8 @@
 
 import { ExternalLink, Loader2, Monitor, RefreshCw, Smartphone } from "lucide-react";
 import { MediaLibraryPage } from "@/components/admin/media/MediaLibrary";
-import { EditorShell } from "@/components/admin/editor/EditorShell";
 import { GalleryEditor } from "@/components/admin/editors/GalleryEditor";
+import { HomeEditor } from "@/components/admin/editors/HomeEditor";
 import { PartnersEditor } from "@/components/admin/editors/PartnersEditor";
 import { TeamEditor } from "@/components/admin/editors/TeamEditor";
 import { previewUrlForSection, useAdmin } from "@/hooks/useAdmin";
@@ -46,6 +46,14 @@ function LegacyEditorContent() {
   };
 
   switch (section.type) {
+    case "home":
+      return (
+        <HomeEditor
+          data={data as HomeData}
+          onChange={(next) => setData(next)}
+          {...common}
+        />
+      );
     case "gallery":
       return (
         <GalleryEditor
@@ -243,39 +251,6 @@ export function Workspace() {
           void navigator.clipboard.writeText(url);
           showToast("URL copiada!", "ok");
         }}
-      />
-    );
-  }
-
-  if (section.type === "home") {
-    if (loading || !data) {
-      return (
-        <div className="flex min-w-0 flex-1 items-center justify-center py-20">
-          <Loader2 className="size-6 animate-spin text-zinc-500" strokeWidth={1.75} />
-          <span className="ml-3 text-sm text-zinc-500">A carregar conteúdo…</span>
-        </div>
-      );
-    }
-
-    async function uploadForEditor(file: File): Promise<string> {
-      return new Promise((resolve, reject) => {
-        processUpload(file, (url) => resolve(url), { showSuccessToast: false }).catch(reject);
-      });
-    }
-
-    return (
-      <EditorShell
-        section={section}
-        data={data as HomeData}
-        pageLabel={section.label}
-        saving={saving}
-        uploading={uploading}
-        previewKey={previewKey}
-        mediaLibrary={mediaLibrary}
-        onChange={(next) => setData(next)}
-        onDirty={markDirty}
-        onRefreshPreview={refreshPreview}
-        onUpload={uploadForEditor}
       />
     );
   }

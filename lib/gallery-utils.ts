@@ -23,7 +23,7 @@ export type GalleryItemInput = Pick<GalleryItem, "type" | "src"> &
 export function normalizeGalleryItem(item: GalleryItemInput, defaultAlt = "Studio Space"): GalleryItem {
   return {
     ...item,
-    featured: false,
+    featured: item.featured ?? false,
     src: normalizeGalleryItemSrc(item),
     alt: item.alt || defaultAlt
   };
