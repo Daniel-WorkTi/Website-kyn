@@ -1,5 +1,13 @@
 import type { SidebarSectionId } from "@/components/admin/AdminSidebar";
+import { buildSitePreviewUrl } from "@/lib/admin/preview";
 
+/** Limite do envio directo ao Cloudinary (signed upload). */
+export const CLOUDINARY_MAX_UPLOAD_MB = 10;
+export const CLOUDINARY_MAX_UPLOAD_BYTES = CLOUDINARY_MAX_UPLOAD_MB * 1024 * 1024;
+/** Alvo da compressão (margem abaixo do limite exacto do Cloudinary). */
+export const CLOUDINARY_UPLOAD_TARGET_BYTES = Math.floor(9.5 * 1024 * 1024);
+
+/** Ficheiros acima disto são rejeitados antes de tentar optimizar. */
 export const MAX_UPLOAD_MB = 100;
 export const MAX_UPLOAD_BYTES = MAX_UPLOAD_MB * 1024 * 1024;
 
@@ -92,8 +100,8 @@ export const SECTIONS: AdminSection[] = [
     label: "Parceiros",
     file: "content/partners.json",
     type: "partners",
-    page: "/parceiros",
-    hint: "Logótipos e nomes dos parceiros."
+    page: "/team#parceiros",
+    hint: "Clientes e parceiros — aparecem na página Meet the Team."
   }
 ];
 
@@ -120,7 +128,9 @@ export type GalleryItem = {
 
 export type GalleryData = {
   title?: string;
+  layout?: "default" | "studio" | "multicam" | "reels";
   items: GalleryItem[];
+  note?: string;
 };
 
 export type HeroVideo = {
@@ -177,6 +187,7 @@ export type TeamMember = {
   name: string;
   roles: string;
   photo: string;
+  photoPosition?: string;
   skills?: string[];
 };
 
@@ -218,8 +229,8 @@ export function getSectionById(id: SidebarSectionId): AdminSection {
   return SECTIONS.find((s) => s.id === id) ?? SECTIONS[0];
 }
 
-export function previewUrlForSection(section: AdminSection): string {
-  return section.page || "/";
+export function previewUrlForSection(section: AdminSection, cacheBust?: number | string): string {
+  return buildSitePreviewUrl(section.page || "/", cacheBust);
 }
 
 export function initials(name: string): string {

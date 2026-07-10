@@ -1,7 +1,5 @@
-import PartnersView from "@/components/site/PartnersView";
-import { getPartners } from "@/lib/content";
+import { redirect } from "next/navigation";
 
-export default async function ParceirosPage() {
-  const data = await getPartners();
-  return <PartnersView data={data} />;
+export default function ParceirosPage() {
+  redirect("/team#parceiros");
 }

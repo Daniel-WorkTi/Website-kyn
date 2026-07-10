@@ -1,7 +1,6 @@
 "use client";
 
 import { ExternalLink, Loader2, Monitor, RefreshCw, Smartphone } from "lucide-react";
-import { SaveIcon } from "@/components/admin/icons/ProimagemIcons";
 import { MediaLibraryPage } from "@/components/admin/media/MediaLibrary";
 import { EditorShell } from "@/components/admin/editor/EditorShell";
 import { GalleryEditor } from "@/components/admin/editors/GalleryEditor";
@@ -50,6 +49,7 @@ function LegacyEditorContent() {
     case "gallery":
       return (
         <GalleryEditor
+          sectionId={section.id}
           data={data as GalleryData}
           onChange={(next) => setData(next)}
           {...common}
@@ -183,7 +183,6 @@ export function Workspace() {
     section,
     data,
     loading,
-    dirty,
     saving,
     uploading,
     previewOpen,
@@ -191,7 +190,6 @@ export function Workspace() {
     previewKey,
     setData,
     markDirty,
-    save,
     processUpload,
     togglePreview,
     setPreviewViewport,
@@ -205,8 +203,31 @@ export function Workspace() {
 
   if (section.type === "media") {
     async function uploadMany(files: File[]) {
-      for (const file of files) {
-        await processUpload(file, () => {});
+      if (!files.length) return;
+
+      try {
+        for (const file of files) {
+          await processUpload(
+            file,
+            () => {},
+            {
+              markDirty: false,
+              refreshLibrary: false,
+              showSuccessToast: false
+            }
+          );
+        }
+
+        await refreshMediaLibrary();
+        showToast(
+          files.length === 1
+            ? "Ficheiro adicionado à biblioteca."
+            : `${files.length} ficheiros adicionados à biblioteca.`,
+          "ok"
+        );
+      } catch (err) {
+        showToast(err instanceof Error ? err.message : "Erro no envio.", "error");
+        await refreshMediaLibrary();
       }
     }
 
@@ -238,28 +259,39 @@ export function Workspace() {
 
     async function uploadForEditor(file: File): Promise<string> {
       return new Promise((resolve, reject) => {
-        processUpload(file, (url) => resolve(url)).catch(reject);
+        processUpload(file, (url) => resolve(url), { showSuccessToast: false }).catch(reject);
       });
     }
 
     return (
       <EditorShell
+        section={section}
         data={data as HomeData}
         pageLabel={section.label}
-        dirty={dirty}
         saving={saving}
         uploading={uploading}
         previewKey={previewKey}
         mediaLibrary={mediaLibrary}
         onChange={(next) => setData(next)}
         onDirty={markDirty}
-        onSave={save}
+        onRefreshPreview={refreshPreview}
         onUpload={uploadForEditor}
       />
     );
   }
 
-  const previewSrc = `${previewUrlForSection(section)}?preview=1&t=${previewKey}`;
+  const previewSrc = previewUrlForSection(section, previewKey);
+
+  const statusLabel = saving
+    ? "A guardar…"
+    : uploading
+      ? "A enviar ficheiro…"
+      : "Guardado";
+
+  const statusClass =
+    saving || uploading
+      ? "border border-amber-500/30 bg-amber-500/10 text-amber-300"
+      : "border border-accent/30 bg-accent-dim text-accent";
 
   return (
     <div className="flex min-w-0 flex-1">
@@ -275,13 +307,14 @@ export function Workspace() {
           <div className="flex flex-wrap items-center gap-3">
             <span
               className={[
-                "rounded-full px-3 py-1 text-xs font-medium",
-                dirty
-                  ? "border border-amber-500/30 bg-amber-500/10 text-amber-300"
-                  : "border border-accent/30 bg-accent-dim text-accent"
+                "inline-flex items-center gap-1.5 rounded-full px-3 py-1 text-xs font-medium",
+                statusClass
               ].join(" ")}
             >
-              {dirty ? "Alterações por guardar" : "Tudo guardado"}
+              {(saving || uploading) && (
+                <Loader2 className="size-3.5 animate-spin" strokeWidth={1.75} />
+              )}
+              {statusLabel}
             </span>
 
             <label className="inline-flex cursor-pointer items-center gap-2 rounded-lg border border-white/10 bg-white/[0.04] px-3 py-2 text-sm text-zinc-300 transition hover:bg-white/[0.08]">
@@ -293,20 +326,6 @@ export function Workspace() {
               />
               Ver pré-visualização
             </label>
-
-            <button
-              type="button"
-              onClick={() => save()}
-              disabled={saving || uploading}
-              className="inline-flex items-center gap-2 rounded-lg border border-white bg-white px-4 py-2 text-sm font-medium text-black transition hover:bg-white/90 disabled:opacity-60"
-            >
-              {saving ? (
-                <Loader2 className="size-4 animate-spin" strokeWidth={1.75} />
-              ) : (
-                <SaveIcon className="size-4" />
-              )}
-              {saving ? "A guardar…" : "Guardar alterações"}
-            </button>
           </div>
         </header>
 

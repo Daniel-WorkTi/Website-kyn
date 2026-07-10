@@ -1,16 +1,16 @@
 "use client";
 
-import { Eye, Loader2, Monitor, RotateCcw, Save, Smartphone } from "lucide-react";
+import { Eye, Loader2, Monitor, RefreshCw, RotateCcw, Smartphone } from "lucide-react";
 import { useEditorStore } from "@/hooks/useEditorStore";
 import type { DevicePreview } from "@/lib/admin/editor-types";
 
 type EditorTopbarProps = {
   pageLabel: string;
-  dirty: boolean;
   saving: boolean;
+  uploading?: boolean;
   previewOpen: boolean;
-  onSave: () => void;
   onTogglePreview: () => void;
+  onRefreshPreview?: () => void;
 };
 
 const DEVICES: { id: DevicePreview; label: string; icon: typeof Monitor }[] = [
@@ -20,13 +20,23 @@ const DEVICES: { id: DevicePreview; label: string; icon: typeof Monitor }[] = [
 
 export function EditorTopbar({
   pageLabel,
-  dirty,
   saving,
+  uploading = false,
   previewOpen,
-  onSave,
-  onTogglePreview
+  onTogglePreview,
+  onRefreshPreview
 }: EditorTopbarProps) {
   const { devicePreview, setDevicePreview, undo, canUndo } = useEditorStore();
+
+  const statusLabel = saving
+    ? "A guardar…"
+    : uploading
+      ? "A enviar ficheiro…"
+      : "Guardado";
+
+  const statusClass = saving || uploading
+    ? "border border-amber-500/30 bg-amber-500/10 text-amber-300"
+    : "border border-emerald-500/20 bg-emerald-500/10 text-emerald-400";
 
   return (
     <header className="flex shrink-0 flex-wrap items-center justify-between gap-3 border-b border-white/[0.08] bg-black/60 px-4 py-3 backdrop-blur-md md:px-6">
@@ -56,6 +66,17 @@ export function EditorTopbar({
           ))}
         </div>
 
+        {onRefreshPreview && (
+          <button
+            type="button"
+            onClick={onRefreshPreview}
+            title="Atualizar site"
+            className="flex size-9 items-center justify-center rounded-lg border border-white/10 text-zinc-400 transition hover:bg-white/[0.06] hover:text-white"
+          >
+            <RefreshCw className="size-4" strokeWidth={1.75} />
+          </button>
+        )}
+
         <button
           type="button"
           onClick={undo}
@@ -82,28 +103,15 @@ export function EditorTopbar({
 
         <span
           className={[
-            "hidden rounded-full px-2.5 py-1 text-[10px] font-medium md:inline",
-            dirty
-              ? "border border-amber-500/30 bg-amber-500/10 text-amber-300"
-              : "border border-emerald-500/20 bg-emerald-500/10 text-emerald-400"
+            "inline-flex items-center gap-1.5 rounded-full px-2.5 py-1 text-[10px] font-medium md:text-xs",
+            statusClass
           ].join(" ")}
         >
-          {dirty ? "Alterações por guardar" : "Tudo guardado"}
-        </span>
-
-        <button
-          type="button"
-          onClick={onSave}
-          disabled={saving}
-          className="inline-flex items-center gap-2 rounded-xl bg-emerald-500 px-4 py-2 text-sm font-semibold text-black transition hover:bg-emerald-400 disabled:opacity-60"
-        >
-          {saving ? (
-            <Loader2 className="size-4 animate-spin" strokeWidth={1.75} />
-          ) : (
-            <Save className="size-4" strokeWidth={1.75} />
+          {(saving || uploading) && (
+            <Loader2 className="size-3 animate-spin" strokeWidth={1.75} />
           )}
-          Guardar alterações
-        </button>
+          {statusLabel}
+        </span>
       </div>
     </header>
   );

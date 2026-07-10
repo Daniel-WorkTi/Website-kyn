@@ -1,7 +1,7 @@
 import TeamView from "@/components/site/TeamView";
-import { getTeam } from "@/lib/content";
+import { getPartners, getTeam } from "@/lib/content";
 
 export default async function TeamPage() {
-  const data = await getTeam();
-  return <TeamView data={data} />;
+  const [team, partners] = await Promise.all([getTeam(), getPartners()]);
+  return <TeamView data={team} partners={partners} />;
 }

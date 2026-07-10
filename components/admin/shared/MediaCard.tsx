@@ -24,7 +24,6 @@ export function MediaCard({
   onUpload
 }: MediaCardProps) {
   const srcInputRef = useRef<HTMLInputElement>(null);
-  const posterInputRef = useRef<HTMLInputElement>(null);
   const url = previewUrl(item);
 
   const badge = `${item.type === "video" ? "Vídeo" : "Foto"}${item.featured ? " · Destaque" : ""}`;
@@ -44,8 +43,16 @@ export function MediaCard({
               <small className="text-xs">foto ou vídeo</small>
             </span>
           </div>
-        ) : item.type === "video" && !item.poster ? (
-          <video src={item.src} muted playsInline className="h-full w-full object-cover" />
+        ) : item.type === "video" && item.src ? (
+          <video
+            src={item.src}
+            autoPlay
+            muted
+            loop
+            playsInline
+            preload="auto"
+            className="h-full w-full object-cover"
+          />
         ) : (
           <img src={url} alt={item.alt || ""} loading="lazy" className="h-full w-full object-cover" />
         )}
@@ -98,48 +105,6 @@ export function MediaCard({
             Destaque (largura total)
           </label>
         </div>
-
-        {item.type === "video" && (
-          <div>
-            <label className="mb-1.5 block text-xs text-zinc-400">Capa do vídeo</label>
-            <div className="flex flex-wrap items-center gap-2">
-              {item.poster && (
-                <img
-                  src={item.poster}
-                  alt=""
-                  className="size-12 rounded-lg border border-white/10 object-cover"
-                />
-              )}
-              <button
-                type="button"
-                onClick={() => posterInputRef.current?.click()}
-                className="rounded-lg border border-white/10 bg-white/[0.04] px-3 py-1.5 text-xs text-zinc-300 transition hover:bg-white/[0.08]"
-              >
-                Carregar capa
-              </button>
-              {item.poster && (
-                <button
-                  type="button"
-                  onClick={() => onChange(index, { ...item, poster: "" })}
-                  className="rounded-lg px-3 py-1.5 text-xs text-zinc-500 transition hover:text-zinc-300"
-                >
-                  Remover capa
-                </button>
-              )}
-              <input
-                ref={posterInputRef}
-                type="file"
-                accept="image/*"
-                hidden
-                onChange={async (e) => {
-                  const file = e.target.files?.[0];
-                  e.target.value = "";
-                  if (file) await onUpload(index, file, "poster");
-                }}
-              />
-            </div>
-          </div>
-        )}
 
         <div>
           <label className="mb-1.5 block text-xs text-zinc-400">Descrição (opcional)</label>

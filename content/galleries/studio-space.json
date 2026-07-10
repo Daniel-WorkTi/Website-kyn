@@ -1,11 +1,66 @@
 {
   "title": "Studio Space",
+  "layout": "studio",
   "items": [
-    { "type": "video", "featured": true, "src": "https://supdmick.com/_assets/video/3375f32436dd6788e60db7fa947e519a.mp4", "poster": "", "alt": "Studio Space" },
-    { "type": "video", "featured": true, "src": "https://supdmick.com/_assets/video/4dfcd497b624f7751bc5bcdf63618fbd.mp4", "poster": "", "alt": "Studio Space" },
-    { "type": "image", "featured": false, "src": "https://supdmick.com/_assets/video/43166b48acdaceb2a734b7828edb3bf5.jpg", "alt": "Studio Space" },
-    { "type": "image", "featured": false, "src": "https://supdmick.com/_assets/video/81d94ac62adb6eee5a5883f40f28d5eb.jpg", "alt": "Studio Space" },
-    { "type": "image", "featured": false, "src": "https://supdmick.com/_assets/video/13a148686049320fb9753234e9bead8a.jpg", "alt": "Studio Space" },
-    { "type": "image", "featured": false, "src": "https://supdmick.com/_assets/video/56c910f3bfdb6142a5c838e0c5806572.jpg", "alt": "Studio Space" }
+    {
+      "type": "video",
+      "src": "https://res.cloudinary.com/zk5df6k0/video/upload/f_mp4,vc_h264,q_auto/proimagem/tbjxxlfrew9jjwkpelgo.mp4",
+      "alt": "Studio Space"
+    },
+    {
+      "type": "video",
+      "src": "https://res.cloudinary.com/zk5df6k0/video/upload/f_mp4,vc_h264,q_auto/proimagem/b27jnpfzyq2vcah7hl48.mp4",
+      "alt": "Studio Space"
+    },
+    {
+      "type": "image",
+      "src": "https://res.cloudinary.com/zk5df6k0/image/upload/f_auto,q_auto,w_2800,c_limit/proimagem/cbxbxiaafaa25jfm8q2l",
+      "alt": "Studio Space"
+    },
+    {
+      "type": "image",
+      "src": "https://res.cloudinary.com/zk5df6k0/image/upload/f_auto,q_auto,w_2800,c_limit/proimagem/ahsfywzxlddwzquz1g7c",
+      "alt": "Studio Space"
+    },
+    {
+      "type": "image",
+      "src": "https://res.cloudinary.com/zk5df6k0/image/upload/f_auto,q_auto,w_2800,c_limit/proimagem/jduc3vynqvuteph309o4",
+      "alt": "Studio Space"
+    },
+    {
+      "type": "image",
+      "src": "https://res.cloudinary.com/zk5df6k0/image/upload/f_auto,q_auto,w_2800,c_limit/proimagem/agpdibqmt2knewn5qqxm",
+      "alt": "Studio Space"
+    },
+    {
+      "type": "image",
+      "src": "https://res.cloudinary.com/zk5df6k0/image/upload/f_auto,q_auto,w_2800,c_limit/proimagem/ivcsqcualdywskkdeclw",
+      "alt": "Studio Space"
+    },
+    {
+      "type": "image",
+      "src": "https://res.cloudinary.com/zk5df6k0/image/upload/f_auto,q_auto,w_2800,c_limit/proimagem/vwyie5ieix75kwxtkhwv",
+      "alt": "Studio Space"
+    },
+    {
+      "type": "image",
+      "src": "https://res.cloudinary.com/zk5df6k0/image/upload/f_auto,q_auto,w_2800,c_limit/proimagem/crlg3dapzzxu8kkuotnd",
+      "alt": "Studio Space"
+    },
+    {
+      "type": "image",
+      "src": "https://res.cloudinary.com/zk5df6k0/image/upload/f_auto,q_auto,w_2800,c_limit/proimagem/vtrm1szqqrhqcao4cqv6",
+      "alt": "Studio Space"
+    },
+    {
+      "type": "image",
+      "src": "https://res.cloudinary.com/zk5df6k0/image/upload/f_auto,q_auto,w_2800,c_limit/proimagem/fg7btnx68mkhxodgjwe0",
+      "alt": "Studio Space"
+    },
+    {
+      "type": "image",
+      "src": "https://res.cloudinary.com/zk5df6k0/image/upload/f_auto,q_auto,w_2800,c_limit/proimagem/ws6hypsuigiqzr0jcqbd",
+      "alt": "Studio Space"
+    }
   ]
 }

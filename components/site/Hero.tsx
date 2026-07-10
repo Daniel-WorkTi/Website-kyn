@@ -45,9 +45,10 @@ export default function Hero({ hero, brand }: HeroProps) {
 
     const updateHeroOnScroll = () => {
       const y = window.scrollY;
-      swapVideo(y > window.innerHeight * 0.25);
+      const vh = window.innerHeight;
+      swapVideo(y > vh * 0.08);
 
-      const shouldExit = y > window.innerHeight * 0.12;
+      const shouldExit = y > vh * 0.12;
       if (shouldExit !== textExitingRef.current) {
         textExitingRef.current = shouldExit;
         setTextExiting(shouldExit);
@@ -105,7 +106,6 @@ export default function Hero({ hero, brand }: HeroProps) {
                   loop
                   playsInline
                   preload="auto"
-                  poster={v.poster || undefined}
                 >
                   <source src={v.src} type={videoMimeType(v.src)} />
                 </video>

@@ -37,6 +37,7 @@ export interface SiteJson {
 
 export interface GalleryJson {
   title: string;
+  layout?: "default" | "studio" | "multicam" | "reels";
   items?: MediaItem[];
   note?: string;
 }
@@ -45,6 +46,8 @@ export interface TeamMember {
   name: string;
   roles: string;
   photo?: string;
+  /** Ajuste fino do crop da foto (ex.: "center 40%"). */
+  photoPosition?: string;
   skills?: string[];
 }
 

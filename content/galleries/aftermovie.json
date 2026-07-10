@@ -1,11 +1,42 @@
 {
   "title": "Aftermovie",
+  "layout": "reels",
   "items": [
-    { "type": "video", "featured": true, "src": "https://supdmick.com/_assets/video/2aade7a774443b9f3cfb819326c44924.mp4", "poster": "https://supdmick.com/_assets/video/0ae7c9e5a6122daa83ead7cbf134cc89.jpg", "alt": "Aftermovie" },
-    { "type": "video", "featured": true, "src": "https://supdmick.com/_assets/video/a19469f527130b52ede3d23d67351dd5.mp4", "poster": "", "alt": "Aftermovie" },
-    { "type": "image", "featured": false, "src": "https://supdmick.com/_assets/video/0ae7c9e5a6122daa83ead7cbf134cc89.jpg", "alt": "Aftermovie" },
-    { "type": "image", "featured": false, "src": "https://supdmick.com/_assets/video/7b085c6bf017adeb6de4461647df9be7.jpg", "alt": "Aftermovie" },
-    { "type": "image", "featured": false, "src": "https://supdmick.com/_assets/video/61bb4077d9f21c970d02814c3016405b.jpg", "alt": "Aftermovie" },
-    { "type": "image", "featured": false, "src": "https://supdmick.com/_assets/video/a2aa62f3c081a7e1c7094d253a17f6b1.jpg", "alt": "Aftermovie" }
+    {
+      "type": "video",
+      "featured": false,
+      "src": "https://res.cloudinary.com/zk5df6k0/video/upload/f_mp4,vc_h264,q_auto/proimagem/jdx1h0y76eyu46lh3m7o.mp4",
+      "alt": "Reel 1"
+    },
+    {
+      "type": "video",
+      "featured": false,
+      "src": "https://res.cloudinary.com/zk5df6k0/video/upload/f_mp4,vc_h264,q_auto/proimagem/of0ngefimwcedlulyal3.mp4",
+      "alt": "Reel 2"
+    },
+    {
+      "type": "video",
+      "featured": false,
+      "src": "https://res.cloudinary.com/zk5df6k0/video/upload/f_mp4,vc_h264,q_auto/proimagem/pzjyocjxqfmlrcqenem5.mp4",
+      "alt": "Reel 3"
+    },
+    {
+      "type": "video",
+      "featured": false,
+      "src": "https://res.cloudinary.com/zk5df6k0/video/upload/f_mp4,vc_h264,q_auto/proimagem/xueczcksldjvveqtik04.mp4",
+      "alt": "Reel 4"
+    },
+    {
+      "type": "video",
+      "featured": false,
+      "src": "https://res.cloudinary.com/zk5df6k0/video/upload/f_mp4,vc_h264,q_auto/proimagem/efru7bi0lfwogs480lus.mp4",
+      "alt": "Reel 5"
+    },
+    {
+      "type": "video",
+      "featured": false,
+      "src": "https://res.cloudinary.com/zk5df6k0/video/upload/f_mp4,vc_h264,q_auto/proimagem/ye1qus8qhz99ah1d14iy.mp4",
+      "alt": "Reel 6"
+    }
   ]
 }

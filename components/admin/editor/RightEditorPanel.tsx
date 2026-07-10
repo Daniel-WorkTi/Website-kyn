@@ -25,8 +25,6 @@ import { VisibilitySwitch } from "./fields/VisibilitySwitch";
 import type { MediaFile } from "@/lib/admin/sections";
 
 type RightEditorPanelProps = {
-  onSave: () => void;
-  saving: boolean;
   onUpload?: (file: File) => Promise<string>;
   uploading?: boolean;
   mediaLibrary?: MediaFile[];
@@ -96,15 +94,44 @@ function AlignControl({ value, onChange }: { value: TextAlign; onChange: (v: Tex
 }
 
 function EmptyState() {
+  const { pageData, setSelectedElement } = useEditorStore();
+
+  const items: { id: EditableElementId; label: string }[] = [
+    { id: "hero", label: "Hero" },
+    { id: "hero.video", label: "Vídeo de fundo" },
+    { id: "hero.title", label: "Título principal" },
+    { id: "hero.subtitle", label: "Subtítulo" },
+    { id: "hero.button", label: "Botão" },
+    { id: "featured.sectionTitle", label: "Título da secção" },
+    ...pageData.featured.cards.map((card) => ({
+      id: `featured.cards.${card.id}` as EditableElementId,
+      label: `Card — ${card.title}`
+    })),
+    { id: "stats", label: "Estatísticas" }
+  ];
+
   return (
-    <div className="flex flex-1 flex-col items-center justify-center px-6 py-16 text-center">
-      <div className="mb-4 flex size-14 items-center justify-center rounded-2xl border border-white/10 bg-white/[0.04]">
-        <MousePointerClick className="size-6 text-zinc-500" strokeWidth={1.5} />
+    <div className="flex flex-1 flex-col px-4 py-6">
+      <div className="mb-4 text-center">
+        <div className="mx-auto mb-3 flex size-12 items-center justify-center rounded-2xl border border-white/10 bg-white/[0.04]">
+          <MousePointerClick className="size-5 text-zinc-500" strokeWidth={1.5} />
+        </div>
+        <h3 className="text-base font-medium text-white">O que queres editar?</h3>
+        <p className="mt-1 text-sm text-zinc-500">Escolhe um elemento do site</p>
       </div>
-      <h3 className="text-base font-medium text-white">Selecione algo no preview</h3>
-      <p className="mt-2 max-w-[240px] text-sm leading-relaxed text-zinc-500">
-        Clique em um texto, imagem, vídeo ou botão para editar
-      </p>
+
+      <div className="sidebar-scroll flex-1 space-y-1.5 overflow-y-auto">
+        {items.map((item) => (
+          <button
+            key={item.id}
+            type="button"
+            onClick={() => setSelectedElement(item.id)}
+            className="flex w-full rounded-xl border border-white/10 bg-white/[0.03] px-3 py-2.5 text-left text-sm text-zinc-300 transition hover:border-emerald-500/30 hover:bg-emerald-500/10 hover:text-white"
+          >
+            {item.label}
+          </button>
+        ))}
+      </div>
     </div>
   );
 }
@@ -117,8 +144,8 @@ function TipsBox() {
         <span className="text-sm font-medium">Dicas rápidas</span>
       </div>
       <ul className="space-y-1.5 text-xs leading-relaxed text-zinc-400">
-        <li>• Clica no preview para escolher o que editar</li>
-        <li>• Guarda sempre no botão verde do topo</li>
+        <li>• Escolhe o elemento na lista à esquerda do painel</li>
+        <li>• Guarda as alterações para veres no site real</li>
         <li>• O vídeo de fundo muda ao fazer scroll no site real</li>
       </ul>
     </div>
@@ -143,8 +170,6 @@ function cardIdFromElement(id: EditableElementId): string | null {
 }
 
 export function RightEditorPanel({
-  onSave,
-  saving,
   onUpload,
   uploading = false,
   mediaLibrary = [],
@@ -237,7 +262,6 @@ export function RightEditorPanel({
                   {pageData.hero.mediaType === "video" ? (
                     <VideoField
                       videoSrc={pageData.hero.videoSrc}
-                      posterSrc={pageData.hero.videoPoster}
                       files={mediaLibrary}
                       onVideoChange={(url) =>
                         updateElement((d) => ({
@@ -245,25 +269,12 @@ export function RightEditorPanel({
                           hero: { ...d.hero, videoSrc: url }
                         }))
                       }
-                      onPosterChange={(url) =>
-                        updateElement((d) => ({
-                          ...d,
-                          hero: { ...d.hero, videoPoster: url }
-                        }))
-                      }
                       onUploadVideo={onUpload}
-                      onUploadPoster={onUpload}
                       uploading={isUploading}
                       onRemoveVideo={() =>
                         updateElement((d) => ({
                           ...d,
                           hero: { ...d.hero, videoSrc: "", videoPoster: "" }
-                        }))
-                      }
-                      onRemovePoster={() =>
-                        updateElement((d) => ({
-                          ...d,
-                          hero: { ...d.hero, videoPoster: "" }
                         }))
                       }
                     />
@@ -597,18 +608,6 @@ export function RightEditorPanel({
         </div>
       )}
 
-      {selectedElementId && (
-        <div className="border-t border-white/10 p-6">
-          <button
-            type="button"
-            onClick={onSave}
-            disabled={saving}
-            className="w-full rounded-xl bg-emerald-500 py-3.5 text-sm font-semibold text-black transition hover:bg-emerald-400 disabled:opacity-60"
-          >
-            {saving ? "A guardar…" : "Guardar alterações"}
-          </button>
-        </div>
-      )}
     </aside>
   );
 }

@@ -22,15 +22,20 @@ import {
   saveContent,
   uploadFile
 } from "@/lib/admin/api";
-import {
-  getSectionById,
-  MAX_UPLOAD_BYTES,
-  MAX_UPLOAD_MB,
-  previewUrlForSection,
-  type AdminSection,
-  type MediaFile,
-  type SectionData
-} from "@/lib/admin/sections";
+import { getSectionById, CLOUDINARY_MAX_UPLOAD_BYTES, CLOUDINARY_UPLOAD_TARGET_BYTES, MAX_UPLOAD_BYTES, MAX_UPLOAD_MB, previewUrlForSection, type AdminSection, type GalleryData, type MediaFile, type SectionData } from "@/lib/admin/sections";
+import { prepareGalleryForSection } from "@/lib/gallery-utils";
+import { mediaFileFromUpload } from "@/lib/admin/media-utils";
+import { prepareFileForUpload } from "@/lib/admin/prepare-upload";
+
+const AUTO_SAVE_DELAY_MS = 1200;
+
+export type ProcessUploadOptions = {
+  markDirty?: boolean;
+  refreshLibrary?: boolean;
+  updateLibrary?: boolean;
+  showSuccessToast?: boolean;
+  successToast?: string;
+};
 
 type AdminContextValue = {
   sessionChecked: boolean;
@@ -51,12 +56,16 @@ type AdminContextValue = {
   navigate: (id: SidebarSectionId) => void;
   login: (username: string, password: string) => Promise<void>;
   logout: () => Promise<void>;
-  save: () => Promise<void>;
+  save: (options?: { silent?: boolean }) => Promise<boolean>;
   setData: (data: SectionData) => void;
   markDirty: () => void;
   showToast: (message: string, type?: ToastType) => void;
   dismissToast: () => void;
-  processUpload: (file: File, onSuccess: (url: string, file: File) => void) => Promise<void>;
+  processUpload: (
+    file: File,
+    onSuccess: (url: string, file: File) => void,
+    options?: ProcessUploadOptions
+  ) => Promise<void>;
   refreshMediaLibrary: () => Promise<void>;
   deleteMedia: (file: MediaFile) => Promise<void>;
   togglePreview: (force?: boolean) => void;
@@ -84,6 +93,8 @@ export function AdminProvider({ children }: { children: ReactNode }) {
   const [previewKey, setPreviewKey] = useState(0);
 
   const mediaCacheRef = useRef<MediaFile[] | null>(null);
+  const savingRef = useRef(false);
+  const saveRef = useRef<(options?: { silent?: boolean }) => Promise<boolean>>(async () => false);
   const section = getSectionById(sectionId);
 
   useEffect(() => {
@@ -119,9 +130,12 @@ export function AdminProvider({ children }: { children: ReactNode }) {
 
   const loadSection = useCallback(
     async (id: SidebarSectionId, skipDirtyCheck = false) => {
-      if (!skipDirtyCheck && dirty) {
-        const ok = window.confirm("Tens alterações por guardar. Queres continuar sem guardar?");
-        if (!ok) return;
+      if (!skipDirtyCheck && dirty && data) {
+        const current = getSectionById(sectionId);
+        if (current.type !== "media") {
+          const saved = await saveRef.current({ silent: true });
+          if (!saved) return;
+        }
       }
 
       const nextSection = getSectionById(id);
@@ -148,7 +162,11 @@ export function AdminProvider({ children }: { children: ReactNode }) {
 
       try {
         const { data: loaded, sha: loadedSha } = await loadContentFile<SectionData>(nextSection.file);
-        setDataState(loaded);
+        const prepared =
+          nextSection.type === "gallery"
+            ? prepareGalleryForSection(nextSection.id, loaded as GalleryData)
+            : loaded;
+        setDataState(prepared);
         setSha(loadedSha);
         setPreviewKey((k) => k + 1);
 
@@ -162,7 +180,7 @@ export function AdminProvider({ children }: { children: ReactNode }) {
         setLoading(false);
       }
     },
-    [dirty, showToast]
+    [data, dirty, sectionId, showToast]
   );
 
   useEffect(() => {
@@ -195,27 +213,76 @@ export function AdminProvider({ children }: { children: ReactNode }) {
     setDirty(false);
   }, []);
 
+  const registerUploadedMedia = useCallback((url: string, file: File) => {
+    const entry = mediaFileFromUpload(url, file);
+    setMediaLibrary((prev) => {
+      if (prev.some((item) => item.url === url)) return prev;
+      const next = [entry, ...prev];
+      mediaCacheRef.current = next;
+      return next;
+    });
+  }, []);
+
   const processUpload = useCallback(
-    async (file: File, onSuccess: (url: string, file: File) => void) => {
+    async (
+      file: File,
+      onSuccess: (url: string, file: File) => void,
+      options: ProcessUploadOptions = {}
+    ) => {
+      const {
+        markDirty: shouldMarkDirty = true,
+        refreshLibrary = true,
+        updateLibrary = true,
+        showSuccessToast = true,
+        successToast = "Ficheiro enviado."
+      } = options;
+
       if (file.size > MAX_UPLOAD_BYTES) {
         throw new Error(
-          `Este ficheiro é demasiado grande (máximo ${MAX_UPLOAD_MB} MB). Tenta comprimir antes de enviar.`
+          `"${file.name}" (${(file.size / (1024 * 1024)).toFixed(1)} MB) excede o máximo de ${MAX_UPLOAD_MB} MB.`
         );
       }
-      showToast(`A enviar ${file.name}…`, "pending");
+
+      let uploadable = file;
+      try {
+        uploadable = await prepareFileForUpload(file, CLOUDINARY_UPLOAD_TARGET_BYTES, {
+          onProgress: (message) => showToast(message, "pending")
+        });
+      } catch (err) {
+        throw err instanceof Error
+          ? err
+          : new Error(`"${file.name}": não foi possível preparar o ficheiro para envio.`);
+      }
+
+      if (uploadable.size > CLOUDINARY_MAX_UPLOAD_BYTES) {
+        throw new Error(
+          `"${file.name}" continua acima de ${CLOUDINARY_MAX_UPLOAD_BYTES / (1024 * 1024)} MB após optimização (${(uploadable.size / (1024 * 1024)).toFixed(1)} MB).`
+        );
+      }
+
+      showToast(`A enviar ${uploadable.name}…`, "pending");
       setUploadCount((c) => c + 1);
       try {
-        const url = await uploadFile(file);
-        onSuccess(url, file);
-        mediaCacheRef.current = null;
-        markDirty();
-        showToast("Ficheiro enviado! Não te esqueças de guardar.", "ok");
-        await refreshMediaLibrary();
+        const url = await uploadFile(uploadable);
+        onSuccess(url, uploadable);
+        if (updateLibrary) {
+          registerUploadedMedia(url, uploadable);
+        }
+        if (shouldMarkDirty) {
+          markDirty();
+        }
+        if (showSuccessToast) {
+          showToast(successToast, "ok");
+        }
+        if (refreshLibrary) {
+          mediaCacheRef.current = null;
+          await refreshMediaLibrary();
+        }
       } finally {
         setUploadCount((c) => Math.max(0, c - 1));
       }
     },
-    [markDirty, showToast, refreshMediaLibrary]
+    [markDirty, registerUploadedMedia, showToast, refreshMediaLibrary]
   );
 
   const deleteMedia = useCallback(
@@ -228,26 +295,53 @@ export function AdminProvider({ children }: { children: ReactNode }) {
     [refreshMediaLibrary, showToast]
   );
 
-  const save = useCallback(async () => {
-    if (!data) return;
+  const save = useCallback(async (options: { silent?: boolean } = {}) => {
+    const { silent = false } = options;
+    if (!data || section.type === "media" || savingRef.current) return false;
+
+    savingRef.current = true;
     setSaving(true);
     try {
-      const newSha = await saveContent(section.file, data, sha, section.label);
+      const payload =
+        section.type === "gallery"
+          ? prepareGalleryForSection(section.id, data as GalleryData)
+          : data;
+      const newSha = await saveContent(section.file, payload, sha, section.label);
+      if (section.type === "gallery" && payload !== data) {
+        setDataState(payload as SectionData);
+      }
       setSha(newSha);
       setDirty(false);
       mediaCacheRef.current = null;
-      showToast("Alterações guardadas! O site atualiza em cerca de 1 minuto.", "ok");
+      if (!silent) {
+        showToast("Alterações guardadas! O site atualiza em cerca de 1 minuto.", "ok");
+      }
       setPreviewKey((k) => k + 1);
+      return true;
     } catch (err) {
       const message = err instanceof Error ? err.message : "Erro ao guardar.";
       showToast(message, "error");
       if (message.includes("Sessão")) {
         setAuthenticated(false);
       }
+      return false;
     } finally {
+      savingRef.current = false;
       setSaving(false);
     }
   }, [data, section, sha, showToast]);
+
+  saveRef.current = save;
+
+  useEffect(() => {
+    if (!sessionChecked || !authenticated || !dirty || !data || section.type === "media") return;
+
+    const timer = window.setTimeout(() => {
+      void saveRef.current({ silent: true });
+    }, AUTO_SAVE_DELAY_MS);
+
+    return () => window.clearTimeout(timer);
+  }, [sessionChecked, authenticated, dirty, data, section.type, section.file]);
 
   const togglePreview = useCallback((force?: boolean) => {
     setPreviewOpen((prev) => (typeof force === "boolean" ? force : !prev));

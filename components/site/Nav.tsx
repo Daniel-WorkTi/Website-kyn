@@ -50,31 +50,43 @@ export default function Nav({ items }: NavProps) {
   };
 
   return (
-    <nav className={`nav${scrolled ? " nav--scrolled" : ""}`}>
-      <div className="nav__inner">
+    <>
+      {menuOpen && (
         <button
           type="button"
-          className={`nav__toggle${menuOpen ? " is-active" : ""}`}
-          aria-label="Menu"
-          aria-expanded={menuOpen}
-          onClick={toggleMenu}
-        >
-          <span />
-        </button>
-        <ul className={`nav__menu${menuOpen ? " is-open" : ""}`}>
-          {items.map((item) => (
-            <li key={item.href}>
-              <Link
-                href={item.href}
-                className={`nav__link${isActive(item.href) ? " is-active" : ""}`}
-                onClick={closeMenu}
-              >
-                {item.label}
-              </Link>
-            </li>
-          ))}
-        </ul>
-      </div>
-    </nav>
+          className="nav__backdrop"
+          aria-label="Fechar menu"
+          onClick={closeMenu}
+        />
+      )}
+
+      <nav className={`nav${scrolled ? " nav--scrolled" : ""}`}>
+        <div className="nav__inner">
+          <button
+            type="button"
+            className={`nav__toggle${menuOpen ? " is-active" : ""}`}
+            aria-label={menuOpen ? "Fechar menu" : "Abrir menu"}
+            aria-expanded={menuOpen}
+            onClick={toggleMenu}
+          >
+            <span />
+          </button>
+
+          <ul className={`nav__menu${menuOpen ? " is-open" : ""}`}>
+            {items.map((item) => (
+              <li key={item.href} className="nav__item">
+                <Link
+                  href={item.href}
+                  className={`nav__link${isActive(item.href) ? " is-active" : ""}`}
+                  onClick={closeMenu}
+                >
+                  {item.label}
+                </Link>
+              </li>
+            ))}
+          </ul>
+        </div>
+      </nav>
+    </>
   );
 }

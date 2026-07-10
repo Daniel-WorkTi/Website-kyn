@@ -1,5 +1,7 @@
 import fs from "fs/promises";
 import path from "path";
+import { prepareGalleryForSection } from "@/lib/gallery-utils";
+import type { GalleryData } from "@/lib/admin/sections";
 import type { GalleryJson, PartnersJson, SiteJson, TeamJson } from "./types";
 
 const CONTENT_DIR = path.join(process.cwd(), "content");
@@ -14,7 +16,16 @@ export async function getSite(): Promise<SiteJson> {
 }
 
 export async function getGallery(slug: string): Promise<GalleryJson> {
-  return readJson<GalleryJson>(path.join(CONTENT_DIR, "galleries", `${slug}.json`));
+  const data = await readJson<GalleryJson>(path.join(CONTENT_DIR, "galleries", `${slug}.json`));
+  if (
+    data.layout === "studio" ||
+    data.layout === "multicam" ||
+    data.layout === "reels" ||
+    slug === "photography"
+  ) {
+    return prepareGalleryForSection(slug, data as GalleryData) as GalleryJson;
+  }
+  return data;
 }
 
 export async function getTeam(): Promise<TeamJson> {

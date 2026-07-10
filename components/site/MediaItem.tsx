@@ -1,5 +1,4 @@
 import type { MediaItem as MediaItemType } from "@/lib/types";
-import { videoMimeType } from "@/lib/utils";
 
 interface MediaItemProps {
   item: MediaItemType;
@@ -12,20 +11,19 @@ export default function MediaItem({
   item,
   className,
   videoClassName,
-  autoplay = false,
+  autoplay = item.type === "video",
 }: MediaItemProps) {
   if (item.type === "video") {
     return (
       <video
         className={videoClassName ?? className}
+        src={item.src}
         autoPlay={autoplay}
         muted
         loop={autoplay}
         playsInline
-        poster={item.poster || undefined}
-      >
-        <source src={item.src} type={videoMimeType(item.src)} />
-      </video>
+        preload="auto"
+      />
     );
   }
 

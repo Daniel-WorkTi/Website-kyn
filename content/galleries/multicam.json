@@ -1,11 +1,66 @@
 {
   "title": "Multicam",
+  "layout": "multicam",
   "items": [
-    { "type": "image", "featured": false, "src": "https://supdmick.com/_assets/video/43166b48acdaceb2a734b7828edb3bf5.jpg", "alt": "Multicam" },
-    { "type": "image", "featured": false, "src": "https://supdmick.com/_assets/video/81d94ac62adb6eee5a5883f40f28d5eb.jpg", "alt": "Multicam" },
-    { "type": "image", "featured": false, "src": "https://supdmick.com/_assets/video/13a148686049320fb9753234e9bead8a.jpg", "alt": "Multicam" },
-    { "type": "image", "featured": false, "src": "https://supdmick.com/_assets/video/56c910f3bfdb6142a5c838e0c5806572.jpg", "alt": "Multicam" },
-    { "type": "image", "featured": false, "src": "https://supdmick.com/_assets/video/457f078f9f0af0b37fc1aaea99b128d1.jpg", "alt": "Multicam" },
-    { "type": "image", "featured": false, "src": "https://supdmick.com/_assets/video/46e00b27837179847be796f082a53cc9.jpg", "alt": "Multicam" }
+    {
+      "type": "video",
+      "featured": false,
+      "src": "https://res.cloudinary.com/zk5df6k0/video/upload/f_mp4,vc_h264,q_auto/proimagem/k9qj8fs9pmntjqzhpxp5.mp4",
+      "alt": "Multicam 1"
+    },
+    {
+      "type": "video",
+      "featured": false,
+      "src": "https://res.cloudinary.com/zk5df6k0/video/upload/f_mp4,vc_h264,q_auto/proimagem/oxgtyuqjra4hdr3a2msj.mp4",
+      "alt": "Multicam 2"
+    },
+    {
+      "type": "video",
+      "featured": false,
+      "src": "https://res.cloudinary.com/zk5df6k0/video/upload/f_mp4,vc_h264,q_auto/proimagem/ec5ulqkg0wd8bqkl7sie.mp4",
+      "alt": "Multicam 3"
+    },
+    {
+      "type": "video",
+      "featured": false,
+      "src": "https://res.cloudinary.com/zk5df6k0/video/upload/f_mp4,vc_h264,q_auto/proimagem/jsldnl0e3gc03kgpp0bt.mp4",
+      "alt": "Multicam 4"
+    },
+    {
+      "type": "video",
+      "featured": false,
+      "src": "https://res.cloudinary.com/zk5df6k0/video/upload/f_mp4,vc_h264,q_auto/proimagem/sla77rwhtjlllxoikzqx.mp4",
+      "alt": "Multicam 5"
+    },
+    {
+      "type": "video",
+      "featured": false,
+      "src": "https://res.cloudinary.com/zk5df6k0/video/upload/f_mp4,vc_h264,q_auto/proimagem/awui79chkgcsbgfc8vu3.mp4",
+      "alt": "Multicam 6"
+    },
+    {
+      "type": "video",
+      "featured": false,
+      "src": "https://res.cloudinary.com/zk5df6k0/video/upload/f_mp4,vc_h264,q_auto/proimagem/zj3p5qel082ohsflkwqa.mp4",
+      "alt": "Multicam 7"
+    },
+    {
+      "type": "video",
+      "featured": false,
+      "src": "https://res.cloudinary.com/zk5df6k0/video/upload/f_mp4,vc_h264,q_auto/proimagem/tjrxvgdpl3nglqphskzu.mp4",
+      "alt": "Multicam 8"
+    },
+    {
+      "type": "video",
+      "featured": false,
+      "src": "https://res.cloudinary.com/zk5df6k0/video/upload/f_mp4,vc_h264,q_auto/proimagem/oheqkrkw9za7f60ytajf.mp4",
+      "alt": "Multicam 9"
+    },
+    {
+      "type": "video",
+      "featured": false,
+      "src": "https://res.cloudinary.com/zk5df6k0/video/upload/f_mp4,vc_h264,q_auto/proimagem/ei78ez7yam4ns7dlewdq.mp4",
+      "alt": "Multicam 10"
+    }
   ]
 }

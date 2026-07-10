@@ -1,41 +1,41 @@
 "use client";
 
-import { useCallback, useEffect, useRef, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { EditorTopbar } from "@/components/admin/editor/EditorTopbar";
 import { RightEditorPanel } from "@/components/admin/editor/RightEditorPanel";
-import { SitePreviewCanvas } from "@/components/admin/editor/SitePreviewCanvas";
+import { SitePreviewFrame } from "@/components/admin/editor/SitePreviewFrame";
 import { EditorStoreProvider, useEditorStore } from "@/hooks/useEditorStore";
 import { previewUrlForSection } from "@/hooks/useAdmin";
 import {
   homeDataToPageEditor,
   pageEditorToHomeData
 } from "@/lib/admin/editor-types";
-import type { HomeData, MediaFile } from "@/lib/admin/sections";
+import type { AdminSection, HomeData, MediaFile } from "@/lib/admin/sections";
 
 type EditorShellProps = {
+  section: AdminSection;
   data: HomeData;
   pageLabel: string;
-  dirty: boolean;
   saving: boolean;
   uploading?: boolean;
   previewKey: number;
   onChange: (data: HomeData) => void;
   onDirty: () => void;
-  onSave: () => Promise<void>;
+  onRefreshPreview: () => void;
   onUpload?: (file: File) => Promise<string>;
   mediaLibrary?: MediaFile[];
 };
 
 function EditorShellInner({
+  section,
   data,
   pageLabel,
-  dirty,
   saving,
   uploading = false,
   previewKey,
   onChange,
   onDirty,
-  onSave,
+  onRefreshPreview,
   onUpload,
   mediaLibrary = []
 }: EditorShellProps) {
@@ -71,29 +71,17 @@ function EditorShellInner({
     }
   }, [selectedElementId]);
 
-  const handleSave = useCallback(async () => {
-    onChange(pageEditorToHomeData(pageData, data));
-    await onSave();
-  }, [pageData, data, onChange, onSave]);
-
-  const previewUrl = `${previewUrlForSection({
-    id: "home",
-    label: pageLabel,
-    file: "content/site.json",
-    type: "home",
-    page: "/",
-    hint: ""
-  })}?preview=1&t=${previewKey}`;
+  const previewUrl = previewUrlForSection(section, previewKey);
 
   return (
     <div className="flex min-h-0 flex-1 flex-col bg-black">
       <EditorTopbar
         pageLabel={pageLabel}
-        dirty={dirty}
         saving={saving}
+        uploading={uploading}
         previewOpen={false}
-        onSave={handleSave}
         onTogglePreview={() => window.open(previewUrl, "_blank")}
+        onRefreshPreview={onRefreshPreview}
       />
 
       <div className="flex border-b border-white/10 lg:hidden">
@@ -119,13 +107,11 @@ function EditorShellInner({
             mobileTab === "edit" ? "hidden lg:flex" : "flex"
           ].join(" ")}
         >
-          <SitePreviewCanvas />
+          <SitePreviewFrame src={previewUrl} onRefresh={onRefreshPreview} />
         </div>
 
         <div className="hidden shrink-0 lg:block">
           <RightEditorPanel
-            onSave={handleSave}
-            saving={saving}
             uploading={uploading}
             onUpload={onUpload}
             mediaLibrary={mediaLibrary}
@@ -140,8 +126,6 @@ function EditorShellInner({
           ].join(" ")}
         >
           <RightEditorPanel
-            onSave={handleSave}
-            saving={saving}
             uploading={uploading}
             onUpload={onUpload}
             mediaLibrary={mediaLibrary}
@@ -170,8 +154,6 @@ function EditorShellInner({
             </button>
           </div>
           <RightEditorPanel
-            onSave={handleSave}
-            saving={saving}
             uploading={uploading}
             onUpload={onUpload}
             mediaLibrary={mediaLibrary}

@@ -1,7 +1,7 @@
 "use client";
 
 import { Upload } from "lucide-react";
-import { MAX_UPLOAD_MB } from "@/lib/admin/sections";
+import { CLOUDINARY_MAX_UPLOAD_MB, MAX_UPLOAD_MB } from "@/lib/admin/sections";
 
 type MediaUploaderProps = {
   onFiles: (files: File[]) => void;
@@ -40,7 +40,7 @@ export function MediaUploader({
       </div>
       <p className="text-sm font-medium text-white">{label}</p>
       <p className="mt-1 text-xs text-zinc-500">
-        Imagens (JPG, PNG, WEBP) e vídeos (MP4, WEBM) · máx. {MAX_UPLOAD_MB} MB
+        Imagens e vídeos · até {MAX_UPLOAD_MB} MB (optimização automática acima de {CLOUDINARY_MAX_UPLOAD_MB} MB)
       </p>
       {uploading && <p className="mt-3 text-xs text-emerald-400 animate-pulse">A enviar…</p>}
     </label>

@@ -1,4 +1,5 @@
 import type { MediaFile } from "@/lib/admin/sections";
+import { guessMediaType } from "@/lib/admin/sections";
 
 export type MediaFilter = "all" | "image" | "video" | "cover";
 
@@ -56,7 +57,49 @@ export function filterMediaFiles(
 }
 
 export function publicIdFromUrl(url: string): string | null {
-  const match = url.match(/\/upload\/(?:v\d+\/)?(.+)\.[^/]+$/);
+  const match = url.match(/\/upload\/(?:[^/]+\/)*(?:v\d+\/)?(.+?)(?:\.[^/.]+)?$/);
   if (!match) return null;
   return decodeURIComponent(match[1]);
+}
+
+function cloudNameFromUrl(url: string): string | null {
+  return url.match(/res\.cloudinary\.com\/([^/]+)/)?.[1] ?? null;
+}
+
+/** URL que o browser consegue mostrar (HEIC → JPG/WEBP, vídeo → frame). */
+export function mediaThumbnailUrl(file: MediaFile): string {
+  const cloud = cloudNameFromUrl(file.url);
+  const publicId = file.publicId ?? publicIdFromUrl(file.url);
+  if (!cloud || !publicId) return file.url;
+
+  if (file.type === "video") {
+    return `https://res.cloudinary.com/${cloud}/video/upload/so_0,w_1200,h_750,c_fill,f_jpg,q_auto/${publicId}.jpg`;
+  }
+
+  return `https://res.cloudinary.com/${cloud}/image/upload/f_auto,q_auto,w_1200,c_limit/${publicId}`;
+}
+
+/** URL de reprodução para vídeos (MP4 compatível com Chrome). */
+export function mediaPlaybackUrl(file: MediaFile): string {
+  if (file.type !== "video") return file.url;
+
+  const cloud = cloudNameFromUrl(file.url);
+  const publicId = file.publicId ?? publicIdFromUrl(file.url);
+  if (!cloud || !publicId) return file.url;
+
+  return `https://res.cloudinary.com/${cloud}/video/upload/f_mp4,vc_h264,q_auto/${publicId}.mp4`;
+}
+
+export function mediaFileFromUpload(url: string, file: File): MediaFile {
+  const name = file.name || url.split("/").pop() || url;
+  const type = file.type.startsWith("video/") ? "video" : guessMediaType(url);
+
+  return {
+    url,
+    name,
+    type: type === "video" ? "video" : "image",
+    size: file.size,
+    createdAt: new Date().toISOString(),
+    publicId: publicIdFromUrl(url) ?? undefined
+  };
 }

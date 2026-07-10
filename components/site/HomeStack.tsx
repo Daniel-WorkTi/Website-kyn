@@ -27,7 +27,7 @@ export default function HomeStack({ items }: HomeStackProps) {
             }
           }}
         >
-          <MediaItem item={item} />
+          <MediaItem item={item} autoplay />
         </div>
       ))}
     </div>

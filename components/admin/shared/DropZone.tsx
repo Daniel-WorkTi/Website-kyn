@@ -2,7 +2,7 @@
 
 import { useCallback, useRef, useState } from "react";
 import { UploadIcon } from "@/components/admin/icons/ProimagemIcons";
-import { MAX_UPLOAD_MB } from "@/lib/admin/sections";
+import { CLOUDINARY_MAX_UPLOAD_MB, MAX_UPLOAD_MB } from "@/lib/admin/sections";
 
 type DropZoneProps = {
   accept?: string;
@@ -85,7 +85,7 @@ export function DropZone({
       </div>
       <p className="text-sm font-medium text-zinc-200">Arrasta ficheiros para aqui</p>
       <p className="mt-1 text-xs text-zinc-500">
-        ou clica para escolher · máximo {MAX_UPLOAD_MB} MB por ficheiro
+        ou clica para escolher · até {MAX_UPLOAD_MB} MB (ficheiros acima de {CLOUDINARY_MAX_UPLOAD_MB} MB são optimizados automaticamente)
       </p>
       {uploading && (
         <p className="mt-3 text-xs text-accent animate-pulse">A enviar ficheiros…</p>

@@ -134,19 +134,15 @@ export function HomeEditor({
               key={i}
               index={i}
               video={video}
-              onUpload={async (field, file) => {
-                const pattern = field === "src" ? /^video\// : /^image\//;
-                if (!file.type.match(pattern)) {
-                  showToast(
-                    field === "src" ? "Escolhe um ficheiro de vídeo." : "Escolhe uma imagem.",
-                    "error"
-                  );
+              onUpload={async (file) => {
+                if (!file.type.startsWith("video/")) {
+                  showToast("Escolhe um ficheiro de vídeo.", "error");
                   return;
                 }
                 try {
                   await processUpload(file, (url) => {
                     const next = [...videos];
-                    next[i] = { ...next[i], [field]: url };
+                    next[i] = { ...next[i], src: url, poster: "" };
                     patchHero({ videos: next });
                   });
                 } catch (err) {
@@ -154,7 +150,7 @@ export function HomeEditor({
                 }
               }}
               onClear={() => {
-                if (!window.confirm("Queres limpar este vídeo e a capa?")) return;
+                if (!window.confirm("Queres limpar este vídeo?")) return;
                 const next = [...videos];
                 next[i] = { src: "", poster: "" };
                 patchHero({ videos: next });
@@ -217,19 +213,28 @@ function HeroVideoCard({
 }: {
   index: number;
   video: { src: string; poster: string };
-  onUpload: (field: "src" | "poster", file: File) => Promise<void>;
+  onUpload: (file: File) => Promise<void>;
   onClear: () => void;
 }) {
   const srcRef = useRef<HTMLInputElement>(null);
-  const posterRef = useRef<HTMLInputElement>(null);
 
   return (
     <article className="overflow-hidden rounded-xl border border-white/[0.08] bg-[#141414]">
       <div className="relative aspect-video bg-black/40">
-        {video.poster ? (
-          <img src={video.poster} alt="" className="h-full w-full object-cover" />
+        {video.src ? (
+          <video
+            src={video.src}
+            autoPlay
+            muted
+            loop
+            playsInline
+            preload="auto"
+            className="h-full w-full object-cover"
+          />
         ) : (
-          <div className="flex h-full items-center justify-center text-sm text-zinc-500">Sem capa</div>
+          <div className="flex h-full items-center justify-center text-sm text-zinc-500">
+            Sem vídeo
+          </div>
         )}
         <span className="absolute left-2 top-2 rounded-md bg-black/70 px-2 py-0.5 text-[0.65rem] text-white">
           Vídeo {index + 1}
@@ -259,44 +264,10 @@ function HeroVideoCard({
             onChange={(e) => {
               const file = e.target.files?.[0];
               e.target.value = "";
-              if (file) onUpload("src", file);
+              if (file) onUpload(file);
             }}
           />
-        </div>
-        <div>
-          <FieldLabel>Imagem de capa</FieldLabel>
-          <div className="flex flex-wrap items-center gap-2">
-            {video.poster && (
-              <img
-                src={video.poster}
-                alt=""
-                className="size-12 rounded-lg border border-white/10 object-cover"
-              />
-            )}
-            <button
-              type="button"
-              onClick={() => posterRef.current?.click()}
-              className={[
-                "rounded-lg border px-3 py-1.5 text-xs transition",
-                video.poster
-                  ? "border-accent/30 bg-accent-dim text-accent"
-                  : "border-white/10 bg-white/[0.04] text-zinc-300 hover:bg-white/[0.08]"
-              ].join(" ")}
-            >
-              {video.poster ? "Capa carregada · Trocar" : "Carregar capa"}
-            </button>
-            <input
-              ref={posterRef}
-              type="file"
-              accept="image/*"
-              hidden
-              onChange={(e) => {
-                const file = e.target.files?.[0];
-                e.target.value = "";
-                if (file) onUpload("poster", file);
-              }}
-            />
-          </div>
+          <p className="mt-2 text-xs text-zinc-500">Inicia automaticamente no site.</p>
         </div>
         <button
           type="button"

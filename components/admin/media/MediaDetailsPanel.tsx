@@ -6,7 +6,9 @@ import {
   formatDimensions,
   formatDuration,
   formatFileSize,
-  formatMediaDate
+  formatMediaDate,
+  mediaPlaybackUrl,
+  mediaThumbnailUrl
 } from "@/lib/admin/media-utils";
 
 type MediaDetailsPanelProps = {
@@ -46,9 +48,19 @@ export function MediaDetailsPanel({
       <div className="overflow-hidden rounded-lg border border-white/10 bg-black">
         <div className="aspect-video">
           {file.type === "video" ? (
-            <video src={file.url} controls className="h-full w-full object-contain" />
+            <video
+              src={mediaPlaybackUrl(file)}
+              poster={mediaThumbnailUrl(file)}
+              controls
+              playsInline
+              className="h-full w-full object-contain"
+            />
           ) : (
-            <img src={file.url} alt={file.name} className="h-full w-full object-contain" />
+            <img
+              src={mediaThumbnailUrl(file)}
+              alt={file.name}
+              className="h-full w-full object-contain"
+            />
           )}
         </div>
       </div>

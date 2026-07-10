@@ -11,38 +11,15 @@ interface GalleryViewProps {
 
 export default function GalleryView({ data }: GalleryViewProps) {
   const { open } = useLightbox();
-  const featured = (data.items || []).filter((i) => i.featured);
-  const rest = (data.items || []).filter((i) => !i.featured);
+  const items = data.items || [];
 
   return (
     <>
       <PageHeading title={data.title} />
 
-      {featured.length > 0 && (
-        <div className="stack">
-          {featured.map((item, i) => (
-            <div
-              key={`featured-${item.src}-${i}`}
-              className="stack__item stack__item--viewport"
-              role="button"
-              tabIndex={0}
-              onClick={() => open(item)}
-              onKeyDown={(e) => {
-                if (e.key === "Enter" || e.key === " ") {
-                  e.preventDefault();
-                  open(item);
-                }
-              }}
-            >
-              <MediaItem item={item} autoplay={item.type === "video"} />
-            </div>
-          ))}
-        </div>
-      )}
-
-      {rest.length > 0 && (
+      {items.length > 0 && (
         <div className="supd-grid">
-          {rest.map((item, i) => (
+          {items.map((item, i) => (
             <div
               key={`grid-${item.src}-${i}`}
               className="supd-grid__cell"

@@ -4,7 +4,6 @@ import { useMemo, useState } from "react";
 import { RefreshCw, Search } from "lucide-react";
 import type { MediaFile } from "@/lib/admin/sections";
 import { filterMediaFiles, type MediaFilter } from "@/lib/admin/media-utils";
-import { MediaDetailsPanel } from "./MediaDetailsPanel";
 import { MediaGrid } from "./MediaGrid";
 import { MediaUploader } from "./MediaUploader";
 
@@ -36,19 +35,17 @@ export function MediaLibraryPage({
 }: MediaLibraryPageProps) {
   const [filter, setFilter] = useState<MediaFilter>("all");
   const [query, setQuery] = useState("");
-  const [selected, setSelected] = useState<MediaFile | null>(null);
-  const [deleting, setDeleting] = useState(false);
+  const [deletingUrl, setDeletingUrl] = useState<string | null>(null);
 
   const filtered = useMemo(() => filterMediaFiles(files, filter, query), [files, filter, query]);
 
   async function handleDelete(file: MediaFile) {
     if (!window.confirm(`Remover "${file.name}" da biblioteca?`)) return;
-    setDeleting(true);
+    setDeletingUrl(file.url);
     try {
       await onDelete(file);
-      if (selected?.url === file.url) setSelected(null);
     } finally {
-      setDeleting(false);
+      setDeletingUrl(null);
     }
   }
 
@@ -74,56 +71,50 @@ export function MediaLibraryPage({
         </div>
       </header>
 
-      <div className="sidebar-scroll flex-1 overflow-y-auto px-6 py-6 lg:px-8">
-        <div className="mx-auto grid max-w-7xl gap-6 xl:grid-cols-[1fr_320px]">
-          <div className="space-y-5">
-            <MediaUploader uploading={uploading} onFiles={onUpload} />
+      <div className="sidebar-scroll flex-1 overflow-y-auto px-6 py-8 lg:px-10">
+        <div className="mx-auto max-w-[1400px] space-y-6">
+          <MediaUploader uploading={uploading} onFiles={onUpload} />
 
-            <div className="flex flex-wrap gap-2">
-              {FILTERS.map((f) => (
-                <button
-                  key={f.id}
-                  type="button"
-                  onClick={() => setFilter(f.id)}
-                  className={[
-                    "rounded-lg border px-3 py-2 text-xs font-medium transition",
-                    filter === f.id
-                      ? "border-emerald-500/40 bg-emerald-500/10 text-emerald-400"
-                      : "border-white/10 text-zinc-400 hover:text-white"
-                  ].join(" ")}
-                >
-                  {f.label}
-                </button>
-              ))}
-            </div>
+          <div className="flex flex-wrap gap-2">
+            {FILTERS.map((f) => (
+              <button
+                key={f.id}
+                type="button"
+                onClick={() => setFilter(f.id)}
+                className={[
+                  "rounded-lg border px-4 py-2.5 text-xs font-medium transition",
+                  filter === f.id
+                    ? "border-emerald-500/40 bg-emerald-500/10 text-emerald-400"
+                    : "border-white/10 text-zinc-400 hover:text-white"
+                ].join(" ")}
+              >
+                {f.label}
+              </button>
+            ))}
+          </div>
 
-            <div className="relative">
-              <Search className="pointer-events-none absolute left-3 top-1/2 size-4 -translate-y-1/2 text-zinc-500" />
-              <input
-                type="search"
-                value={query}
-                onChange={(e) => setQuery(e.target.value)}
-                placeholder="Pesquisar mídia por nome…"
-                className="w-full rounded-xl border border-white/10 bg-white/[0.04] py-3 pl-10 pr-4 text-sm text-white outline-none focus:border-emerald-500/40"
-              />
-            </div>
-
-            <p className="text-xs text-zinc-600">
-              {filtered.length} {filtered.length === 1 ? "ficheiro" : "ficheiros"}
-            </p>
-
-            <MediaGrid
-              files={filtered}
-              selectedUrl={selected?.url}
-              onOpen={setSelected}
+          <div className="relative">
+            <Search className="pointer-events-none absolute left-4 top-1/2 size-4 -translate-y-1/2 text-zinc-500" />
+            <input
+              type="search"
+              value={query}
+              onChange={(e) => setQuery(e.target.value)}
+              placeholder="Pesquisar mídia por nome…"
+              className="w-full rounded-xl border border-white/10 bg-white/[0.04] py-3.5 pl-11 pr-4 text-sm text-white outline-none focus:border-emerald-500/40"
             />
           </div>
 
-          <MediaDetailsPanel
-            file={selected}
+          <p className="text-xs text-zinc-600">
+            {filtered.length} {filtered.length === 1 ? "ficheiro" : "ficheiros"}
+          </p>
+
+          <MediaGrid
+            files={filtered}
+            variant="library"
             onCopyUrl={onCopyUrl}
             onDelete={handleDelete}
-            deleting={deleting}
+            deletingUrl={deletingUrl}
+            emptyMessage="Nenhuma mídia na biblioteca. Usa o botão acima para enviar ficheiros."
           />
         </div>
       </div>

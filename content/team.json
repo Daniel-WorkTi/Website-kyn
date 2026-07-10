@@ -4,58 +4,42 @@
     {
       "name": "Kym Willer",
       "roles": "Cam OP · Photographer",
-      "photo": "",
+      "photo": "https://res.cloudinary.com/zk5df6k0/image/upload/f_auto,q_auto,w_1200,c_limit/proimagem/pfrhxpvqvwucwridm9lo",
       "skills": ["videographer", "photography"]
     },
     {
       "name": "Ruan Costa",
       "roles": "Cam OP · Drone OP · Editor",
-      "photo": "",
+      "photo": "https://res.cloudinary.com/zk5df6k0/image/upload/f_auto,q_auto,w_1200,c_limit/proimagem/ijdfz7uqzv0uqow2zsr3",
       "skills": ["videographer", "drone", "editor"]
     },
     {
       "name": "Henrique Monteiro",
       "roles": "Cam OP · Editor",
-      "photo": "",
+      "photo": "https://res.cloudinary.com/zk5df6k0/image/upload/f_auto,q_auto,w_1200,c_limit/proimagem/fj8ajx7onizzgbjelzzk",
       "skills": ["videographer", "editor"]
     }
   ],
   "members": [
     {
-      "name": "Alexandre Balas",
-      "roles": "FPV / Drone OP",
-      "skills": ["fpv", "drone"],
-      "photo": ""
-    },
-    {
       "name": "Eduardo Lima",
       "roles": "Cam OP · Drone OP",
       "skills": ["videographer", "drone"],
-      "photo": ""
-    },
-    {
-      "name": "Eduardo Ramos",
-      "roles": "Photographer",
-      "skills": ["photography"],
-      "photo": ""
-    },
-    {
-      "name": "Francisco Santos",
-      "roles": "Cam OP",
-      "skills": ["videographer"],
-      "photo": ""
+      "photo": "https://res.cloudinary.com/zk5df6k0/image/upload/f_auto,q_auto,w_1200,c_limit/proimagem/jypbqwri66wemqngrjkf"
     },
     {
       "name": "Ikaro Fonseca",
       "roles": "Photographer · Cam OP",
       "skills": ["photography", "videographer"],
-      "photo": ""
+      "photo": "https://res.cloudinary.com/zk5df6k0/image/upload/f_auto,q_auto,w_1200,c_limit/proimagem/ijpjijq5ruvhtiad6gut",
+      "photoPosition": "center 35%"
     },
     {
-      "name": "Isabelli Raso",
-      "roles": "Editor · Social Media Management",
-      "skills": ["editor", "social-media"],
-      "photo": ""
+      "name": "Francisco Santos",
+      "roles": "Cam OP",
+      "skills": ["videographer"],
+      "photo": "https://res.cloudinary.com/zk5df6k0/image/upload/f_auto,q_auto,w_1200,c_limit/proimagem/ll297ff7wwuekx3wgfo0",
+      "photoPosition": "center 58%"
     }
   ]
 }
