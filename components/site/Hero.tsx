@@ -110,21 +110,20 @@ export default function Hero({ hero, brand }: HeroProps) {
         <div className={contentClass} id="hero-content">
           <h1 className="hero__title hero-animate">{title}</h1>
           {lines.length > 0 && (
-            <p className="hero__subtitle">
+            <div className="hero__subtitle">
               {lines.map((line, i) => (
-                <span
+                <p
                   key={i}
                   className={`hero__line hero-animate hero-animate--${i + 1}`}
                 >
-                  {line.split("|").map((part) => part.trim()).filter(Boolean).map((topic, j, arr) => (
-                    <span key={`${i}-${j}`} className="hero__topic">
-                      {j > 0 && <span className="hero__sep" aria-hidden="true">|</span>}
-                      {topic}
-                    </span>
-                  ))}
-                </span>
+                  {line
+                    .split("|")
+                    .map((part) => part.trim())
+                    .filter(Boolean)
+                    .join(" | ")}
+                </p>
               ))}
-            </p>
+            </div>
           )}
         </div>
       </div>
