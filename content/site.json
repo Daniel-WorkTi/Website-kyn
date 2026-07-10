@@ -41,14 +41,10 @@
     }
   ],
   "hero": {
-    "title": "PROIMAGEM.PT",
+    "title": "PROIMAGEM.P",
     "subtitleLines": [
-      "MULTICAM",
-      "AFTERMOVIE",
-      "PHOTOGRAPHY",
-      "FPV/DRONE",
-      "SOCIAL MEDIA",
-      "STUDIO SPACE"
+      "MULTICAM | AFTERMOVIE | PHOTOGRAPHY",
+      "FPV/DRONE | SOCIAL MEDIA | STUDIO SPACE"
     ],
     "videos": [
       {
@@ -65,7 +61,7 @@
     "buttonStyle": "primary",
     "buttonVisible": true,
     "mediaType": "video",
-    "imageSrc": "https://res.cloudinary.com/zk5df6k0/video/upload/so_0,w_2800,f_jpg,q_auto/v1783465685/VID2_zlwavi.jpg",
+    "imageSrc": "",
     "visible": true,
     "titleSize": "large",
     "titleAlign": "center",
