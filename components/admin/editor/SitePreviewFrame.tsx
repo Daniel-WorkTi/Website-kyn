@@ -5,10 +5,11 @@ import { useEditorStore } from "@/hooks/useEditorStore";
 
 type SitePreviewFrameProps = {
   src: string;
+  previewKey?: number;
   onRefresh?: () => void;
 };
 
-export function SitePreviewFrame({ src, onRefresh }: SitePreviewFrameProps) {
+export function SitePreviewFrame({ src, previewKey = 0, onRefresh }: SitePreviewFrameProps) {
   const { devicePreview } = useEditorStore();
 
   return (
@@ -44,19 +45,19 @@ export function SitePreviewFrame({ src, onRefresh }: SitePreviewFrameProps) {
         {devicePreview === "mobile" ? (
           <div className="h-full min-h-[640px] w-[390px] shrink-0 overflow-hidden rounded-[24px] border border-white/10 bg-black shadow-[0_24px_80px_rgba(0,0,0,0.5)]">
             <iframe
-              key={src}
+              key={`${src}-${previewKey}-mobile`}
               src={src}
               title="Site original — mobile"
-              className="h-full w-full border-0 bg-white"
+              className="h-full w-full border-0 bg-black"
             />
           </div>
         ) : (
           <div className="flex h-full min-h-0 w-full max-w-6xl flex-1 overflow-hidden rounded-2xl border border-white/10 bg-black shadow-[0_24px_80px_rgba(0,0,0,0.5)]">
             <iframe
-              key={src}
+              key={`${src}-${previewKey}-desktop`}
               src={src}
               title="Site original — desktop"
-              className="h-full w-full min-h-[640px] border-0 bg-white"
+              className="h-full w-full min-h-[640px] border-0 bg-black"
             />
           </div>
         )}

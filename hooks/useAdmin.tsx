@@ -53,6 +53,7 @@ type AdminContextValue = {
   mediaLibrary: MediaFile[];
   mediaLoading: boolean;
   previewKey: number;
+  loadError: string | null;
   navigate: (id: SidebarSectionId) => void;
   login: (username: string, password: string) => Promise<void>;
   logout: () => Promise<void>;
@@ -71,6 +72,7 @@ type AdminContextValue = {
   togglePreview: (force?: boolean) => void;
   setPreviewViewport: (viewport: "desktop" | "mobile") => void;
   refreshPreview: () => void;
+  reloadSection: () => void;
 };
 
 const AdminContext = createContext<AdminContextValue | null>(null);
@@ -91,10 +93,22 @@ export function AdminProvider({ children }: { children: ReactNode }) {
   const [mediaLibrary, setMediaLibrary] = useState<MediaFile[]>([]);
   const [mediaLoading, setMediaLoading] = useState(false);
   const [previewKey, setPreviewKey] = useState(0);
+  const [loadError, setLoadError] = useState<string | null>(null);
 
   const mediaCacheRef = useRef<MediaFile[] | null>(null);
   const savingRef = useRef(false);
   const saveRef = useRef<(options?: { silent?: boolean }) => Promise<boolean>>(async () => false);
+  const autoSaveBlockedRef = useRef(false);
+  const activeLoadsRef = useRef(0);
+  const loadSectionRef = useRef<(id: SidebarSectionId, skipDirtyCheck?: boolean) => Promise<void>>(
+    async () => {}
+  );
+  const dataRef = useRef(data);
+  const dirtyRef = useRef(dirty);
+  const sectionIdRef = useRef(sectionId);
+  dataRef.current = data;
+  dirtyRef.current = dirty;
+  sectionIdRef.current = sectionId;
   const section = getSectionById(sectionId);
 
   useEffect(() => {
@@ -110,7 +124,10 @@ export function AdminProvider({ children }: { children: ReactNode }) {
 
   const dismissToast = useCallback(() => setToast(null), []);
 
-  const markDirty = useCallback(() => setDirty(true), []);
+  const markDirty = useCallback(() => {
+    autoSaveBlockedRef.current = false;
+    setDirty(true);
+  }, []);
 
   const setData = useCallback((next: SectionData) => {
     setDataState(next);
@@ -123,15 +140,17 @@ export function AdminProvider({ children }: { children: ReactNode }) {
       const files = await loadMediaLibrary(true, null);
       mediaCacheRef.current = files;
       setMediaLibrary(files);
+    } catch (err) {
+      showToast(err instanceof Error ? err.message : "Erro ao carregar mídias.", "error");
     } finally {
       setMediaLoading(false);
     }
-  }, []);
+  }, [showToast]);
 
   const loadSection = useCallback(
-    async (id: SidebarSectionId, skipDirtyCheck = false) => {
-      if (!skipDirtyCheck && dirty && data) {
-        const current = getSectionById(sectionId);
+    async (id: SidebarSectionId, skipDirtyCheck = false, keepContent = false) => {
+      if (!skipDirtyCheck && dirtyRef.current && dataRef.current) {
+        const current = getSectionById(sectionIdRef.current);
         if (current.type !== "media") {
           const saved = await saveRef.current({ silent: true });
           if (!saved) return;
@@ -141,26 +160,32 @@ export function AdminProvider({ children }: { children: ReactNode }) {
       const nextSection = getSectionById(id);
       setSectionId(id);
       setDirty(false);
-
-      if (nextSection.type === "media") {
-        setLoading(true);
+      autoSaveBlockedRef.current = false;
+      setLoadError(null);
+      if (!keepContent) {
         setDataState(null);
         setSha(null);
-        try {
+      }
+
+      activeLoadsRef.current += 1;
+      setLoading(true);
+
+      const safetyTimer = window.setTimeout(() => {
+        if (activeLoadsRef.current > 0) {
+          activeLoadsRef.current = 0;
+          setLoading(false);
+          setLoadError("O carregamento demorou demasiado. Tenta novamente.");
+        }
+      }, 30_000);
+
+      try {
+        if (nextSection.type === "media") {
           const files = await loadMediaLibrary(true, null);
           mediaCacheRef.current = files;
           setMediaLibrary(files);
-        } catch (err) {
-          showToast(err instanceof Error ? err.message : "Erro ao carregar mídias.", "error");
-        } finally {
-          setLoading(false);
+          return;
         }
-        return;
-      }
 
-      setLoading(true);
-
-      try {
         const { data: loaded, sha: loadedSha } = await loadContentFile<SectionData>(nextSection.file);
         const prepared =
           nextSection.type === "gallery"
@@ -170,24 +195,41 @@ export function AdminProvider({ children }: { children: ReactNode }) {
         setSha(loadedSha);
         setPreviewKey((k) => k + 1);
 
-        const files = await loadMediaLibrary(false, mediaCacheRef.current);
-        mediaCacheRef.current = files;
-        setMediaLibrary(files);
+        void loadMediaLibrary(false, mediaCacheRef.current)
+          .then((files) => {
+            mediaCacheRef.current = files;
+            setMediaLibrary(files);
+          })
+          .catch(() => {});
       } catch (err) {
-        showToast(err instanceof Error ? err.message : "Erro ao carregar.", "error");
+        const message = err instanceof Error ? err.message : "Erro ao carregar.";
+        setLoadError(message);
+        showToast(message, "error");
         setDataState(null);
       } finally {
-        setLoading(false);
+        window.clearTimeout(safetyTimer);
+        activeLoadsRef.current = Math.max(0, activeLoadsRef.current - 1);
+        if (activeLoadsRef.current === 0) {
+          setLoading(false);
+        }
       }
     },
-    [data, dirty, sectionId, showToast]
+    [showToast]
   );
 
+  loadSectionRef.current = loadSection;
+
   useEffect(() => {
-    if (authenticated) {
-      loadSection("home", true);
+    if (!authenticated) {
+      activeLoadsRef.current = 0;
+      setLoading(false);
+      setLoadError(null);
+      return;
     }
-  }, [authenticated]); // eslint-disable-line react-hooks/exhaustive-deps
+
+    setLoading(true);
+    void loadSectionRef.current("home", true);
+  }, [authenticated]);
 
   const navigate = useCallback(
     (id: SidebarSectionId) => {
@@ -197,20 +239,19 @@ export function AdminProvider({ children }: { children: ReactNode }) {
     [loadSection, sectionId]
   );
 
-  const login = useCallback(
-    async (username: string, password: string) => {
-      await apiLogin(username, password);
-      setAuthenticated(true);
-      await loadSection("home", true);
-    },
-    [loadSection]
-  );
+  const login = useCallback(async (username: string, password: string) => {
+    await apiLogin(username, password);
+    setAuthenticated(true);
+  }, []);
 
   const logout = useCallback(async () => {
     await apiLogout();
     setAuthenticated(false);
     setDataState(null);
     setDirty(false);
+    setLoadError(null);
+    setLoading(false);
+    activeLoadsRef.current = 0;
   }, []);
 
   const registerUploadedMedia = useCallback((url: string, file: File) => {
@@ -307,11 +348,16 @@ export function AdminProvider({ children }: { children: ReactNode }) {
           ? prepareGalleryForSection(section.id, data as GalleryData)
           : data;
       const newSha = await saveContent(section.file, payload, sha, section.label);
-      if (section.type === "gallery" && payload !== data) {
-        setDataState(payload as SectionData);
+      if (section.type === "gallery") {
+        setDataState((current) => {
+          if (!current) return current;
+          const next = prepareGalleryForSection(section.id, current as GalleryData);
+          return JSON.stringify(next) === JSON.stringify(current) ? current : next;
+        });
       }
       setSha(newSha);
       setDirty(false);
+      autoSaveBlockedRef.current = false;
       mediaCacheRef.current = null;
       if (!silent) {
         showToast("Alterações guardadas! O site atualiza em cerca de 1 minuto.", "ok");
@@ -321,6 +367,7 @@ export function AdminProvider({ children }: { children: ReactNode }) {
     } catch (err) {
       const message = err instanceof Error ? err.message : "Erro ao guardar.";
       showToast(message, "error");
+      autoSaveBlockedRef.current = true;
       if (message.includes("Sessão")) {
         setAuthenticated(false);
       }
@@ -334,14 +381,24 @@ export function AdminProvider({ children }: { children: ReactNode }) {
   saveRef.current = save;
 
   useEffect(() => {
-    if (!sessionChecked || !authenticated || !dirty || !data || section.type === "media") return;
+    if (
+      !sessionChecked ||
+      !authenticated ||
+      !dirty ||
+      !data ||
+      section.type === "media" ||
+      autoSaveBlockedRef.current
+    ) {
+      return;
+    }
 
     const timer = window.setTimeout(() => {
+      if (autoSaveBlockedRef.current) return;
       void saveRef.current({ silent: true });
     }, AUTO_SAVE_DELAY_MS);
 
     return () => window.clearTimeout(timer);
-  }, [sessionChecked, authenticated, dirty, data, section.type, section.file]);
+  }, [sessionChecked, authenticated, dirty, section.type, section.file]);
 
   const togglePreview = useCallback((force?: boolean) => {
     setPreviewOpen((prev) => (typeof force === "boolean" ? force : !prev));
@@ -350,6 +407,10 @@ export function AdminProvider({ children }: { children: ReactNode }) {
   const refreshPreview = useCallback(() => {
     setPreviewKey((k) => k + 1);
   }, []);
+
+  const reloadSection = useCallback(() => {
+    void loadSection(sectionId, true, true);
+  }, [loadSection, sectionId]);
 
   const value = useMemo<AdminContextValue>(
     () => ({
@@ -368,6 +429,7 @@ export function AdminProvider({ children }: { children: ReactNode }) {
       mediaLibrary,
       mediaLoading,
       previewKey,
+      loadError,
       navigate,
       login,
       logout,
@@ -381,7 +443,8 @@ export function AdminProvider({ children }: { children: ReactNode }) {
       deleteMedia,
       togglePreview,
       setPreviewViewport,
-      refreshPreview
+      refreshPreview,
+      reloadSection
     }),
     [
       sessionChecked,
@@ -399,6 +462,7 @@ export function AdminProvider({ children }: { children: ReactNode }) {
       mediaLibrary,
       mediaLoading,
       previewKey,
+      loadError,
       navigate,
       login,
       logout,
@@ -412,7 +476,8 @@ export function AdminProvider({ children }: { children: ReactNode }) {
       deleteMedia,
       togglePreview,
       setPreviewViewport,
-      refreshPreview
+      refreshPreview,
+      reloadSection
     ]
   );
 

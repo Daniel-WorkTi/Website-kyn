@@ -18,16 +18,42 @@ if (-not (Test-Path "node_modules")) {
 }
 
 # Libertar porta 3000 se um servidor antigo ficou preso
-foreach ($port in 3000) {
-  $conns = Get-NetTCPConnection -LocalPort $port -State Listen -ErrorAction SilentlyContinue
-  foreach ($c in $conns) {
-    $proc = Get-Process -Id $c.OwningProcess -ErrorAction SilentlyContinue
-    if ($proc -and $proc.ProcessName -match "node") {
-      Write-Host "A encerrar processo node na porta $port (PID $($proc.Id))..." -ForegroundColor Yellow
-      Stop-Process -Id $proc.Id -Force -ErrorAction SilentlyContinue
-      Start-Sleep -Seconds 1
+function Stop-ListenerOnPort {
+  param([int]$Port)
+
+  $pids = [System.Collections.Generic.HashSet[int]]::new()
+  try {
+    Get-NetTCPConnection -LocalPort $Port -State Listen -ErrorAction SilentlyContinue |
+      ForEach-Object { [void]$pids.Add($_.OwningProcess) }
+  } catch {
+    # ignore
+  }
+
+  if ($pids.Count -eq 0) {
+    netstat -ano | Select-String ":$Port\s" | ForEach-Object {
+      if ($_ -match "LISTENING\s+(\d+)\s*$") {
+        [void]$pids.Add([int]$Matches[1])
+      }
     }
   }
+
+  foreach ($procId in $pids) {
+    $proc = Get-Process -Id $procId -ErrorAction SilentlyContinue
+    if (-not $proc) { continue }
+    Write-Host "A encerrar $($proc.ProcessName) na porta $Port (PID $procId)..." -ForegroundColor Yellow
+    Stop-Process -Id $procId -Force -ErrorAction SilentlyContinue
+  }
+
+  if ($pids.Count -gt 0) {
+    Start-Sleep -Seconds 2
+  }
+}
+
+Stop-ListenerOnPort -Port 3000
+
+if (Test-Path ".next") {
+  Write-Host "A limpar cache de compilacao (.next)..." -ForegroundColor Yellow
+  Remove-Item -Recurse -Force ".next"
 }
 
 Write-Host ""

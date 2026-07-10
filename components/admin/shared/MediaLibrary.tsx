@@ -2,14 +2,16 @@
 
 import { RefreshCw } from "lucide-react";
 import type { MediaFile } from "@/lib/admin/sections";
+import { mediaPlaybackUrl, mediaThumbnailUrl } from "@/lib/admin/media-utils";
 
 type MediaLibraryProps = {
   files: MediaFile[];
-  hint: string;
+  hint?: string;
   filter?: "all" | "video" | "image";
   onSelect: (url: string, type: string) => void;
   onRefresh: () => void;
   loading?: boolean;
+  compact?: boolean;
 };
 
 export function MediaLibrary({
@@ -18,49 +20,64 @@ export function MediaLibrary({
   filter = "all",
   onSelect,
   onRefresh,
-  loading = false
+  loading = false,
+  compact = false
 }: MediaLibraryProps) {
-  const filtered =
-    filter === "all" ? files : files.filter((f) => f.type === filter);
+  const filtered = filter === "all" ? files : files.filter((f) => f.type === filter);
 
   return (
-    <section className="rounded-xl border border-white/[0.06] bg-white/[0.02] p-4">
-      <div className="mb-3 flex items-start justify-between gap-4">
-        <h2 className="text-base font-medium text-white">Biblioteca de ficheiros</h2>
+    <section className="rounded-lg border border-white/[0.06] bg-white/[0.02] p-3">
+      <div className="mb-2 flex items-center justify-between gap-3">
+        <h3 className="text-xs font-medium text-zinc-300">Biblioteca</h3>
         <button
           type="button"
           onClick={onRefresh}
           disabled={loading}
-          className="inline-flex items-center gap-1.5 rounded-lg border border-white/10 bg-white/[0.04] px-3 py-1.5 text-xs text-zinc-300 transition hover:bg-white/[0.08] disabled:opacity-50"
+          className="inline-flex items-center gap-1 rounded-md px-2 py-1 text-[10px] text-zinc-500 transition hover:bg-white/[0.05] hover:text-zinc-300 disabled:opacity-50"
         >
-          <RefreshCw className={["size-3.5", loading ? "animate-spin" : ""].join(" ")} strokeWidth={1.75} />
+          <RefreshCw className={["size-3", loading ? "animate-spin" : ""].join(" ")} strokeWidth={1.75} />
           Atualizar
         </button>
       </div>
-      <p className="mb-4 text-sm text-zinc-500">{hint}</p>
+
+      {hint ? <p className="mb-3 text-[11px] leading-relaxed text-zinc-600">{hint}</p> : null}
 
       {!filtered.length ? (
-        <p className="rounded-xl border border-dashed border-white/10 px-4 py-8 text-center text-sm text-zinc-600">
-          Ainda não há ficheiros carregados. Usa a área de envio abaixo.
+        <p className="rounded-lg border border-dashed border-white/[0.08] px-3 py-6 text-center text-[11px] text-zinc-600">
+          Sem ficheiros. Envia pela área de envio.
         </p>
       ) : (
-        <div className="grid grid-cols-3 gap-2 sm:grid-cols-4 md:grid-cols-5 lg:grid-cols-6">
+        <div
+          className={[
+            "grid gap-1.5",
+            compact ? "grid-cols-4" : "grid-cols-3 sm:grid-cols-4"
+          ].join(" ")}
+        >
           {filtered.map((file) => (
             <button
               key={file.url}
               type="button"
               title={file.name}
               onClick={() => onSelect(file.url, file.type)}
-              className="group relative aspect-square overflow-hidden rounded-xl border border-white/10 bg-black/40 transition hover:border-accent/40 hover:ring-1 hover:ring-accent/30"
+              className="relative aspect-square overflow-hidden rounded-md border border-white/[0.08] bg-black/40 transition hover:border-white/25"
             >
               {file.type === "video" ? (
-                <video src={file.url} muted playsInline className="h-full w-full object-cover" />
+                <video
+                  src={mediaPlaybackUrl(file)}
+                  poster={mediaThumbnailUrl(file)}
+                  muted
+                  playsInline
+                  preload="metadata"
+                  className="h-full w-full object-cover"
+                />
               ) : (
-                <img src={file.url} alt="" loading="lazy" className="h-full w-full object-cover" />
+                <img
+                  src={mediaThumbnailUrl(file)}
+                  alt=""
+                  loading="lazy"
+                  className="h-full w-full object-cover"
+                />
               )}
-              <span className="absolute bottom-1 left-1 rounded bg-black/70 px-1.5 py-0.5 text-[0.6rem] text-white">
-                {file.type === "video" ? "Vídeo" : "Foto"}
-              </span>
             </button>
           ))}
         </div>
@@ -79,28 +96,31 @@ export function SectionBlock({
   children: React.ReactNode;
 }) {
   return (
-    <section className="space-y-4">
-      <div>
-        <h2 className="text-base font-medium text-white">{title}</h2>
-        {subtitle && <p className="mt-1 text-sm text-zinc-500">{subtitle}</p>}
+    <section className="space-y-4 border-b border-white/[0.05] pb-6 last:border-0 last:pb-0">
+      <div className="space-y-1">
+        <h2 className="text-sm font-medium text-white">{title}</h2>
+        {subtitle ? <p className="text-[11px] leading-relaxed text-zinc-500">{subtitle}</p> : null}
       </div>
-      {children}
+      <div className="space-y-4">{children}</div>
     </section>
   );
 }
 
 export function EmptyState({ title, text }: { title: string; text: string }) {
   return (
-    <div className="rounded-xl border border-dashed border-white/10 px-6 py-10 text-center">
-      <p className="text-sm font-medium text-zinc-400">{title}</p>
-      <p className="mt-1 text-sm text-zinc-600">{text}</p>
+    <div className="rounded-lg border border-dashed border-white/[0.08] px-4 py-8 text-center">
+      <p className="text-xs font-medium text-zinc-500">{title}</p>
+      <p className="mt-1 text-[11px] text-zinc-600">{text}</p>
     </div>
   );
 }
 
 export function FieldLabel({ children, htmlFor }: { children: React.ReactNode; htmlFor?: string }) {
   return (
-    <label htmlFor={htmlFor} className="mb-1.5 block text-xs text-zinc-400">
+    <label
+      htmlFor={htmlFor}
+      className="mb-2 block text-[11px] font-medium uppercase tracking-[0.1em] text-zinc-500"
+    >
       {children}
     </label>
   );
@@ -124,7 +144,7 @@ export function TextInput({
       value={value}
       onChange={(e) => onChange(e.target.value)}
       placeholder={placeholder}
-      className="w-full rounded-lg border border-white/10 bg-[#0a0a0a] px-3 py-2.5 text-sm text-white outline-none transition focus:border-accent/40"
+      className="box-border w-full min-h-[40px] rounded-lg border border-white/[0.08] bg-[#0a0a0a] px-3 py-2 text-sm leading-normal text-white outline-none transition placeholder:text-zinc-600 focus:border-white/20"
     />
   );
 }
@@ -146,22 +166,20 @@ export function TextArea({
       rows={rows}
       value={value}
       onChange={(e) => onChange(e.target.value)}
-      className="w-full resize-y rounded-lg border border-white/10 bg-[#0a0a0a] px-3 py-2.5 text-sm text-white outline-none transition focus:border-accent/40"
+      className="box-border w-full resize-y rounded-lg border border-white/[0.08] bg-[#0a0a0a] px-3 py-2.5 text-sm leading-relaxed text-white outline-none transition focus:border-white/20"
     />
   );
 }
 
 export function AddButton({ onClick, label }: { onClick: () => void; label: string }) {
   return (
-    <div className="pt-2">
-      <button
-        type="button"
-        onClick={onClick}
-        className="rounded-lg border border-white/10 bg-white/[0.04] px-4 py-2 text-sm text-zinc-300 transition hover:bg-white/[0.08] hover:text-white"
-      >
-        {label}
-      </button>
-    </div>
+    <button
+      type="button"
+      onClick={onClick}
+      className="w-full rounded-lg border border-dashed border-white/[0.1] py-2.5 text-xs text-zinc-500 transition hover:border-white/20 hover:bg-white/[0.03] hover:text-zinc-300"
+    >
+      + {label}
+    </button>
   );
 }
 
@@ -176,9 +194,9 @@ export function UploadOverlayButton({
     <button
       type="button"
       onClick={onClick}
-      className="group relative flex size-full items-center justify-center overflow-hidden rounded-xl border border-white/10 bg-white/[0.03] transition hover:border-white/20"
+      className="group relative flex size-full items-center justify-center overflow-hidden rounded-lg border border-white/[0.08] bg-white/[0.02] transition hover:border-white/20"
     >
-      <span className="absolute inset-0 flex items-center justify-center bg-black/50 text-xs font-medium text-white opacity-0 transition group-hover:opacity-100">
+      <span className="absolute inset-0 flex items-center justify-center bg-black/50 text-[11px] text-white opacity-0 transition group-hover:opacity-100">
         {label}
       </span>
     </button>

@@ -2,7 +2,6 @@
 
 import { useCallback, useRef, useState } from "react";
 import { UploadIcon } from "@/components/admin/icons/ProimagemIcons";
-import { CLOUDINARY_MAX_UPLOAD_MB, MAX_UPLOAD_MB } from "@/lib/admin/sections";
 
 type DropZoneProps = {
   accept?: string;
@@ -54,11 +53,11 @@ export function DropZone({
         handleFiles(e.dataTransfer.files);
       }}
       className={[
-        "group relative flex cursor-pointer flex-col items-center justify-center rounded-xl",
-        "border-2 border-dashed px-4 py-6 text-center transition-all duration-200",
+        "group relative flex cursor-pointer flex-col items-center justify-center rounded-lg",
+        "border border-dashed px-4 py-5 text-center transition",
         dragOver
-          ? "border-accent/60 bg-accent-dim"
-          : "border-white/10 bg-white/[0.02] hover:border-white/20 hover:bg-white/[0.04]",
+          ? "border-white/25 bg-white/[0.04]"
+          : "border-white/[0.08] bg-white/[0.02] hover:border-white/15",
         uploading ? "pointer-events-none opacity-60" : "",
         className
       ].join(" ")}
@@ -74,22 +73,13 @@ export function DropZone({
           e.target.value = "";
         }}
       />
-      <div
-        className={[
-          "mb-3 flex size-11 items-center justify-center rounded-xl",
-          "border border-white/10 bg-white/[0.04] text-zinc-400",
-          "group-hover:text-accent transition-colors"
-        ].join(" ")}
-      >
-        <UploadIcon className="size-5" />
+      <div className="mb-2 flex size-9 items-center justify-center rounded-lg border border-white/[0.08] text-zinc-500 transition group-hover:text-zinc-300">
+        <UploadIcon className="size-4" />
       </div>
-      <p className="text-sm font-medium text-zinc-200">Arrasta ficheiros para aqui</p>
-      <p className="mt-1 text-xs text-zinc-500">
-        ou clica para escolher · até {MAX_UPLOAD_MB} MB (ficheiros acima de {CLOUDINARY_MAX_UPLOAD_MB} MB são optimizados automaticamente)
-      </p>
-      {uploading && (
-        <p className="mt-3 text-xs text-accent animate-pulse">A enviar ficheiros…</p>
-      )}
+      <p className="text-xs text-zinc-400">Arrastar ou clicar para enviar</p>
+      {uploading ? (
+        <p className="mt-2 text-[10px] text-zinc-500">A enviar…</p>
+      ) : null}
     </div>
   );
 }

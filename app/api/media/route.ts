@@ -1,6 +1,6 @@
 import { NextRequest } from "next/server";
 import { requireAdminRequest } from "@/lib/admin/auth-request";
-import { CLOUDINARY_FOLDER, configureCloudinary, isCloudinaryConfigured } from "@/lib/cloudinary";
+import { configureCloudinary, isCloudinaryConfigured } from "@/lib/cloudinary";
 import type { MediaFile } from "@/lib/admin/sections";
 
 type CloudinaryResource = {
@@ -36,7 +36,7 @@ export async function GET(req: NextRequest) {
   if (admin instanceof Response) return admin;
 
   if (!isCloudinaryConfigured()) {
-    return Response.json({ files: [] });
+    return Response.json({ files: [], configured: false });
   }
 
   try {
@@ -46,13 +46,11 @@ export async function GET(req: NextRequest) {
       cloudinary.api.resources({
         type: "upload",
         resource_type: "image",
-        prefix: CLOUDINARY_FOLDER,
         max_results: 500
       }),
       cloudinary.api.resources({
         type: "upload",
         resource_type: "video",
-        prefix: CLOUDINARY_FOLDER,
         max_results: 500
       })
     ]);
@@ -61,7 +59,7 @@ export async function GET(req: NextRequest) {
       .map((item: CloudinaryResource) => mapResource(item))
       .sort((a, b) => (b.createdAt || "").localeCompare(a.createdAt || ""));
 
-    return Response.json({ files });
+    return Response.json({ files, configured: true });
   } catch (err) {
     return Response.json(
       { error: err instanceof Error ? err.message : "Erro" },

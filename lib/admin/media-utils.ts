@@ -57,9 +57,27 @@ export function filterMediaFiles(
 }
 
 export function publicIdFromUrl(url: string): string | null {
-  const match = url.match(/\/upload\/(?:[^/]+\/)*(?:v\d+\/)?(.+?)(?:\.[^/.]+)?$/);
-  if (!match) return null;
-  return decodeURIComponent(match[1]);
+  if (!url.includes("/upload/")) return null;
+
+  const afterUpload = url.split("/upload/")[1];
+  if (!afterUpload) return null;
+
+  const segments = afterUpload.split("/").filter(Boolean);
+  let index = 0;
+
+  while (index < segments.length && segments[index].includes(",")) {
+    index += 1;
+  }
+
+  if (index < segments.length && /^v\d+$/.test(segments[index])) {
+    index += 1;
+  }
+
+  if (index >= segments.length) return null;
+
+  const parts = segments.slice(index);
+  parts[parts.length - 1] = parts[parts.length - 1].replace(/\.[^.]+$/, "");
+  return parts.join("/");
 }
 
 function cloudNameFromUrl(url: string): string | null {

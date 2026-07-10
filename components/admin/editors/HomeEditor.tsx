@@ -1,6 +1,6 @@
 "use client";
 
-import { useRef, useState } from "react";
+import { useState } from "react";
 import { ArrowDown, ArrowUp, Trash2 } from "lucide-react";
 import { MediaPickerField } from "@/components/admin/editor/fields/MediaPickerField";
 import { DropZone } from "@/components/admin/shared/DropZone";
@@ -8,7 +8,6 @@ import {
   AddButton,
   EmptyState,
   FieldLabel,
-  MediaLibrary,
   SectionBlock,
   TextArea,
   TextInput
@@ -35,9 +34,7 @@ export function HomeEditor({
   onDirty,
   processUpload,
   showToast,
-  mediaLibrary,
-  refreshMediaLibrary,
-  mediaLoading
+  mediaLibrary
 }: HomeEditorProps) {
   const [uploading, setUploading] = useState(false);
   const hero = data.hero || { title: "", subtitleLines: [], videos: [{ src: "", poster: "" }, { src: "", poster: "" }] };
@@ -54,17 +51,6 @@ export function HomeEditor({
   function patchHero(partial: Partial<HomeData["hero"]>) {
     onChange({ ...data, hero: { ...hero, ...partial } });
     onDirty();
-  }
-
-  function addStackFromLibrary(url: string, type: string) {
-    const mediaType = type === "video" ? "video" : "image";
-    const name = url.split("/").pop()?.replace(/\.[^.]+$/, "") || "Proimagem.pt";
-    patch({
-      homeStack: [
-        ...stack,
-        { type: mediaType, src: url, alt: name }
-      ]
-    });
   }
 
   async function handleStackDrop(files: File[]) {
@@ -101,10 +87,10 @@ export function HomeEditor({
   }
 
   return (
-    <div className="space-y-8">
-      <SectionBlock title="Texto do cabeçalho">
+    <div className="space-y-6">
+      <SectionBlock title="Textos">
         <div>
-          <FieldLabel htmlFor="hero-title">Título principal</FieldLabel>
+          <FieldLabel htmlFor="hero-title">Título</FieldLabel>
           <TextInput
             id="hero-title"
             value={hero.title || data.brand || ""}
@@ -113,9 +99,6 @@ export function HomeEditor({
         </div>
         <div>
           <FieldLabel htmlFor="hero-subtitle">Subtítulo</FieldLabel>
-          <p className="mb-2 text-xs text-zinc-500">
-            Cada linha aparece no site. Usa | para separar tópicos na mesma linha (ex.: 2 linhas com 3 tópicos).
-          </p>
           <TextArea
             id="hero-subtitle"
             value={(hero.subtitleLines || []).join("\n")}
@@ -129,81 +112,46 @@ export function HomeEditor({
             }
             rows={3}
           />
+          <p className="mt-1.5 text-[10px] text-zinc-600">Uma linha por frase no site.</p>
         </div>
       </SectionBlock>
 
       <SectionBlock
-        title="Vídeos de fundo"
-        subtitle="Vídeo 1 ao abrir a página · Vídeo 2 quando o visitante faz scroll."
+        title="Vídeos do cabeçalho"
+        subtitle="Vídeo 1 ao abrir · Vídeo 2 no scroll."
       >
-        <MediaLibrary
-          files={mediaLibrary}
-          filter="video"
-          hint="Clica num vídeo da biblioteca para preencher o primeiro slot vazio."
-          onSelect={(url) => {
-            const nextVideos = [...videos];
-            const slot = nextVideos.findIndex((v) => !v.src);
-            const i = slot >= 0 ? slot : 0;
-            nextVideos[i] = { ...nextVideos[i], src: url, poster: "" };
-            patchHero({ videos: nextVideos });
-          }}
-          onRefresh={refreshMediaLibrary}
-          loading={mediaLoading}
-        />
-        <div className="grid gap-4 sm:grid-cols-2">
+        <div className="space-y-5">
           {videos.map((video, i) => (
-            <div key={i} className="space-y-2">
-              <p className="text-xs font-medium text-zinc-400">
-                Vídeo {i + 1}{i === 0 ? " (inicial)" : " (no scroll)"}
-              </p>
-              <MediaPickerField
-                label=""
-                type="video"
-                value={video.src}
-                files={mediaLibrary}
-                uploading={uploading}
-                onChange={(url) => {
-                  const next = [...videos];
-                  next[i] = { ...next[i], src: url, poster: "" };
-                  patchHero({ videos: next });
-                }}
-                onUpload={uploadForPicker}
-                onRemove={() => {
-                  const next = [...videos];
-                  next[i] = { src: "", poster: "" };
-                  patchHero({ videos: next });
-                }}
-              />
-            </div>
+            <MediaPickerField
+              key={i}
+              label={i === 0 ? "Vídeo inicial" : "Vídeo no scroll"}
+              type="video"
+              value={video.src}
+              files={mediaLibrary}
+              uploading={uploading}
+              onChange={(url) => {
+                const next = [...videos];
+                next[i] = { ...next[i], src: url, poster: "" };
+                patchHero({ videos: next });
+              }}
+              onUpload={uploadForPicker}
+              onRemove={() => {
+                const next = [...videos];
+                next[i] = { src: "", poster: "" };
+                patchHero({ videos: next });
+              }}
+            />
           ))}
         </div>
       </SectionBlock>
 
-      <SectionBlock
-        title="Mídias abaixo do cabeçalho"
-        subtitle="Fotos e vídeos em largura total, na ordem em que aparecem aqui."
-      >
-        <MediaLibrary
-          files={mediaLibrary}
-          hint="Clica numa foto ou vídeo da biblioteca para adicionar ao stack."
-          onSelect={addStackFromLibrary}
-          onRefresh={refreshMediaLibrary}
-          loading={mediaLoading}
-        />
-
-        <DropZone
-          accept="image/*,video/*"
-          onFiles={handleStackDrop}
-          uploading={uploading}
-        />
+      <SectionBlock title="Mídias da página" subtitle="Ordem = ordem no site.">
+        <DropZone accept="image/*,video/*" onFiles={handleStackDrop} uploading={uploading} />
 
         {stack.length === 0 ? (
-          <EmptyState
-            title="Sem mídias"
-            text="Adiciona fotos ou vídeos com a biblioteca ou a área de envio acima."
-          />
+          <EmptyState title="Nenhuma mídia" text="Envia ficheiros acima ou adiciona um bloco." />
         ) : (
-          <div className="grid gap-4 sm:grid-cols-2">
+          <div className="space-y-4">
             {stack.map((item, i) => (
               <StackMediaCard
                 key={`${item.src}-${i}`}
@@ -216,30 +164,13 @@ export function HomeEditor({
                   next[i] = updated;
                   patch({ homeStack: next });
                 }}
-                onRemove={() => {
-                  patch({ homeStack: stack.filter((_, idx) => idx !== i) });
-                }}
+                onRemove={() => patch({ homeStack: stack.filter((_, idx) => idx !== i) })}
                 onMove={(direction) => {
                   const j = direction === "up" ? i - 1 : i + 1;
                   if (j < 0 || j >= stack.length) return;
                   const next = [...stack];
                   [next[i], next[j]] = [next[j], next[i]];
                   patch({ homeStack: next });
-                }}
-                onUpload={async (file) => {
-                  try {
-                    await processUpload(file, (url, f) => {
-                      const next = [...stack];
-                      next[i] = {
-                        type: f.type.startsWith("video/") ? "video" : "image",
-                        src: url,
-                        alt: next[i].alt || f.name.replace(/\.[^.]+$/, "")
-                      };
-                      patch({ homeStack: next });
-                    });
-                  } catch (err) {
-                    showToast(err instanceof Error ? err.message : "Erro no envio.", "error");
-                  }
                 }}
                 uploadForPicker={uploadForPicker}
               />
@@ -248,12 +179,8 @@ export function HomeEditor({
         )}
 
         <AddButton
-          label="Adicionar bloco vazio"
-          onClick={() =>
-            patch({
-              homeStack: [...stack, { type: "image", src: "", alt: "" }]
-            })
-          }
+          label="Adicionar bloco"
+          onClick={() => patch({ homeStack: [...stack, { type: "image", src: "", alt: "" }] })}
         />
       </SectionBlock>
     </div>
@@ -268,7 +195,6 @@ function StackMediaCard({
   onChange,
   onRemove,
   onMove,
-  onUpload,
   uploadForPicker
 }: {
   item: HomeStackItem;
@@ -278,15 +204,12 @@ function StackMediaCard({
   onChange: (item: HomeStackItem) => void;
   onRemove: () => void;
   onMove: (direction: "up" | "down") => void;
-  onUpload: (file: File) => Promise<void>;
   uploadForPicker: (file: File) => Promise<string>;
 }) {
-  const inputRef = useRef<HTMLInputElement>(null);
-
   return (
-    <article className="overflow-hidden rounded-xl border border-white/[0.08] bg-[#141414]">
+    <article className="rounded-lg border border-white/[0.06] bg-white/[0.02] p-3">
       <MediaPickerField
-        label={`Bloco ${index + 1} (${item.type === "video" ? "vídeo" : "foto"})`}
+        label={`Bloco ${index + 1}`}
         type={item.type}
         value={item.src}
         files={mediaLibrary}
@@ -295,63 +218,55 @@ function StackMediaCard({
           onChange({
             ...item,
             src: url,
-            type: picked?.type === "video" ? "video" : item.type === "video" && !picked ? "video" : picked?.type === "image" ? "image" : item.type
+            type:
+              picked?.type === "video"
+                ? "video"
+                : picked?.type === "image"
+                  ? "image"
+                  : item.type
           });
         }}
         onUpload={uploadForPicker}
         onRemove={() => onChange({ ...item, src: "" })}
       />
 
-      <div className="space-y-3 px-4 pb-4">
-        <div>
-          <FieldLabel>Descrição (acessibilidade)</FieldLabel>
-          <TextInput
-            value={item.alt || ""}
-            onChange={(value) => onChange({ ...item, alt: value })}
-            placeholder="Descrição da mídia"
-          />
-        </div>
-
-        <div className="flex flex-wrap gap-2">
-          <button
-            type="button"
-            disabled={index === 0}
-            onClick={() => onMove("up")}
-            className="inline-flex items-center gap-1 rounded-lg border border-white/10 bg-white/[0.04] px-3 py-1.5 text-xs text-zinc-300 transition hover:bg-white/[0.08] disabled:opacity-40"
-          >
-            <ArrowUp className="size-3.5" strokeWidth={1.75} />
-            Subir
-          </button>
-          <button
-            type="button"
-            disabled={index === total - 1}
-            onClick={() => onMove("down")}
-            className="inline-flex items-center gap-1 rounded-lg border border-white/10 bg-white/[0.04] px-3 py-1.5 text-xs text-zinc-300 transition hover:bg-white/[0.08] disabled:opacity-40"
-          >
-            <ArrowDown className="size-3.5" strokeWidth={1.75} />
-            Descer
-          </button>
-          <button
-            type="button"
-            onClick={onRemove}
-            className="inline-flex items-center gap-1 rounded-lg border border-red-500/20 bg-red-500/10 px-3 py-1.5 text-xs text-red-400"
-          >
-            <Trash2 className="size-3.5" strokeWidth={1.75} />
-            Remover
-          </button>
-        </div>
-
-        <input
-          ref={inputRef}
-          type="file"
-          accept="image/*,video/*"
-          hidden
-          onChange={(e) => {
-            const file = e.target.files?.[0];
-            e.target.value = "";
-            if (file) void onUpload(file);
-          }}
+      <div className="mt-3">
+        <FieldLabel>Descrição</FieldLabel>
+        <TextInput
+          value={item.alt || ""}
+          onChange={(value) => onChange({ ...item, alt: value })}
+          placeholder="Opcional"
         />
+      </div>
+
+      <div className="mt-3 flex items-center gap-1 border-t border-white/[0.05] pt-3">
+        <button
+          type="button"
+          disabled={index === 0}
+          onClick={() => onMove("up")}
+          title="Subir"
+          className="inline-flex size-7 items-center justify-center rounded-md text-zinc-500 transition hover:bg-white/[0.05] hover:text-zinc-300 disabled:opacity-30"
+        >
+          <ArrowUp className="size-3.5" strokeWidth={1.75} />
+        </button>
+        <button
+          type="button"
+          disabled={index === total - 1}
+          onClick={() => onMove("down")}
+          title="Descer"
+          className="inline-flex size-7 items-center justify-center rounded-md text-zinc-500 transition hover:bg-white/[0.05] hover:text-zinc-300 disabled:opacity-30"
+        >
+          <ArrowDown className="size-3.5" strokeWidth={1.75} />
+        </button>
+        <span className="flex-1" />
+        <button
+          type="button"
+          onClick={onRemove}
+          title="Remover bloco"
+          className="inline-flex size-7 items-center justify-center rounded-md text-red-400/70 transition hover:bg-red-500/10 hover:text-red-300"
+        >
+          <Trash2 className="size-3.5" strokeWidth={1.75} />
+        </button>
       </div>
     </article>
   );

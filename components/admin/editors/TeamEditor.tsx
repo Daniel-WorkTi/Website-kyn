@@ -6,7 +6,6 @@ import {
   AddButton,
   EmptyState,
   FieldLabel,
-  MediaLibrary,
   SectionBlock,
   TextInput
 } from "@/components/admin/shared/MediaLibrary";
@@ -38,10 +37,7 @@ export function TeamEditor({
   onChange,
   onDirty,
   processUpload,
-  showToast,
-  mediaLibrary,
-  refreshMediaLibrary,
-  mediaLoading
+  mediaLibrary
 }: TeamEditorProps) {
   const featured = data.featured || [];
   const members = data.members || [];
@@ -59,17 +55,6 @@ export function TeamEditor({
 
   return (
     <div className="space-y-8">
-      <MediaLibrary
-        files={mediaLibrary}
-        filter="image"
-        hint="Clica numa foto da biblioteca e depois escolhe o membro abaixo para associar."
-        onSelect={() => {
-          showToast("Usa «Escolher da biblioteca» no cartão do membro.", "pending");
-        }}
-        onRefresh={refreshMediaLibrary}
-        loading={mediaLoading}
-      />
-
       <SectionBlock
         title="Destaques no topo"
         subtitle="Membros em destaque no início da página da equipa."
@@ -150,51 +135,55 @@ function PersonCard({
   onRemove?: () => void;
 }) {
   return (
-    <article className="space-y-4 rounded-xl border border-white/[0.08] bg-[#141414] p-4">
-      <div className="grid gap-4 lg:grid-cols-2">
-        <MediaPickerField
-          label={`Foto — ${member.name || "sem nome"}`}
-          type="image"
-          value={member.photo}
-          files={mediaLibrary}
-          onChange={(url) => onChange({ ...member, photo: url })}
-          onUpload={uploadForPicker}
-          onRemove={() => onChange({ ...member, photo: "" })}
-        />
+    <article className="space-y-3 rounded-lg border border-white/[0.06] bg-white/[0.02] p-3">
+      <MediaPickerField
+        label="Foto"
+        type="image"
+        value={member.photo || ""}
+        files={mediaLibrary}
+        onChange={(url) => onChange({ ...member, photo: url })}
+        onUpload={uploadForPicker}
+        onRemove={() => onChange({ ...member, photo: "" })}
+      />
 
-        <div className="space-y-3">
+      <div className="space-y-3">
+        <div>
+          <FieldLabel>Nome</FieldLabel>
           <TextInput
             value={member.name}
             onChange={(value) => onChange({ ...member, name: value })}
             placeholder="Nome"
           />
+        </div>
+        <div>
+          <FieldLabel>Funções</FieldLabel>
           <TextInput
             value={member.roles}
             onChange={(value) => onChange({ ...member, roles: value })}
-            placeholder="Funções (ex.: Cam OP · Editor)"
+            placeholder="Ex.: Cam OP · Editor"
           />
-          {member.photo && (
-            <div>
-              <FieldLabel>Enquadramento da foto</FieldLabel>
-              <select
-                value={member.photoPosition || ""}
-                onChange={(e) =>
-                  onChange({
-                    ...member,
-                    photoPosition: e.target.value || undefined
-                  })
-                }
-                className="w-full rounded-lg border border-white/10 bg-[#0a0a0a] px-3 py-2 text-sm text-white outline-none focus:border-accent/40"
-              >
-                {PHOTO_POSITIONS.map((opt) => (
-                  <option key={opt.value || "default"} value={opt.value}>
-                    {opt.label}
-                  </option>
-                ))}
-              </select>
-            </div>
-          )}
         </div>
+        {member.photo ? (
+          <div>
+            <FieldLabel>Enquadramento</FieldLabel>
+            <select
+              value={member.photoPosition || ""}
+              onChange={(e) =>
+                onChange({
+                  ...member,
+                  photoPosition: e.target.value || undefined
+                })
+              }
+              className="box-border w-full min-h-[40px] rounded-lg border border-white/[0.08] bg-[#0a0a0a] px-3 py-2 text-sm text-white outline-none focus:border-white/20"
+            >
+              {PHOTO_POSITIONS.map((opt) => (
+                <option key={opt.value || "default"} value={opt.value}>
+                  {opt.label}
+                </option>
+              ))}
+            </select>
+          </div>
+        ) : null}
       </div>
 
       {showSkills && (

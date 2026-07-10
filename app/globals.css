@@ -3,8 +3,11 @@
 @tailwind utilities;
 
 @layer base {
+  html,
   body {
-    @apply bg-[#0a0a0a] text-white antialiased;
+    @apply m-0 bg-black p-0 text-white antialiased;
+    width: 100%;
+    overflow-x: hidden;
   }
 }
 

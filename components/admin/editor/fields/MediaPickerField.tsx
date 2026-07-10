@@ -1,19 +1,12 @@
 "use client";
 
-import { useState } from "react";
-import { FolderOpen, ImageIcon, Trash2, Video } from "lucide-react";
+import { useRef, useState } from "react";
+import { FolderOpen, ImageIcon, Trash2, Upload, Video } from "lucide-react";
 import { MediaPickerModal } from "@/components/admin/media/MediaPickerModal";
-import {
-  formatDimensions,
-  formatDuration,
-  formatFileSize,
-  formatMediaDate
-} from "@/lib/admin/media-utils";
 import type { MediaFile } from "@/lib/admin/sections";
-import { UploadField } from "./UploadField";
 
 type MediaPickerFieldProps = {
-  label: string;
+  label?: string;
   value: string;
   type: "image" | "video";
   files: MediaFile[];
@@ -21,10 +14,11 @@ type MediaPickerFieldProps = {
   onUpload?: (file: File) => Promise<string | void>;
   uploading?: boolean;
   onRemove?: () => void;
-  hint?: string;
-  formatsLabel?: string;
-  maxSizeLabel?: string;
 };
+
+function fileName(url: string): string {
+  return url.split("/").pop()?.split("?")[0] || "ficheiro";
+}
 
 export function MediaPickerField({
   label,
@@ -34,111 +28,111 @@ export function MediaPickerField({
   onChange,
   onUpload,
   uploading,
-  onRemove,
-  hint,
-  formatsLabel,
-  maxSizeLabel
+  onRemove
 }: MediaPickerFieldProps) {
   const [pickerOpen, setPickerOpen] = useState(false);
-  const [replaceOpen, setReplaceOpen] = useState(false);
-  const fileMeta = files.find((f) => f.url === value);
+  const uploadRef = useRef<HTMLInputElement>(null);
 
   return (
-    <div className="space-y-3">
-      <span className="text-sm font-medium text-zinc-300">{label}</span>
+    <div className="space-y-2.5">
+      {label ? (
+        <p className="text-[11px] font-medium uppercase tracking-[0.12em] text-zinc-500">{label}</p>
+      ) : null}
 
-      <div className="overflow-hidden rounded-xl border border-white/10 bg-black/40">
-        <div className="relative aspect-video bg-zinc-900">
+      <button
+        type="button"
+        onClick={() => setPickerOpen(true)}
+        className="group relative w-full overflow-hidden rounded-lg border border-white/[0.08] bg-black/50 transition hover:border-white/20"
+      >
+        <div className="aspect-video w-full bg-zinc-950">
           {value ? (
             type === "video" ? (
-              <video src={value} className="h-full w-full object-cover" muted playsInline controls />
+              <video src={value} className="h-full w-full object-cover" muted playsInline />
             ) : (
               <img src={value} alt="" className="h-full w-full object-cover" />
             )
           ) : (
-            <div className="flex h-full flex-col items-center justify-center gap-2 text-zinc-600">
+            <div className="flex h-full flex-col items-center justify-center gap-1.5 text-zinc-600">
               {type === "video" ? (
-                <Video className="size-8" strokeWidth={1.5} />
+                <Video className="size-6" strokeWidth={1.5} />
               ) : (
-                <ImageIcon className="size-8" strokeWidth={1.5} />
+                <ImageIcon className="size-6" strokeWidth={1.5} />
               )}
-              <span className="text-xs">Nenhuma mídia selecionada</span>
+              <span className="text-[11px]">Clica para escolher</span>
             </div>
           )}
         </div>
-      </div>
+        <span className="absolute inset-0 flex items-center justify-center bg-black/55 text-xs text-white opacity-0 transition group-hover:opacity-100">
+          Trocar mídia
+        </span>
+      </button>
 
-      {fileMeta && (
-        <div className="rounded-lg border border-white/10 bg-white/[0.02] px-3 py-2 text-xs text-zinc-500 space-y-1">
-          <p className="truncate text-zinc-300">{fileMeta.name}</p>
-          <p>{formatFileSize(fileMeta.size)} · {formatMediaDate(fileMeta.createdAt)}</p>
-          {type === "image" && <p>{formatDimensions(fileMeta)}</p>}
-          {type === "video" && <p>Duração: {formatDuration(fileMeta.duration)}</p>}
-        </div>
-      )}
+      {value ? (
+        <p className="truncate text-[10px] text-zinc-600" title={fileName(value)}>
+          {fileName(value)}
+        </p>
+      ) : null}
 
-      <div className="grid grid-cols-2 gap-2">
+      <div className="flex items-center gap-1.5">
         {onUpload && (
-          <UploadField
-            label="Fazer upload"
-            accept={type === "video" ? "video/mp4,video/webm,video/*" : "image/jpeg,image/png,image/webp,image/*"}
-            uploading={uploading}
-            onFile={async (file) => {
-              const url = await onUpload(file);
-              if (typeof url === "string") onChange(url);
-            }}
-          />
+          <>
+            <input
+              ref={uploadRef}
+              type="file"
+              accept={type === "video" ? "video/*" : "image/*"}
+              hidden
+              onChange={(e) => {
+                const file = e.target.files?.[0];
+                e.target.value = "";
+                if (file) {
+                  void onUpload(file).then((url) => {
+                    if (typeof url === "string") onChange(url);
+                  });
+                }
+              }}
+            />
+            <button
+              type="button"
+              disabled={uploading}
+              onClick={() => uploadRef.current?.click()}
+              title="Enviar ficheiro"
+              className="inline-flex flex-1 items-center justify-center gap-1.5 rounded-lg border border-white/[0.08] bg-white/[0.03] px-2 py-2 text-[11px] text-zinc-400 transition hover:bg-white/[0.06] hover:text-zinc-200 disabled:opacity-50"
+            >
+              <Upload className="size-3.5" strokeWidth={1.75} />
+              {uploading ? "A enviar…" : "Enviar"}
+            </button>
+          </>
         )}
         <button
           type="button"
           onClick={() => setPickerOpen(true)}
-          className="inline-flex items-center justify-center gap-2 rounded-xl border border-white/10 bg-white/[0.04] py-2.5 text-sm text-zinc-200 transition hover:bg-white/[0.08]"
+          title="Biblioteca"
+          className="inline-flex flex-1 items-center justify-center gap-1.5 rounded-lg border border-white/[0.08] bg-white/[0.03] px-2 py-2 text-[11px] text-zinc-400 transition hover:bg-white/[0.06] hover:text-zinc-200"
         >
-          <FolderOpen className="size-4" strokeWidth={1.75} />
+          <FolderOpen className="size-3.5" strokeWidth={1.75} />
           Biblioteca
         </button>
-        {value && (
-          <button
-            type="button"
-            onClick={() => setReplaceOpen(true)}
-            className="col-span-2 rounded-xl border border-white/10 bg-white/[0.04] py-2.5 text-sm text-zinc-200 transition hover:bg-white/[0.08]"
-          >
-            Substituir
-          </button>
-        )}
-        {onRemove && value && (
+        {value && onRemove ? (
           <button
             type="button"
             onClick={onRemove}
-            className="col-span-2 inline-flex items-center justify-center gap-2 rounded-xl border border-red-500/20 bg-red-500/10 py-2.5 text-sm text-red-300 transition hover:bg-red-500/15"
+            title="Remover"
+            className="inline-flex size-8 shrink-0 items-center justify-center rounded-lg border border-red-500/15 text-red-400/80 transition hover:bg-red-500/10 hover:text-red-300"
           >
-            <Trash2 className="size-4" strokeWidth={1.75} />
-            Remover
+            <Trash2 className="size-3.5" strokeWidth={1.75} />
           </button>
-        )}
+        ) : null}
       </div>
 
-      {(formatsLabel || maxSizeLabel || hint) && (
-        <div className="text-xs text-zinc-600 space-y-0.5">
-          {formatsLabel && <p>Formatos: {formatsLabel}</p>}
-          {maxSizeLabel && <p>Máximo: {maxSizeLabel}</p>}
-          {hint && <p>{hint}</p>}
-          {uploading && <p className="text-emerald-400">A enviar ficheiro…</p>}
-        </div>
-      )}
-
       <MediaPickerModal
-        open={pickerOpen || replaceOpen}
-        onClose={() => {
-          setPickerOpen(false);
-          setReplaceOpen(false);
-        }}
+        open={pickerOpen}
+        onClose={() => setPickerOpen(false)}
         files={files}
         filterType={type}
         onPick={(file) => onChange(file.url)}
         onUpload={onUpload}
         uploading={uploading}
-        title={replaceOpen ? "Substituir mídia" : "Escolher da biblioteca"}
+        title="Escolher mídia"
       />
     </div>
   );

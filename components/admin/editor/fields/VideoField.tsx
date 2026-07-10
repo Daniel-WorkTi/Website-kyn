@@ -1,7 +1,6 @@
 "use client";
 
 import type { MediaFile } from "@/lib/admin/sections";
-import { MAX_UPLOAD_MB } from "@/lib/admin/sections";
 import { MediaPickerField } from "./MediaPickerField";
 
 type VideoFieldProps = {
@@ -31,9 +30,6 @@ export function VideoField({
       onUpload={onUploadVideo}
       uploading={uploading}
       onRemove={onRemoveVideo}
-      formatsLabel="MP4, WEBM"
-      maxSizeLabel={`${MAX_UPLOAD_MB} MB`}
-      hint="O vídeo inicia automaticamente no site — não é necessária capa."
     />
   );
 }

@@ -1,4 +1,5 @@
-export const PROIMAGEM_LOGO_SRC = "/assets/logo-proimagem.png";
+export const PROIMAGEM_LOGO_SRC =
+  "https://res.cloudinary.com/zk5df6k0/image/upload/v1783721421/proimagem/avuve9px3olbytlqhset.png";
 
 type ProimagemLogoProps = {
   className?: string;

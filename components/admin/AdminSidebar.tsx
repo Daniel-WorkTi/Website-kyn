@@ -15,6 +15,7 @@ import {
   SocialMediaIcon,
   StudioSpaceIcon
 } from "@/components/admin/icons/ProimagemIcons";
+import { ProimagemLogo } from "@/components/admin/ProimagemLogo";
 import { useCallback, useState, type ComponentType, type SVGProps } from "react";
 import { Images } from "lucide-react";
 
@@ -99,16 +100,16 @@ const MEDIA_ITEM: NavItem = {
 function BrandMark({ collapsed }: { collapsed: boolean }) {
   if (collapsed) {
     return (
-      <div className="flex size-10 items-center justify-center rounded-xl border border-white/10 bg-black text-lg font-bold text-white">
-        P
+      <div className="flex size-10 items-center justify-center overflow-hidden rounded-xl border border-white/10 bg-black">
+        <ProimagemLogo className="h-5 w-auto max-w-[2rem] object-contain" />
       </div>
     );
   }
 
   return (
     <div className="min-w-0">
-      <h2 className="text-base font-semibold tracking-tight text-white">Proimagem.pt</h2>
-      <span className="mt-1 inline-flex rounded-full bg-white/[0.06] px-2 py-0.5 text-[10px] text-zinc-400">
+      <ProimagemLogo className="h-6 w-auto max-w-[140px] object-contain object-left" />
+      <span className="mt-1.5 inline-flex rounded-full bg-white/[0.06] px-2 py-0.5 text-[10px] text-zinc-400">
         Gestão
       </span>
     </div>

@@ -1,82 +1,81 @@
 "use client";
 
-import { useRef } from "react";
+import { useState } from "react";
 import { ArrowDown, ArrowUp, Trash2 } from "lucide-react";
-import { previewUrl, type GalleryItem } from "@/lib/admin/sections";
+import { MediaPickerField } from "@/components/admin/editor/fields/MediaPickerField";
+import { previewUrl, type GalleryItem, type MediaFile } from "@/lib/admin/sections";
 
 type MediaCardProps = {
   item: GalleryItem;
   index: number;
   total: number;
+  files: MediaFile[];
   onChange: (index: number, item: GalleryItem) => void;
   onRemove: (index: number) => void;
   onMove: (index: number, direction: "up" | "down") => void;
-  onUpload: (index: number, file: File, field?: "src" | "poster") => Promise<void>;
+  uploadForPicker: (file: File) => Promise<string>;
 };
 
 export function MediaCard({
   item,
   index,
   total,
+  files,
   onChange,
   onRemove,
   onMove,
-  onUpload
+  uploadForPicker
 }: MediaCardProps) {
-  const srcInputRef = useRef<HTMLInputElement>(null);
+  const [uploading, setUploading] = useState(false);
   const url = previewUrl(item);
 
   const badge = `${item.type === "video" ? "Vídeo" : "Foto"}${item.featured ? " · Destaque" : ""}`;
 
   return (
-    <article className="overflow-hidden rounded-xl border border-white/[0.08] bg-[#141414]">
-      <button
-        type="button"
-        onClick={() => srcInputRef.current?.click()}
-        className="group relative block aspect-video w-full overflow-hidden bg-black/40"
-      >
-        {!url ? (
-          <div className="flex h-full items-center justify-center text-center text-sm text-zinc-500">
-            <span>
-              Clica para carregar
-              <br />
-              <small className="text-xs">foto ou vídeo</small>
-            </span>
-          </div>
-        ) : item.type === "video" && item.src ? (
-          <video
-            src={item.src}
-            autoPlay
-            muted
-            loop
-            playsInline
-            preload="auto"
-            className="h-full w-full object-cover"
-          />
-        ) : (
-          <img src={url} alt={item.alt || ""} loading="lazy" className="h-full w-full object-cover" />
-        )}
-        <span className="absolute left-2 top-2 rounded-md bg-black/70 px-2 py-0.5 text-[0.65rem] font-medium text-white backdrop-blur-sm">
-          {badge}
-        </span>
-        <span className="absolute inset-0 flex items-center justify-center bg-black/50 text-sm font-medium text-white opacity-0 transition-opacity group-hover:opacity-100">
-          Trocar ficheiro
-        </span>
-        <input
-          ref={srcInputRef}
-          type="file"
-          accept="image/*,video/*"
-          hidden
-          onChange={async (e) => {
-            const file = e.target.files?.[0];
-            e.target.value = "";
-            if (file) await onUpload(index, file, "src");
+    <article className="overflow-hidden rounded-lg border border-white/[0.06] bg-white/[0.02]">
+      <div className="relative">
+        <MediaPickerField
+          type={item.type}
+          value={item.src}
+          files={files}
+          uploading={uploading}
+          onChange={(pickedUrl) => {
+            const picked = files.find((f) => f.url === pickedUrl);
+            const type =
+              picked?.type === "video"
+                ? "video"
+                : picked?.type === "image"
+                  ? "image"
+                  : /\.(mp4|webm|mov|m4v)(\?|$)/i.test(pickedUrl)
+                    ? "video"
+                    : item.type;
+            onChange(index, {
+              ...item,
+              src: pickedUrl,
+              type
+            });
           }}
+          onUpload={async (file) => {
+            setUploading(true);
+            try {
+              return await uploadForPicker(file);
+            } finally {
+              setUploading(false);
+            }
+          }}
+          onRemove={url ? () => onChange(index, { ...item, src: "" }) : undefined}
         />
-      </button>
+        {url ? (
+          <span className="pointer-events-none absolute left-2 top-2 z-10 rounded-md bg-black/70 px-2 py-0.5 text-[0.65rem] font-medium text-white backdrop-blur-sm">
+            {badge}
+          </span>
+        ) : null}
+      </div>
 
-      <div className="space-y-3 p-4">
-        <p className="text-xs font-medium text-zinc-500">Item {index + 1}</p>
+      <div className="space-y-3 p-3">
+        <p className="text-[11px] font-medium uppercase tracking-[0.1em] text-zinc-500">
+          Item {index + 1}
+        </p>
 
         <div className="grid gap-3 sm:grid-cols-2">
           <div>

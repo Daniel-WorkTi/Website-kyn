@@ -5,7 +5,7 @@ import { MediaPickerField } from "@/components/admin/editor/fields/MediaPickerFi
 import {
   AddButton,
   EmptyState,
-  MediaLibrary,
+  FieldLabel,
   SectionBlock,
   TextInput
 } from "@/components/admin/shared/MediaLibrary";
@@ -30,9 +30,7 @@ export function PartnersEditor({
   onChange,
   onDirty,
   processUpload,
-  mediaLibrary,
-  refreshMediaLibrary,
-  mediaLoading
+  mediaLibrary
 }: PartnersEditorProps) {
   const main = data.main || [];
   const secondary = data.secondary || [];
@@ -50,15 +48,6 @@ export function PartnersEditor({
 
   return (
     <div className="space-y-8">
-      <MediaLibrary
-        files={mediaLibrary}
-        filter="image"
-        hint="Logótipos dos parceiros — escolhe ou envia imagens com fundo transparente se possível."
-        onSelect={() => {}}
-        onRefresh={refreshMediaLibrary}
-        loading={mediaLoading}
-      />
-
       <PartnerSection
         title="Parceiros principais"
         subtitle="Logótipos em destaque na página Meet the Team."
@@ -139,33 +128,32 @@ function PartnerCard({
   onRemove: () => void;
 }) {
   return (
-    <article className="space-y-4 rounded-xl border border-white/[0.08] bg-[#141414] p-4">
-      <div className="grid gap-4 lg:grid-cols-2">
-        <MediaPickerField
-          label={`Logo — ${partner.name || "sem nome"}`}
-          type="image"
-          value={partner.logo}
-          files={mediaLibrary}
-          onChange={(url) => onChange({ ...partner, logo: url })}
-          onUpload={uploadForPicker}
-          onRemove={() => onChange({ ...partner, logo: "" })}
+    <article className="space-y-3 rounded-lg border border-white/[0.06] bg-white/[0.02] p-3">
+      <MediaPickerField
+        label="Logo"
+        type="image"
+        value={partner.logo || ""}
+        files={mediaLibrary}
+        onChange={(url) => onChange({ ...partner, logo: url })}
+        onUpload={uploadForPicker}
+        onRemove={() => onChange({ ...partner, logo: "" })}
+      />
+      <div>
+        <FieldLabel>Nome</FieldLabel>
+        <TextInput
+          value={partner.name}
+          onChange={(value) => onChange({ ...partner, name: value })}
+          placeholder="Nome do parceiro"
         />
-        <div className="flex flex-col justify-center gap-3">
-          <TextInput
-            value={partner.name}
-            onChange={(value) => onChange({ ...partner, name: value })}
-            placeholder="Nome do parceiro"
-          />
-          <button
-            type="button"
-            onClick={onRemove}
-            className="inline-flex w-fit items-center gap-1 rounded-lg border border-red-500/20 bg-red-500/10 px-3 py-1.5 text-xs text-red-400"
-          >
-            <Trash2 className="size-3.5" strokeWidth={1.75} />
-            Remover
-          </button>
-        </div>
       </div>
+      <button
+        type="button"
+        onClick={onRemove}
+        className="inline-flex items-center gap-1 text-[11px] text-red-400/80 transition hover:text-red-300"
+      >
+        <Trash2 className="size-3.5" strokeWidth={1.75} />
+        Remover
+      </button>
     </article>
   );
 }

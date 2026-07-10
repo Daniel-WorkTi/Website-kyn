@@ -1,6 +1,8 @@
 import crypto from "crypto";
 import { cookies } from "next/headers";
 import { NextRequest, NextResponse } from "next/server";
+import { getAdminConfig } from "@/lib/admin-store";
+import { verifyPassword } from "@/lib/password";
 
 const COOKIE_NAME = "proimagem_session";
 const SESSION_DAYS = 7;
@@ -13,11 +15,17 @@ function timingSafeEqual(a: string, b: string): boolean {
   return crypto.timingSafeEqual(ba, bb);
 }
 
-export function verifyCredentials(username: string, password: string): boolean {
-  const expectedUser = process.env.ADMIN_USERNAME;
-  const expectedPass = process.env.ADMIN_PASSWORD;
-  if (!expectedUser || !expectedPass) return false;
-  return timingSafeEqual(username, expectedUser) && timingSafeEqual(password, expectedPass);
+export async function verifyCredentials(username: string, password: string): Promise<boolean> {
+  try {
+    const config = await getAdminConfig();
+    if (!timingSafeEqual(username.trim(), config.username.trim())) return false;
+    return verifyPassword(password, config.passwordHash);
+  } catch {
+    const expectedUser = process.env.ADMIN_USERNAME;
+    const expectedPass = process.env.ADMIN_PASSWORD;
+    if (!expectedUser || !expectedPass) return false;
+    return timingSafeEqual(username, expectedUser) && timingSafeEqual(password, expectedPass);
+  }
 }
 
 export function createSessionToken(username: string): string {

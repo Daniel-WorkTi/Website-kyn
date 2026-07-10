@@ -7,9 +7,12 @@ import { videoMimeType } from "@/lib/utils";
 interface HeroProps {
   hero: Hero;
   brand: string;
+  interactive?: boolean;
+  showContent?: boolean;
 }
 
-export default function Hero({ hero, brand }: HeroProps) {
+export default function Hero({ hero, brand, interactive = true, showContent = true }: HeroProps) {
+  const heroRef = useRef<HTMLElement>(null);
   const vid1Ref = useRef<HTMLVideoElement>(null);
   const vid2Ref = useRef<HTMLVideoElement>(null);
   const showingSecondRef = useRef(false);
@@ -22,6 +25,8 @@ export default function Hero({ hero, brand }: HeroProps) {
   const lines = (hero.subtitleLines || []).map((line) => line.toUpperCase());
 
   useEffect(() => {
+    if (!interactive) return;
+
     const swapVideo = (toSecond: boolean) => {
       const vid1 = vid1Ref.current;
       const vid2 = vid2Ref.current;
@@ -31,38 +36,70 @@ export default function Hero({ hero, brand }: HeroProps) {
       setShowingSecond(toSecond);
 
       const active = toSecond ? vid2 : vid1;
-      active.currentTime = 0;
+      const inactive = toSecond ? vid1 : vid2;
       active.play().catch(() => {});
+      inactive.pause();
+    };
+
+    const setTextExit = (shouldExit: boolean) => {
+      if (shouldExit === textExitingRef.current) return;
+      textExitingRef.current = shouldExit;
+      setTextExiting(shouldExit);
+    };
+
+    const isHeroInView = () => {
+      const heroEl = heroRef.current;
+      if (!heroEl) return false;
+      const rect = heroEl.getBoundingClientRect();
+      return rect.top < window.innerHeight && rect.bottom > 0;
     };
 
     const updateHeroOnScroll = () => {
-      const y = window.scrollY;
       const vh = window.innerHeight;
-      swapVideo(y > vh * 0.08);
+      const scrolled = Math.max(0, window.scrollY);
 
-      const shouldExit = y > vh * 0.35;
-      if (shouldExit !== textExitingRef.current) {
-        textExitingRef.current = shouldExit;
-        setTextExiting(shouldExit);
+      swapVideo(scrolled > vh * 0.05);
+      setTextExit(scrolled > vh * 0.15);
+    };
+
+    const onWheel = (e: WheelEvent) => {
+      if (!isHeroInView()) return;
+
+      if (e.deltaY > 2) {
+        swapVideo(true);
+        setTextExit(true);
+      }
+
+      if (e.deltaY < -2 && window.scrollY <= 8) {
+        swapVideo(false);
+        setTextExit(false);
       }
     };
 
     window.addEventListener("scroll", updateHeroOnScroll, { passive: true });
+    window.addEventListener("wheel", onWheel, { passive: true });
     updateHeroOnScroll();
-    return () => window.removeEventListener("scroll", updateHeroOnScroll);
-  }, []);
+    return () => {
+      window.removeEventListener("scroll", updateHeroOnScroll);
+      window.removeEventListener("wheel", onWheel);
+    };
+  }, [interactive]);
 
   useEffect(() => {
-    [vid1Ref, vid2Ref].forEach((ref) => {
-      const video = ref.current;
+    const vid1 = vid1Ref.current;
+    const vid2 = vid2Ref.current;
+    [vid1, vid2].forEach((video) => {
       if (!video) return;
       video.muted = true;
       video.playsInline = true;
       video.setAttribute("playsinline", "");
       video.setAttribute("webkit-playsinline", "");
       video.preload = "auto";
-      video.play().catch(() => {});
+      video.load();
     });
+    vid1?.play().catch(() => {});
+    vid2?.play().catch(() => {});
+    vid2?.pause();
   }, [videos]);
 
   const contentClass = [
@@ -77,7 +114,7 @@ export default function Hero({ hero, brand }: HeroProps) {
   const hasDualVideos = videos.length >= 2;
 
   return (
-    <section className="hero hero--scroll" id="home-hero">
+    <section className="hero" id="home-hero" ref={heroRef}>
       <div className="hero__sticky">
         <div className="hero__media">
           {hasVideos ? (
@@ -107,6 +144,7 @@ export default function Hero({ hero, brand }: HeroProps) {
           )}
         </div>
         <div className="hero__overlay" />
+        {showContent && (
         <div className={contentClass} id="hero-content">
           <h1 className="hero__title hero-animate">{title}</h1>
           {lines.length > 0 && (
@@ -126,6 +164,7 @@ export default function Hero({ hero, brand }: HeroProps) {
             </div>
           )}
         </div>
+        )}
       </div>
     </section>
   );

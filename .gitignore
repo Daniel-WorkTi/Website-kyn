@@ -7,6 +7,7 @@ Thumbs.db
 .vercel
 .env
 .env.local
+private/admin.json
 
 # Resíduos de exportação do Canva
 *_files/

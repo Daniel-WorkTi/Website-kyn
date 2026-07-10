@@ -1,9 +1,30 @@
 import { SECTIONS, guessMediaType, type MediaFile } from "./sections";
+import { publicIdFromUrl } from "./media-utils";
 
 const FETCH_OPTS: RequestInit = { credentials: "include" };
+const FETCH_TIMEOUT_MS = 20_000;
+
+async function fetchWithTimeout(
+  url: string,
+  options: RequestInit = {},
+  timeoutMs = FETCH_TIMEOUT_MS
+): Promise<Response> {
+  const controller = new AbortController();
+  const timer = setTimeout(() => controller.abort(), timeoutMs);
+  try {
+    return await fetch(url, { ...options, signal: controller.signal });
+  } catch (err) {
+    if (err instanceof DOMException && err.name === "AbortError") {
+      throw new Error("O pedido demorou demasiado. Verifica a ligação e tenta outra vez.");
+    }
+    throw err;
+  } finally {
+    clearTimeout(timer);
+  }
+}
 
 export async function checkSession(): Promise<{ authenticated: boolean; user?: string }> {
-  const res = await fetch("/api/session", FETCH_OPTS);
+  const res = await fetchWithTimeout("/api/session", FETCH_OPTS, 10_000);
   if (!res.ok) return { authenticated: false };
   return res.json();
 }
@@ -25,19 +46,23 @@ export async function logout(): Promise<void> {
 
 export async function loadContentFile<T>(file: string): Promise<{ data: T; sha: string | null }> {
   const apiPath = file.replace(/^content\//, "");
-  const res = await fetch(`/content/${apiPath}?t=${Date.now()}`, { cache: "no-store" });
+  const res = await fetchWithTimeout(`/content/${apiPath}?t=${Date.now()}`, { cache: "no-store" });
   if (!res.ok) throw new Error("Não foi possível carregar o conteúdo.");
   const data = (await res.json()) as T;
 
   let sha: string | null = null;
   try {
-    const meta = await fetch(`/api/content?path=${encodeURIComponent(file)}`, FETCH_OPTS);
+    const meta = await fetchWithTimeout(
+      `/api/content?path=${encodeURIComponent(file)}`,
+      FETCH_OPTS,
+      10_000
+    );
     if (meta.ok) {
       const m = await meta.json();
       sha = m.sha ?? null;
     }
   } catch {
-    /* ignore */
+    /* sha opcional em dev */
   }
 
   return { data, sha };
@@ -122,42 +147,91 @@ function walkUrls(obj: unknown, urls: Set<string>): void {
 
 async function collectMediaFromContent(): Promise<MediaFile[]> {
   const urls = new Set<string>();
-  for (const section of SECTIONS) {
-    try {
-      const res = await fetch(`/content/${section.file.replace(/^content\//, "")}?t=${Date.now()}`, {
-        cache: "no-store"
-      });
-      if (!res.ok) continue;
-      walkUrls(await res.json(), urls);
-    } catch {
-      /* ignore */
-    }
-  }
+  const contentSections = SECTIONS.filter((s) => s.file);
+
+  await Promise.all(
+    contentSections.map(async (section) => {
+      try {
+        const apiPath = section.file.replace(/^content\//, "");
+        const res = await fetchWithTimeout(`/content/${apiPath}?t=${Date.now()}`, {
+          cache: "no-store"
+        }, 8_000);
+        if (!res.ok) return;
+        walkUrls(await res.json(), urls);
+      } catch {
+        /* ignore */
+      }
+    })
+  );
+
   return [...urls].map((url) => ({
     url,
     name: url.split("/").pop() || url,
-    type: guessMediaType(url)
+    type: guessMediaType(url),
+    publicId: publicIdFromUrl(url) ?? undefined
   }));
+}
+
+function mergeMediaFiles(...lists: MediaFile[][]): MediaFile[] {
+  const merged = new Map<string, MediaFile>();
+
+  for (const list of lists) {
+    for (const file of list) {
+      const existing = merged.get(file.url);
+      merged.set(file.url, existing ? { ...existing, ...file } : file);
+    }
+  }
+
+  return [...merged.values()].sort((a, b) =>
+    (b.createdAt || b.name).localeCompare(a.createdAt || a.name)
+  );
 }
 
 export async function loadMediaLibrary(force = false, cache: MediaFile[] | null): Promise<MediaFile[]> {
   if (cache && !force) return cache;
 
+  const fromContent = await collectMediaFromContent();
+  let fromCloudinary: MediaFile[] = [];
+  let configured = false;
+  let apiError: string | null = null;
+
   try {
-    const res = await fetch(`/api/media?t=${Date.now()}`, FETCH_OPTS);
+    const res = await fetchWithTimeout(`/api/media?t=${Date.now()}`, FETCH_OPTS, 15_000);
+    const data = await res.json();
+
     if (res.ok) {
-      const data = await res.json();
-      if (Array.isArray(data.files)) return data.files as MediaFile[];
+      configured = data.configured !== false;
+      if (Array.isArray(data.files)) {
+        fromCloudinary = data.files as MediaFile[];
+      }
+    } else {
+      apiError = typeof data.error === "string" ? data.error : "Erro ao carregar biblioteca.";
     }
   } catch {
-    /* ignore */
+    apiError = "Não foi possível contactar a API de mídias.";
   }
 
-  return collectMediaFromContent();
+  const files = mergeMediaFiles(fromCloudinary, fromContent);
+
+  if (!configured && !files.length && apiError) {
+    throw new Error(
+      "Cloudinary não está configurado no servidor. Adiciona CLOUDINARY_URL nas variáveis de ambiente da Vercel."
+    );
+  }
+
+  if (apiError && !fromCloudinary.length && fromContent.length) {
+    return files;
+  }
+
+  if (apiError && !files.length) {
+    throw new Error(apiError);
+  }
+
+  return files;
 }
 
 export async function deleteMediaFile(file: MediaFile): Promise<void> {
-  const publicId = file.publicId;
+  const publicId = file.publicId ?? publicIdFromUrl(file.url);
   if (!publicId) throw new Error("Não foi possível identificar o ficheiro para remover.");
 
   const res = await fetch("/api/media", {
@@ -172,4 +246,57 @@ export async function deleteMediaFile(file: MediaFile): Promise<void> {
 
   const data = await res.json();
   if (!res.ok) throw new Error(data.error || "Erro ao remover ficheiro.");
+}
+
+export type AdminSettings = {
+  username: string;
+  hasPassword: boolean;
+};
+
+async function parseApiError(res: Response): Promise<string> {
+  const data = await res.json().catch(() => ({}));
+  return (data as { error?: string }).error || "Pedido falhou.";
+}
+
+export async function loadAdminSettings(): Promise<AdminSettings> {
+  const res = await fetchWithTimeout("/api/admin/settings", FETCH_OPTS, 10_000);
+  if (!res.ok) throw new Error(await parseApiError(res));
+  return res.json() as Promise<AdminSettings>;
+}
+
+export async function saveAdminUsername(username: string): Promise<AdminSettings> {
+  const res = await fetch("/api/admin/settings", {
+    method: "PUT",
+    ...FETCH_OPTS,
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ username })
+  });
+  if (!res.ok) throw new Error(await parseApiError(res));
+  const data = (await res.json()) as { username: string; hasPassword: boolean };
+  return { username: data.username, hasPassword: data.hasPassword };
+}
+
+export async function requestPasswordCode(payload: {
+  newPassword: string;
+  confirmPassword: string;
+}): Promise<string> {
+  const res = await fetch("/api/admin/settings/password", {
+    method: "POST",
+    ...FETCH_OPTS,
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(payload)
+  });
+  if (!res.ok) throw new Error(await parseApiError(res));
+  const data = (await res.json()) as { message?: string };
+  return data.message || "Código enviado.";
+}
+
+export async function confirmPasswordChange(code: string): Promise<void> {
+  const res = await fetch("/api/admin/settings/password", {
+    method: "PATCH",
+    ...FETCH_OPTS,
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ code })
+  });
+  if (!res.ok) throw new Error(await parseApiError(res));
 }

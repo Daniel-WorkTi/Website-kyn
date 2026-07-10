@@ -1,13 +1,14 @@
 "use client";
 
 import { useState } from "react";
+import { FolderOpen } from "lucide-react";
 import type { SidebarSectionId } from "@/components/admin/AdminSidebar";
+import { MediaPickerModal } from "@/components/admin/media/MediaPickerModal";
 import { DropZone } from "@/components/admin/shared/DropZone";
 import { MediaCard } from "@/components/admin/shared/MediaCard";
 import {
   EmptyState,
   FieldLabel,
-  MediaLibrary,
   SectionBlock,
   TextArea,
   TextInput
@@ -54,12 +55,9 @@ function renderItemList(
   items: GalleryItem[],
   allItems: GalleryItem[],
   updateItems: (next: GalleryItem[]) => void,
-  processUpload: GalleryEditorProps["processUpload"],
-  showToast: GalleryEditorProps["showToast"],
-  data: GalleryData,
-  onChange: GalleryEditorProps["onChange"],
-  onDirty: () => void,
-  sectionId: SidebarSectionId
+  uploadForPicker: (file: File) => Promise<string>,
+  sectionId: SidebarSectionId,
+  mediaLibrary: MediaFile[]
 ) {
   return items.map((item) => {
     const index = allItems.indexOf(item);
@@ -69,6 +67,7 @@ function renderItemList(
         item={item}
         index={index}
         total={allItems.length}
+        files={mediaLibrary}
         onChange={(i, updated) => {
           const next = [...allItems];
           next[i] =
@@ -86,30 +85,7 @@ function renderItemList(
           [next[i], next[j]] = [next[j], next[i]];
           updateItems(next);
         }}
-        onUpload={async (i, file, field = "src") => {
-          try {
-            await processUpload(file, (url, f) => {
-              const next = [...allItems];
-              if (field === "poster") {
-                next[i] = { ...next[i], poster: url };
-              } else {
-                const entry =
-                  sectionId === "studio-space"
-                    ? createGalleryItemFromUpload(url, f, sectionId)
-                    : {
-                        ...next[i],
-                        src: url,
-                        type: f.type.startsWith("video/") ? ("video" as const) : ("image" as const)
-                      };
-                next[i] = { ...next[i], ...entry };
-              }
-              onChange(prepareGalleryForSection(sectionId, { ...data, items: next }));
-              onDirty();
-            });
-          } catch (err) {
-            showToast(err instanceof Error ? err.message : "Erro no envio.", "error");
-          }
-        }}
+        uploadForPicker={uploadForPicker}
       />
     );
   });
@@ -122,11 +98,10 @@ export function GalleryEditor({
   onDirty,
   processUpload,
   showToast,
-  mediaLibrary,
-  refreshMediaLibrary,
-  mediaLoading
+  mediaLibrary
 }: GalleryEditorProps) {
   const [uploading, setUploading] = useState(false);
+  const [addPickerOpen, setAddPickerOpen] = useState(false);
   const isStudio = sectionId === "studio-space";
   const videoOnly = VIDEO_ONLY_SECTIONS.has(sectionId);
   const items = data.items || [];
@@ -144,6 +119,24 @@ export function GalleryEditor({
       return;
     }
     updateItems([...items, createGalleryItemFromLibrary(url, type, sectionId)]);
+  }
+
+  async function uploadForPicker(file: File): Promise<string> {
+    return new Promise((resolve, reject) => {
+      processUpload(file, (url) => resolve(url)).catch(reject);
+    });
+  }
+
+  async function uploadToLibrary(file: File): Promise<void> {
+    setUploading(true);
+    try {
+      await uploadForPicker(file);
+    } catch (err) {
+      showToast(err instanceof Error ? err.message : "Erro no envio.", "error");
+      throw err;
+    } finally {
+      setUploading(false);
+    }
   }
 
   async function handleDropFiles(files: File[]) {
@@ -171,14 +164,9 @@ export function GalleryEditor({
   }
 
   const layoutHint = LAYOUT_HINTS[sectionId];
-  const libraryHint = isStudio
-    ? "Envia ou escolhe da biblioteca — vídeos vão para o topo da página, fotos entram no grid automaticamente."
-    : videoOnly
-      ? "Clica num vídeo da biblioteca para adicionar, ou envia novos abaixo."
-      : "Clica num ficheiro para adicionar à galeria, ou envia novos abaixo.";
 
   return (
-    <div className="space-y-8">
+    <div className="space-y-6">
       <SectionBlock title="Informação da página">
         <div>
           <FieldLabel htmlFor="gallery-title">Título da página</FieldLabel>
@@ -211,26 +199,49 @@ export function GalleryEditor({
         </div>
       )}
 
-      <MediaLibrary
-        files={mediaLibrary}
-        filter={videoOnly ? "video" : "all"}
-        hint={libraryHint}
-        onSelect={addFromLibrary}
-        onRefresh={refreshMediaLibrary}
-        loading={mediaLoading}
-      />
+      <SectionBlock
+        title="Adicionar conteúdo"
+        subtitle={
+          isStudio
+            ? "Vídeos vão para o topo; fotos entram no grid automaticamente."
+            : videoOnly
+              ? "Envia ou escolhe vídeos da biblioteca."
+              : "Envia ficheiros ou escolhe da biblioteca."
+        }
+      >
+        <DropZone
+          accept={videoOnly ? "video/*" : "image/*,video/*"}
+          onFiles={handleDropFiles}
+          uploading={uploading}
+        />
+        <button
+          type="button"
+          onClick={() => setAddPickerOpen(true)}
+          className="mt-3 inline-flex w-full items-center justify-center gap-2 rounded-lg border border-white/[0.08] bg-white/[0.03] px-3 py-2.5 text-[11px] text-zinc-400 transition hover:bg-white/[0.06] hover:text-zinc-200"
+        >
+          <FolderOpen className="size-3.5" strokeWidth={1.75} />
+          Escolher da biblioteca
+        </button>
+      </SectionBlock>
 
-      <DropZone
-        accept={videoOnly ? "video/*" : "image/*,video/*"}
-        onFiles={handleDropFiles}
+      <MediaPickerModal
+        open={addPickerOpen}
+        onClose={() => setAddPickerOpen(false)}
+        files={mediaLibrary}
+        filterType={videoOnly ? "video" : "all"}
+        onPick={(file) => addFromLibrary(file.url, file.type)}
+        onUpload={async (file) => {
+          await uploadToLibrary(file);
+        }}
         uploading={uploading}
+        title="Adicionar da biblioteca"
       />
 
       {items.length === 0 ? (
         <SectionBlock title="Galeria">
           <EmptyState
             title="Ainda não há conteúdo"
-            text="Usa a biblioteca ou a área de envio para adicionar fotos e vídeos."
+            text="Envia ficheiros acima ou escolhe da biblioteca."
           />
         </SectionBlock>
       ) : isStudio ? (
@@ -239,7 +250,7 @@ export function GalleryEditor({
             {videos.length === 0 ? (
               <p className="text-sm text-zinc-500">Ainda não há vídeos. Envia um ficheiro de vídeo.</p>
             ) : (
-              <div className="grid gap-4 sm:grid-cols-2">{renderItemList(videos, items, updateItems, processUpload, showToast, data, onChange, onDirty, sectionId)}</div>
+              <div className="space-y-3">{renderItemList(videos, items, updateItems, uploadForPicker, sectionId, mediaLibrary)}</div>
             )}
           </SectionBlock>
 
@@ -247,14 +258,14 @@ export function GalleryEditor({
             {images.length === 0 ? (
               <p className="text-sm text-zinc-500">Ainda não há fotos. Envia imagens para o grid.</p>
             ) : (
-              <div className="grid gap-4 sm:grid-cols-2">{renderItemList(images, items, updateItems, processUpload, showToast, data, onChange, onDirty, sectionId)}</div>
+              <div className="space-y-3">{renderItemList(images, items, updateItems, uploadForPicker, sectionId, mediaLibrary)}</div>
             )}
           </SectionBlock>
         </div>
       ) : (
         <SectionBlock title={`Galeria (${items.length === 1 ? "1 item" : `${items.length} itens`})`}>
-          <div className="grid gap-4 sm:grid-cols-2">
-            {renderItemList(items, items, updateItems, processUpload, showToast, data, onChange, onDirty, sectionId)}
+          <div className="space-y-3">
+            {renderItemList(items, items, updateItems, uploadForPicker, sectionId, mediaLibrary)}
           </div>
         </SectionBlock>
       )}

@@ -14,7 +14,7 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: "Utilizador e palavra-passe em falta." }, { status: 400 });
   }
 
-  if (!verifyCredentials(String(username).trim(), String(password))) {
+  if (!(await verifyCredentials(String(username).trim(), String(password)))) {
     return NextResponse.json({ error: "Utilizador ou palavra-passe incorretos." }, { status: 401 });
   }
 
