@@ -2,7 +2,7 @@
 
 import { Check, Eye, Loader2, Monitor, RefreshCw, RotateCcw, Smartphone } from "lucide-react";
 import { useEditorStore } from "@/hooks/useEditorStore";
-import type { DevicePreview } from "@/lib/admin/editor-types";
+import type { DevicePreview } from "@/lib/admin/device-preview";
 
 type EditorTopbarProps = {
   pageLabel: string;

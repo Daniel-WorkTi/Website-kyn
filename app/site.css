@@ -664,6 +664,17 @@ body.site-theme {
   grid-column: 3;
 }
 
+html.site-theme[data-page="team"],
+html.site-theme[data-page="team"] body {
+  scrollbar-width: none;
+  -ms-overflow-style: none;
+}
+
+html.site-theme[data-page="team"]::-webkit-scrollbar,
+html.site-theme[data-page="team"] body::-webkit-scrollbar {
+  display: none;
+}
+
 /* ── Team ── */
 
 .section {
@@ -952,10 +963,6 @@ body.site-theme {
     grid-column: 2 / span 2;
   }
 
-  .team-featured {
-    grid-template-columns: 1fr;
-  }
-
   .partners-grid--main,
   .partners-grid--secondary {
     grid-template-columns: repeat(2, 1fr);
@@ -966,6 +973,10 @@ body.site-theme {
   .nav__inner {
     justify-content: flex-end;
     padding: 0 1.25rem;
+  }
+
+  .team-featured {
+    grid-template-columns: 1fr;
   }
 
   .nav__toggle {

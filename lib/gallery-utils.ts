@@ -76,7 +76,12 @@ export function prepareGalleryForSection(sectionId: string, data: GalleryData): 
       items: (data.items || []).map((item) => normalizeGalleryItem(item, "Photography"))
     };
   }
-  return data;
+
+  const defaultAlt = data.title || "Gallery";
+  return {
+    ...data,
+    items: (data.items || []).map((item) => normalizeGalleryItem(item, defaultAlt))
+  };
 }
 
 export function createGalleryItemFromUpload(

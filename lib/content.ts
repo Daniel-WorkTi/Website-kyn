@@ -9,15 +9,7 @@ export async function getSite(): Promise<SiteJson> {
 
 export async function getGallery(slug: string): Promise<GalleryJson> {
   const data = await readContentJson<GalleryJson>(`content/galleries/${slug}.json`);
-  if (
-    data.layout === "studio" ||
-    data.layout === "multicam" ||
-    data.layout === "reels" ||
-    slug === "photography"
-  ) {
-    return prepareGalleryForSection(slug, data as GalleryData) as GalleryJson;
-  }
-  return data;
+  return prepareGalleryForSection(slug, data as GalleryData) as GalleryJson;
 }
 
 export async function getTeam(): Promise<TeamJson> {

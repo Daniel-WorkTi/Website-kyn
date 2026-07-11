@@ -1,6 +1,6 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import PageHeading from "@/components/site/PageHeading";
 import Reveal from "@/components/site/Reveal";
 import { initials } from "@/lib/utils";
@@ -118,6 +118,13 @@ interface TeamViewProps {
 
 export default function TeamView({ data, partners }: TeamViewProps) {
   const [filter, setFilter] = useState<string | null>(null);
+
+  useEffect(() => {
+    document.documentElement.dataset.page = "team";
+    return () => {
+      delete document.documentElement.dataset.page;
+    };
+  }, []);
 
   const gridMembers = useMemo(() => data.members || [], [data.members]);
   const mainPartners = partners?.main || [];

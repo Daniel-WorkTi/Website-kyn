@@ -51,14 +51,9 @@ function Stop-ListenerOnPort {
 
 Stop-ListenerOnPort -Port 3000
 
-if (Test-Path ".next") {
-  Write-Host "A limpar cache de compilacao (.next)..." -ForegroundColor Yellow
-  Remove-Item -Recurse -Force ".next"
-}
-
 Write-Host ""
 Write-Host "Servidor em http://localhost:3000" -ForegroundColor Green
 Write-Host "Admin em    http://localhost:3000/admin" -ForegroundColor Green
 Write-Host "Producao    https://website-kyn.vercel.app" -ForegroundColor Cyan
 Write-Host ""
-npm run dev
+& "$nodeDir\node.exe" (Join-Path $PSScriptRoot "scripts\dev.mjs")
