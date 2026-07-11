@@ -1,6 +1,5 @@
 "use client";
 
-import { ProimagemLogo } from "@/components/admin/ProimagemLogo";
 import { useState } from "react";
 import { useAdmin } from "@/hooks/useAdmin";
 
@@ -29,7 +28,9 @@ export function LoginForm() {
     <div className="flex min-h-screen items-center justify-center bg-black px-6">
       <div className="w-full max-w-lg text-center">
         <div className="mb-10 flex flex-col items-center">
-          <ProimagemLogo className="mb-5 h-14 w-auto max-w-[min(100%,200px)] sm:h-16" />
+          <h1 className="mb-6 text-2xl font-bold uppercase tracking-[0.28em] text-white sm:text-3xl">
+            Proimagem.pt
+          </h1>
 
           <div className="inline-flex items-center gap-2 rounded-full border border-white/[0.08] bg-white/[0.03] px-4 py-1.5">
             <span className="size-1.5 shrink-0 rounded-full bg-emerald-400/90 shadow-[0_0_8px_rgba(74,222,128,0.5)]" />
