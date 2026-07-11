@@ -97,7 +97,7 @@ Páginas dinâmicas — leem o conteúdo mais recente em cada pedido.
 | `/team` | Equipa + parceiros |
 | `/parceiros` | Secção parceiros |
 
-**Componentes principais:** `Hero`, `HomeStack`, `GalleryView`, `StudioGalleryView`, `MulticamGalleryView`, `ReelsGalleryView`, `TeamView`, `PartnersView`, `Nav`, `Lightbox`, `SiteChrome`.
+**Componentes principais:** `Hero`, `HomeStack`, `GalleryView`, `StudioGalleryView`, `MulticamGalleryView`, `ReelsGalleryView`, `TeamView`, `Nav`, `Lightbox`, `SiteChrome`.
 
 **Estilos:** `app/site.css` — visual minimalista (fundo preto, tipografia Inter).
 
@@ -220,7 +220,7 @@ Layouts de galeria suportados: `default`, `studio`, `multicam`, `reels` — proc
 
 ## Documentação adicional
 
-- [docs/AUDIT.md](./docs/AUDIT.md) — auditoria técnica, fluxos e código activo
+- [GUIA-CMS.md](./GUIA-CMS.md) — guia para o cliente editar conteúdo no painel
 
 ---
 

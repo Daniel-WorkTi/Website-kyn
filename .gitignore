@@ -12,3 +12,6 @@ tsconfig.tsbuildinfo
 
 # Resíduos de exportação do Canva
 *_files/
+
+# Relatórios de teste regeneráveis
+docs/CMS-TEST-REPORT.json

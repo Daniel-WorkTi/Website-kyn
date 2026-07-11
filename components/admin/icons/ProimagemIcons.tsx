@@ -17,22 +17,6 @@ function IconBase({ className, children, ...props }: IconProps & { children: Rea
   );
 }
 
-export function LogoProimagemIcon({ className, ...props }: IconProps) {
-  return (
-    <IconBase className={className} {...props}>
-      <rect x="6" y="6" width="52" height="52" rx="14" stroke="currentColor" strokeWidth="3" />
-      <path
-        d="M20 46V18h18c7 0 12 5 12 12s-5 12-12 12H30"
-        stroke="currentColor"
-        strokeWidth="5"
-        strokeLinecap="round"
-        strokeLinejoin="round"
-      />
-      <path d="M30 18v28" stroke="currentColor" strokeWidth="5" strokeLinecap="round" />
-    </IconBase>
-  );
-}
-
 export function HomeIcon({ className, ...props }: IconProps) {
   return (
     <IconBase className={className} {...props}>
@@ -274,31 +258,6 @@ export function ChevronLeftIcon({ className, ...props }: IconProps) {
   );
 }
 
-export function SaveIcon({ className, ...props }: IconProps) {
-  return (
-    <IconBase className={className} {...props}>
-      <path
-        d="M14 10h28l8 8v36H14V10Z"
-        stroke="currentColor"
-        strokeWidth="3.6"
-        strokeLinejoin="round"
-      />
-      <path
-        d="M22 10v16h20V10"
-        stroke="currentColor"
-        strokeWidth="3.6"
-        strokeLinejoin="round"
-      />
-      <path
-        d="M23 54V38h18v16"
-        stroke="currentColor"
-        strokeWidth="3.6"
-        strokeLinejoin="round"
-      />
-    </IconBase>
-  );
-}
-
 export function UploadIcon({ className, ...props }: IconProps) {
   return (
     <IconBase className={className} {...props}>
@@ -316,31 +275,6 @@ export function UploadIcon({ className, ...props }: IconProps) {
         strokeWidth="3.8"
         strokeLinecap="round"
       />
-    </IconBase>
-  );
-}
-
-export function WarningIcon({ className, ...props }: IconProps) {
-  return (
-    <IconBase className={className} {...props}>
-      <path
-        d="M32 10 58 54H6L32 10Z"
-        stroke="currentColor"
-        strokeWidth="3.6"
-        strokeLinejoin="round"
-      />
-      <path d="M32 26v12" stroke="currentColor" strokeWidth="4" strokeLinecap="round" />
-      <circle cx="32" cy="46" r="3" fill="currentColor" />
-    </IconBase>
-  );
-}
-
-export function InfoIcon({ className, ...props }: IconProps) {
-  return (
-    <IconBase className={className} {...props}>
-      <circle cx="32" cy="32" r="24" stroke="currentColor" strokeWidth="3.6" />
-      <path d="M32 29v17" stroke="currentColor" strokeWidth="4" strokeLinecap="round" />
-      <circle cx="32" cy="20" r="3" fill="currentColor" />
     </IconBase>
   );
 }

@@ -144,14 +144,6 @@ export type HomeStackItem = {
   alt: string;
 };
 
-export type FeaturedCard = {
-  id: string;
-  title: string;
-  image: string;
-  link: string;
-  visible?: boolean;
-};
-
 export type HomeData = {
   brand?: string;
   nav?: { label: string; href: string }[];
@@ -173,12 +165,6 @@ export type HomeData = {
     titleColor?: string;
     subtitleAlign?: "left" | "center" | "right";
   };
-  featured?: {
-    sectionTitle: string;
-    visible?: boolean;
-    cards: FeaturedCard[];
-  };
-  stats?: { id: string; label: string; value: string }[];
   homeStack: HomeStackItem[];
   [key: string]: unknown;
 };
