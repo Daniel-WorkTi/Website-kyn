@@ -5,62 +5,74 @@
     {
       "type": "video",
       "src": "https://res.cloudinary.com/zk5df6k0/video/upload/f_mp4,vc_h264,q_auto/proimagem/tbjxxlfrew9jjwkpelgo.mp4",
-      "alt": "Studio Space"
+      "alt": "Studio Space",
+      "featured": true
     },
     {
       "type": "video",
       "src": "https://res.cloudinary.com/zk5df6k0/video/upload/f_mp4,vc_h264,q_auto/proimagem/b27jnpfzyq2vcah7hl48.mp4",
-      "alt": "Studio Space"
+      "alt": "Studio Space",
+      "featured": false
     },
     {
       "type": "image",
-      "src": "https://res.cloudinary.com/zk5df6k0/image/upload/f_auto,q_auto,w_2800,c_limit/proimagem/cbxbxiaafaa25jfm8q2l",
-      "alt": "Studio Space"
+      "src": "https://res.cloudinary.com/zk5df6k0/image/upload/f_auto,q_auto,w_2400,c_limit/proimagem/cbxbxiaafaa25jfm8q2l",
+      "alt": "Studio Space",
+      "featured": false
     },
     {
       "type": "image",
-      "src": "https://res.cloudinary.com/zk5df6k0/image/upload/f_auto,q_auto,w_2800,c_limit/proimagem/ahsfywzxlddwzquz1g7c",
-      "alt": "Studio Space"
+      "src": "https://res.cloudinary.com/zk5df6k0/image/upload/f_auto,q_auto,w_2400,c_limit/proimagem/ahsfywzxlddwzquz1g7c",
+      "alt": "Studio Space",
+      "featured": false
     },
     {
       "type": "image",
-      "src": "https://res.cloudinary.com/zk5df6k0/image/upload/f_auto,q_auto,w_2800,c_limit/proimagem/jduc3vynqvuteph309o4",
-      "alt": "Studio Space"
+      "src": "https://res.cloudinary.com/zk5df6k0/image/upload/f_auto,q_auto,w_2400,c_limit/proimagem/jduc3vynqvuteph309o4",
+      "alt": "Studio Space",
+      "featured": false
     },
     {
       "type": "image",
-      "src": "https://res.cloudinary.com/zk5df6k0/image/upload/f_auto,q_auto,w_2800,c_limit/proimagem/agpdibqmt2knewn5qqxm",
-      "alt": "Studio Space"
+      "src": "https://res.cloudinary.com/zk5df6k0/image/upload/f_auto,q_auto,w_2400,c_limit/proimagem/agpdibqmt2knewn5qqxm",
+      "alt": "Studio Space",
+      "featured": false
     },
     {
       "type": "image",
-      "src": "https://res.cloudinary.com/zk5df6k0/image/upload/f_auto,q_auto,w_2800,c_limit/proimagem/ivcsqcualdywskkdeclw",
-      "alt": "Studio Space"
+      "src": "https://res.cloudinary.com/zk5df6k0/image/upload/f_auto,q_auto,w_2400,c_limit/proimagem/ivcsqcualdywskkdeclw",
+      "alt": "Studio Space",
+      "featured": false
     },
     {
       "type": "image",
-      "src": "https://res.cloudinary.com/zk5df6k0/image/upload/f_auto,q_auto,w_2800,c_limit/proimagem/vwyie5ieix75kwxtkhwv",
-      "alt": "Studio Space"
+      "src": "https://res.cloudinary.com/zk5df6k0/image/upload/f_auto,q_auto,w_2400,c_limit/proimagem/vwyie5ieix75kwxtkhwv",
+      "alt": "Studio Space",
+      "featured": false
     },
     {
       "type": "image",
-      "src": "https://res.cloudinary.com/zk5df6k0/image/upload/f_auto,q_auto,w_2800,c_limit/proimagem/crlg3dapzzxu8kkuotnd",
-      "alt": "Studio Space"
+      "src": "https://res.cloudinary.com/zk5df6k0/image/upload/f_auto,q_auto,w_2400,c_limit/proimagem/crlg3dapzzxu8kkuotnd",
+      "alt": "Studio Space",
+      "featured": false
     },
     {
       "type": "image",
-      "src": "https://res.cloudinary.com/zk5df6k0/image/upload/f_auto,q_auto,w_2800,c_limit/proimagem/vtrm1szqqrhqcao4cqv6",
-      "alt": "Studio Space"
+      "src": "https://res.cloudinary.com/zk5df6k0/image/upload/f_auto,q_auto,w_2400,c_limit/proimagem/vtrm1szqqrhqcao4cqv6",
+      "alt": "Studio Space",
+      "featured": false
     },
     {
       "type": "image",
-      "src": "https://res.cloudinary.com/zk5df6k0/image/upload/f_auto,q_auto,w_2800,c_limit/proimagem/fg7btnx68mkhxodgjwe0",
-      "alt": "Studio Space"
+      "src": "https://res.cloudinary.com/zk5df6k0/image/upload/f_auto,q_auto,w_2400,c_limit/proimagem/fg7btnx68mkhxodgjwe0",
+      "alt": "Studio Space",
+      "featured": false
     },
     {
       "type": "image",
-      "src": "https://res.cloudinary.com/zk5df6k0/image/upload/f_auto,q_auto,w_2800,c_limit/proimagem/ws6hypsuigiqzr0jcqbd",
-      "alt": "Studio Space"
+      "src": "https://res.cloudinary.com/zk5df6k0/image/upload/f_auto,q_auto,w_2400,c_limit/proimagem/ws6hypsuigiqzr0jcqbd",
+      "alt": "Studio Space",
+      "featured": false
     }
   ]
 }
