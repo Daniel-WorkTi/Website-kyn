@@ -5,41 +5,65 @@
       "name": "Kym Willer",
       "roles": "Cam OP · Photographer",
       "photo": "https://res.cloudinary.com/zk5df6k0/image/upload/f_auto,q_auto,w_1200,c_limit/proimagem/pfrhxpvqvwucwridm9lo",
-      "skills": ["videographer", "photography"]
+      "skills": [
+        "videographer",
+        "photography"
+      ]
     },
     {
       "name": "Ruan Costa",
       "roles": "Cam OP · Drone OP · Editor",
       "photo": "https://res.cloudinary.com/zk5df6k0/image/upload/f_auto,q_auto,w_1200,c_limit/proimagem/ijdfz7uqzv0uqow2zsr3",
-      "skills": ["videographer", "drone", "editor"]
+      "skills": [
+        "videographer",
+        "drone",
+        "editor"
+      ]
     },
     {
       "name": "Henrique Monteiro",
       "roles": "Cam OP · Editor",
       "photo": "https://res.cloudinary.com/zk5df6k0/image/upload/f_auto,q_auto,w_1200,c_limit/proimagem/fj8ajx7onizzgbjelzzk",
-      "skills": ["videographer", "editor"]
+      "skills": [
+        "videographer",
+        "editor"
+      ]
     }
   ],
   "members": [
     {
       "name": "Eduardo Lima",
       "roles": "Cam OP · Drone OP",
-      "skills": ["videographer", "drone"],
+      "skills": [
+        "videographer",
+        "drone"
+      ],
       "photo": "https://res.cloudinary.com/zk5df6k0/image/upload/f_auto,q_auto,w_1200,c_limit/proimagem/jypbqwri66wemqngrjkf"
     },
     {
       "name": "Ikaro Fonseca",
       "roles": "Photographer · Cam OP",
-      "skills": ["photography", "videographer"],
+      "skills": [
+        "photography",
+        "videographer"
+      ],
       "photo": "https://res.cloudinary.com/zk5df6k0/image/upload/f_auto,q_auto,w_1200,c_limit/proimagem/ijpjijq5ruvhtiad6gut",
       "photoPosition": "center 35%"
     },
     {
       "name": "Francisco Santos",
       "roles": "Cam OP",
-      "skills": ["videographer"],
+      "skills": [
+        "videographer"
+      ],
       "photo": "https://res.cloudinary.com/zk5df6k0/image/upload/f_auto,q_auto,w_1200,c_limit/proimagem/ll297ff7wwuekx3wgfo0",
       "photoPosition": "center 58%"
+    },
+    {
+      "name": "",
+      "roles": "",
+      "skills": [],
+      "photo": ""
     }
   ]
 }
