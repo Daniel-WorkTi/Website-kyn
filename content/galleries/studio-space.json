@@ -6,7 +6,7 @@
       "type": "video",
       "src": "https://res.cloudinary.com/zk5df6k0/video/upload/f_mp4,vc_h264,q_auto/proimagem/tbjxxlfrew9jjwkpelgo.mp4",
       "alt": "Studio Space",
-      "featured": true
+      "featured": false
     },
     {
       "type": "video",
