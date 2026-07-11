@@ -4,6 +4,9 @@ import { SiteChrome } from "@/components/site/SiteChrome";
 import { getSite } from "@/lib/content";
 import "../site.css";
 
+export const dynamic = "force-dynamic";
+export const revalidate = 0;
+
 export default async function SiteLayout({
   children
 }: {

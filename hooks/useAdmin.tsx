@@ -360,7 +360,7 @@ export function AdminProvider({ children }: { children: ReactNode }) {
       autoSaveBlockedRef.current = false;
       mediaCacheRef.current = null;
       if (!silent) {
-        showToast("Alterações guardadas! O site atualiza em cerca de 1 minuto.", "ok");
+        showToast("Alterações guardadas no site.", "ok");
       }
       setPreviewKey((k) => k + 1);
       return true;
