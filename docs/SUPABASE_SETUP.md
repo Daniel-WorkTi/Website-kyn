@@ -81,21 +81,26 @@ media/
 
 Ex.: `studio-space/images/a1b2c3d4.webp`
 
-### Limite de tamanho (obrigatório para vídeos)
+### Limite de tamanho (vídeos)
 
-Se aparece **413 Maximum size exceeded** no upload TUS:
+| Plano Supabase | Máx. por ficheiro |
+|----------------|-------------------|
+| **Free** | **50 MB** (não dá para subir) |
+| Pro / Team | até 500 GB |
 
-1. Dashboard → **Storage → Configuration** → **Global file size limit** ≥ `500 MB`
-2. **Storage → Buckets → media → Edit** → Restrict file size ≥ `500 MB`  
-   ou SQL:
+No plano Free o admin **comprime** qualquer vídeo grande para ~45 MB antes do envio.
+
+SQL (bucket alinhado a 50 MB):
 
 ```sql
 update storage.buckets
-set file_size_limit = 524288000
+set file_size_limit = 52428800
 where id = 'media';
 ```
 
-O cliente comprime vídeos para ≤ ~200 MB; o bucket precisa de margem acima disso.
+Dashboard: **Storage → Configuration → Global file size limit** = `50` MB (máximo no Free).
+
+Para vídeos maiores com menos compressão: upgrade para **Pro** e sobe `VIDEO_STORAGE_LIMIT_MB` em `lib/admin/sections.ts`.
 
 ## 8. Auth / RLS (resumo)
 

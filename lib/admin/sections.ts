@@ -8,12 +8,15 @@ export const IMAGE_OPTIMIZE_TARGET_BYTES = Math.floor(14 * 1024 * 1024);
 
 /**
  * Vídeos: aceitar qualquer tamanho no input.
- * No browser comprimimos até ao teto de Storage, privilegiando qualidade
- * (resolução completa primeiro; só reduz escala se necessário).
+ * No browser comprimimos até ao teto efectivo do Storage.
+ *
+ * Plano Free Supabase = máximo 50 MB por ficheiro (hard limit).
+ * Pro/Team permitem até centenas de GB — sobe VIDEO_STORAGE_LIMIT_MB se upgradares.
  */
-export const MAX_VIDEO_UPLOAD_MB = 200;
+export const VIDEO_STORAGE_LIMIT_MB = 50;
+export const MAX_VIDEO_UPLOAD_MB = VIDEO_STORAGE_LIMIT_MB;
 export const MAX_VIDEO_UPLOAD_BYTES = MAX_VIDEO_UPLOAD_MB * 1024 * 1024;
-/** Alvo de compressão — perto do teto para não destruir qualidade. */
+/** Alvo de compressão — ligeiramente abaixo do teto Free (50 MB). */
 export const VIDEO_OPTIMIZE_TARGET_BYTES = Math.floor(MAX_VIDEO_UPLOAD_BYTES * 0.92);
 
 /** @deprecated aliases */

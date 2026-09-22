@@ -98,7 +98,7 @@ async function uploadResumable(
         if (msg.includes("413") || /maximum size exceeded/i.test(msg)) {
           reject(
             new Error(
-              "O Supabase rejeitou o ficheiro (limite de tamanho). Em Storage → Configuration sobe o Global file size limit para pelo menos 500 MB, e no bucket media define Restrict file size ≥ 500 MB."
+              "Limite do Supabase Storage (plano Free = máx. 50 MB por ficheiro). O vídeo será comprimido para ~45 MB. Se ainda falhar: Storage → Configuration → Global file size limit = 50 MB, e no bucket media o mesmo. Para ficheiros maiores sem tanta compressão, faz upgrade para Pro."
             )
           );
           return;

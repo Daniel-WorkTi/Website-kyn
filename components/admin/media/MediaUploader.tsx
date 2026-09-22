@@ -40,7 +40,7 @@ export function MediaUploader({
       </div>
       <p className="text-sm font-medium text-white">{label}</p>
       <p className="mt-1 text-xs text-zinc-500">
-        Imagens até {IMAGE_OPTIMIZE_MAX_MB} MB · vídeos: qualquer tamanho (optimizados até ≤{MAX_VIDEO_UPLOAD_MB} MB)
+        Imagens até {IMAGE_OPTIMIZE_MAX_MB} MB · vídeos: qualquer tamanho (comprimidos para ≤{MAX_VIDEO_UPLOAD_MB} MB — limite Free Supabase)
       </p>
       {uploading && <p className="mt-3 text-xs text-emerald-400 animate-pulse">A enviar…</p>}
     </label>

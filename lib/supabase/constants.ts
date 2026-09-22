@@ -18,7 +18,8 @@ export const MEDIA_BUCKET = "media";
 
 /** Limites de upload (Storage Supabase — ajustáveis). */
 export const MAX_IMAGE_UPLOAD_MB = 15;
-export const MAX_VIDEO_UPLOAD_MB = 200;
+/** Plano Free = 50 MB hard limit. Com Pro podes subir (e VIDEO_STORAGE_LIMIT_MB no código). */
+export const MAX_VIDEO_UPLOAD_MB = 50;
 export const MAX_IMAGE_UPLOAD_BYTES = MAX_IMAGE_UPLOAD_MB * 1024 * 1024;
 export const MAX_VIDEO_UPLOAD_BYTES = MAX_VIDEO_UPLOAD_MB * 1024 * 1024;
 /** Acima deste tamanho, upload de vídeo usa TUS resumable. */

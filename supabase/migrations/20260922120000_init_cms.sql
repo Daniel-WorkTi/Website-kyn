@@ -334,7 +334,7 @@ values (
   'media',
   'media',
   true,
-  524288000, -- 500 MB (vídeos optimizados; global Storage deve ser ≥ isto)
+  52428800, -- 50 MB (plano Free; Pro permite mais)
   array[
     'image/jpeg', 'image/png', 'image/webp', 'image/gif',
     'video/mp4', 'video/webm', 'video/quicktime'
