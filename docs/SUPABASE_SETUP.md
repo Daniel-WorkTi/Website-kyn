@@ -81,6 +81,22 @@ media/
 
 Ex.: `studio-space/images/a1b2c3d4.webp`
 
+### Limite de tamanho (obrigatório para vídeos)
+
+Se aparece **413 Maximum size exceeded** no upload TUS:
+
+1. Dashboard → **Storage → Configuration** → **Global file size limit** ≥ `500 MB`
+2. **Storage → Buckets → media → Edit** → Restrict file size ≥ `500 MB`  
+   ou SQL:
+
+```sql
+update storage.buckets
+set file_size_limit = 524288000
+where id = 'media';
+```
+
+O cliente comprime vídeos para ≤ ~200 MB; o bucket precisa de margem acima disso.
+
 ## 8. Auth / RLS (resumo)
 
 | Quem | Pode |

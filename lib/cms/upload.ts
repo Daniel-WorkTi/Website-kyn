@@ -71,7 +71,10 @@ async function uploadResumable(
   }
 
   const projectUrl = process.env.NEXT_PUBLIC_SUPABASE_URL!.replace(/\/$/, "");
-  const endpoint = `${projectUrl}/storage/v1/upload/resumable`;
+  // Hosted: hostname Storage directo (docs Supabase).
+  const endpoint = projectUrl.includes(".supabase.co")
+    ? `${projectUrl.replace(".supabase.co", ".storage.supabase.co")}/storage/v1/upload/resumable`
+    : `${projectUrl}/storage/v1/upload/resumable`;
 
   await new Promise<void>((resolve, reject) => {
     const upload = new Upload(file, {
@@ -81,17 +84,26 @@ async function uploadResumable(
         Authorization: `Bearer ${session.access_token}`,
         "x-upsert": "false",
       },
-      uploadDataDuringCreation: true,
+      uploadDataDuringCreation: false,
       removeFingerprintOnSuccess: true,
       metadata: {
         bucketName: MEDIA_BUCKET,
         objectName: storagePath,
-        contentType: file.type,
+        contentType: file.type || "application/octet-stream",
         cacheControl: "3600",
       },
       chunkSize: 6 * 1024 * 1024,
       onError(error) {
-        reject(error);
+        const msg = error instanceof Error ? error.message : String(error);
+        if (msg.includes("413") || /maximum size exceeded/i.test(msg)) {
+          reject(
+            new Error(
+              "O Supabase rejeitou o ficheiro (limite de tamanho). Em Storage → Configuration sobe o Global file size limit para pelo menos 500 MB, e no bucket media define Restrict file size ≥ 500 MB."
+            )
+          );
+          return;
+        }
+        reject(error instanceof Error ? error : new Error(msg));
       },
       onProgress(bytesUploaded, bytesTotal) {
         const percent = bytesTotal ? Math.round((bytesUploaded / bytesTotal) * 100) : 0;
