@@ -47,7 +47,20 @@ export function MediaPickerField({
         <div className="aspect-video w-full bg-zinc-950">
           {value ? (
             type === "video" ? (
-              <video src={value} className="h-full w-full object-cover" muted playsInline />
+              <video
+                src={value}
+                className="h-full w-full object-cover"
+                muted
+                playsInline
+                preload="metadata"
+                onLoadedMetadata={(e) => {
+                  try {
+                    e.currentTarget.currentTime = 0.1;
+                  } catch {
+                    /* ignore */
+                  }
+                }}
+              />
             ) : (
               <img src={value} alt="" className="h-full w-full object-cover" />
             )

@@ -64,11 +64,17 @@ export function MediaLibrary({
               {file.type === "video" ? (
                 <video
                   src={mediaPlaybackUrl(file)}
-                  poster={mediaThumbnailUrl(file)}
                   muted
                   playsInline
                   preload="metadata"
                   className="h-full w-full object-cover"
+                  onLoadedMetadata={(e) => {
+                    try {
+                      e.currentTarget.currentTime = 0.1;
+                    } catch {
+                      /* ignore */
+                    }
+                  }}
                 />
               ) : (
                 <img

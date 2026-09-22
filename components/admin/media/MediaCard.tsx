@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { Copy, Film, ImageIcon, Loader2, Play, Trash2 } from "lucide-react";
 import type { MediaFile } from "@/lib/admin/sections";
 import {
@@ -24,6 +24,15 @@ type MediaCardProps = {
   selectable?: boolean;
 };
 
+function isRasterImageUrl(url: string): boolean {
+  if (!url) return false;
+  if (url.includes("res.cloudinary.com") && url.includes("/image/")) return true;
+  if (url.includes("res.cloudinary.com") && /\/video\/upload\/.*\.(jpe?g|png|webp)/i.test(url)) {
+    return true;
+  }
+  return /\.(jpe?g|png|webp|gif|avif)(\?|$)/i.test(url);
+}
+
 export function MediaCard({
   file,
   variant = "default",
@@ -38,10 +47,13 @@ export function MediaCard({
   const isLibrary = variant === "library";
   const thumbUrl = mediaThumbnailUrl(file);
   const videoUrl = file.type === "video" ? mediaPlaybackUrl(file) : null;
-  const [imgSrc, setImgSrc] = useState(thumbUrl);
+  const hasImagePoster = file.type === "video" && isRasterImageUrl(thumbUrl);
+  const [imgSrc, setImgSrc] = useState(hasImagePoster ? thumbUrl : "");
+  const videoRef = useRef<HTMLVideoElement>(null);
 
   useEffect(() => {
-    setImgSrc(mediaThumbnailUrl(file));
+    const next = mediaThumbnailUrl(file);
+    setImgSrc(isRasterImageUrl(next) ? next : "");
   }, [file.url, file.publicId, file.type]);
 
   const handleClick = () => {
@@ -71,39 +83,54 @@ export function MediaCard({
         <div className={["relative w-full bg-zinc-900", previewClass].join(" ")}>
           {file.type === "video" ? (
             <>
-              <img
-                src={imgSrc}
-                alt={file.name}
-                loading="lazy"
-                className="absolute inset-0 h-full w-full object-cover"
-                onError={() => {
-                  if (imgSrc !== file.url) setImgSrc(file.url);
-                }}
-              />
+              {/* Capa = primeiro frame (metadata). Sem <img> na URL do .webm/.mp4. */}
+              {hasImagePoster && imgSrc ? (
+                <img
+                  src={imgSrc}
+                  alt={file.name}
+                  loading="lazy"
+                  className="absolute inset-0 h-full w-full object-cover"
+                  onError={() => setImgSrc("")}
+                />
+              ) : null}
               <video
+                ref={videoRef}
                 src={videoUrl ?? file.url}
-                poster={imgSrc}
                 muted
                 playsInline
-                preload="none"
-                className="absolute inset-0 h-full w-full object-cover opacity-0 transition group-hover:opacity-100"
+                preload="metadata"
+                className={[
+                  "absolute inset-0 h-full w-full object-cover transition",
+                  hasImagePoster && imgSrc
+                    ? "opacity-0 group-hover:opacity-100"
+                    : "opacity-100"
+                ].join(" ")}
+                onLoadedMetadata={(e) => {
+                  const v = e.currentTarget;
+                  // Força paint do first frame
+                  try {
+                    if (v.currentTime < 0.05) v.currentTime = 0.1;
+                  } catch {
+                    /* ignore seek errors */
+                  }
+                }}
                 onMouseEnter={(e) => {
                   e.currentTarget.play().catch(() => {});
                 }}
                 onMouseLeave={(e) => {
                   e.currentTarget.pause();
-                  e.currentTarget.currentTime = 0;
+                  e.currentTarget.currentTime = 0.1;
                 }}
               />
               <span className="pointer-events-none absolute inset-0 flex items-center justify-center">
-                <span className="flex size-12 items-center justify-center rounded-full bg-black/55 text-white shadow-lg transition group-hover:scale-105">
+                <span className="flex size-12 items-center justify-center rounded-full bg-black/55 text-white shadow-lg transition group-hover:scale-105 group-hover:opacity-0">
                   <Play className="ml-0.5 size-5" fill="currentColor" strokeWidth={0} />
                 </span>
               </span>
             </>
           ) : (
             <img
-              src={imgSrc}
+              src={imgSrc || thumbUrl}
               alt={file.name}
               loading="lazy"
               className="absolute inset-0 h-full w-full object-cover"
