@@ -114,7 +114,10 @@ export function mediaPlaybackUrl(file: MediaFile): string {
 
 export function mediaFileFromUpload(url: string, file: File): MediaFile {
   const name = file.name || url.split("/").pop() || url;
-  const type = file.type.startsWith("video/") ? "video" : guessMediaType(url);
+  const type =
+    file.type.startsWith("video/") || /\.(mp4|webm|mov|m4v)$/i.test(file.name || url)
+      ? "video"
+      : guessMediaType(url);
   const storagePath = url.includes("/storage/v1/object/public/media/")
     ? decodeURIComponent(url.split("/storage/v1/object/public/media/")[1]?.split("?")[0] || "")
     : undefined;

@@ -286,7 +286,8 @@ insert into public.sections (id, type, title, layout, page_path, sort_order) val
   ('fpv-drone', 'gallery', 'FPV/Drone', 'default', '/fpv-drone', 50),
   ('social-media', 'gallery', 'Social Media', 'default', '/social-media', 60),
   ('team', 'team', 'Meet the Team', null, '/team', 70),
-  ('partners', 'partners', 'Parceiros', null, '/team#parceiros', 80)
+  ('partners', 'partners', 'Parceiros', null, '/team#parceiros', 80),
+  ('library', 'gallery', 'Biblioteca de mídia', null, null, 90)
 on conflict (id) do update set
   title = excluded.title,
   layout = excluded.layout,

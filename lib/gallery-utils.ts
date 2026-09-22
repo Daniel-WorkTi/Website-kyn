@@ -84,7 +84,10 @@ export function createGalleryItemFromUpload(
   file: File,
   sectionId: string
 ): GalleryItem {
-  const type = file.type.startsWith("video/") ? "video" : "image";
+  const type =
+    file.type.startsWith("video/") || /\.(mp4|webm|mov|m4v)$/i.test(file.name)
+      ? "video"
+      : "image";
   const base: GalleryItem = {
     type,
     featured: false,

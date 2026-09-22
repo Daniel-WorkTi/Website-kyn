@@ -166,6 +166,44 @@ export async function uploadMediaFile(
     opts.onProgress?.({ percent: 100, phase: "uploading" });
   }
 
+  // Garante que aparece na Biblioteca de Mídia (não depende só do save da galeria).
+  opts.onProgress?.({ percent: 100, phase: "saving", message: "A registar na biblioteca…" });
+
+  const librarySectionId = "library";
+  const { error: ensureSectionError } = await supabase.from("sections").upsert(
+    {
+      id: librarySectionId,
+      type: "gallery",
+      title: "Biblioteca de mídia",
+      sort_order: 90,
+      published: true,
+    },
+    { onConflict: "id" }
+  );
+  if (ensureSectionError) {
+    // Secção pode já existir; só falha se for erro real sem a tabela
+    console.warn("[upload] ensure library section:", ensureSectionError.message);
+  }
+
+  const { error: dbError } = await supabase.from("media_items").insert({
+    section_id: librarySectionId,
+    slot: "gallery",
+    type: kind,
+    storage_path: storagePath,
+    title: file.name,
+    mime_type: file.type || null,
+    file_size: file.size,
+    sort_order: Date.now() % 1_000_000_000,
+  });
+
+  if (dbError) {
+    // Ficheiro já está no Storage — limpar órfão e falhar de forma clara
+    await supabase.storage.from(MEDIA_BUCKET).remove([storagePath]);
+    throw new Error(
+      `Upload no Storage OK, mas falhou ao registar na biblioteca: ${dbError.message}. Corre a migration da secção library no Supabase.`
+    );
+  }
+
   opts.onProgress?.({ percent: 100, phase: "done" });
 
   return {
