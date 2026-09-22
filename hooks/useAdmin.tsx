@@ -22,7 +22,7 @@ import {
   saveContent,
   uploadFile
 } from "@/lib/admin/api";
-import { getSectionById, IMAGE_OPTIMIZE_MAX_BYTES, IMAGE_OPTIMIZE_TARGET_BYTES, MAX_UPLOAD_BYTES, MAX_UPLOAD_MB, previewUrlForSection, type AdminSection, type GalleryData, type MediaFile, type SectionData } from "@/lib/admin/sections";
+import { getSectionById, IMAGE_OPTIMIZE_MAX_BYTES, IMAGE_OPTIMIZE_TARGET_BYTES, MAX_RAW_VIDEO_BYTES, MAX_RAW_VIDEO_MB, MAX_VIDEO_UPLOAD_BYTES, MAX_VIDEO_UPLOAD_MB, VIDEO_OPTIMIZE_TARGET_BYTES, previewUrlForSection, type AdminSection, type GalleryData, type MediaFile, type SectionData } from "@/lib/admin/sections";
 import { prepareGalleryForSection } from "@/lib/gallery-utils";
 import { mediaFileFromUpload } from "@/lib/admin/media-utils";
 import { prepareFileForUpload } from "@/lib/admin/prepare-upload";
@@ -278,15 +278,23 @@ export function AdminProvider({ children }: { children: ReactNode }) {
         successToast = "Ficheiro enviado."
       } = options;
 
-      if (file.size > MAX_UPLOAD_BYTES) {
+      const isVideo =
+        file.type.startsWith("video/") || /\.(mp4|webm|mov|m4v)$/i.test(file.name);
+
+      // Vídeos grandes: NÃO rejeitar antes do optimizador do browser.
+      if (isVideo && file.size > MAX_RAW_VIDEO_BYTES) {
         throw new Error(
-          `"${file.name}" (${(file.size / (1024 * 1024)).toFixed(1)} MB) excede o máximo de ${MAX_UPLOAD_MB} MB.`
+          `"${file.name}" (${(file.size / (1024 * 1024)).toFixed(1)} MB) excede o máximo de ${MAX_RAW_VIDEO_MB} MB para optimização.`
         );
       }
 
+      const optimizeTarget = isVideo
+        ? VIDEO_OPTIMIZE_TARGET_BYTES
+        : IMAGE_OPTIMIZE_TARGET_BYTES;
+
       let uploadable = file;
       try {
-        uploadable = await prepareFileForUpload(file, IMAGE_OPTIMIZE_TARGET_BYTES, {
+        uploadable = await prepareFileForUpload(file, optimizeTarget, {
           onProgress: (message) => showToast(message, "pending")
         });
       } catch (err) {
@@ -295,7 +303,13 @@ export function AdminProvider({ children }: { children: ReactNode }) {
           : new Error(`"${file.name}": não foi possível preparar o ficheiro para envio.`);
       }
 
-      if (uploadable.size > IMAGE_OPTIMIZE_MAX_BYTES) {
+      if (isVideo) {
+        if (uploadable.size > MAX_VIDEO_UPLOAD_BYTES) {
+          throw new Error(
+            `"${file.name}" continua acima de ${MAX_VIDEO_UPLOAD_MB} MB após optimização (${(uploadable.size / (1024 * 1024)).toFixed(1)} MB).`
+          );
+        }
+      } else if (uploadable.size > IMAGE_OPTIMIZE_MAX_BYTES) {
         throw new Error(
           `"${file.name}" continua acima de ${IMAGE_OPTIMIZE_MAX_BYTES / (1024 * 1024)} MB após optimização (${(uploadable.size / (1024 * 1024)).toFixed(1)} MB).`
         );

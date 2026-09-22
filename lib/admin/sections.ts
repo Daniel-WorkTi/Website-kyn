@@ -6,9 +6,22 @@ export const IMAGE_OPTIMIZE_MAX_MB = 15;
 export const IMAGE_OPTIMIZE_MAX_BYTES = IMAGE_OPTIMIZE_MAX_MB * 1024 * 1024;
 export const IMAGE_OPTIMIZE_TARGET_BYTES = Math.floor(14 * 1024 * 1024);
 
-/** Ficheiros acima disto são rejeitados antes de tentar optimizar. */
-export const MAX_UPLOAD_MB = 200;
-export const MAX_UPLOAD_BYTES = MAX_UPLOAD_MB * 1024 * 1024;
+/**
+ * Vídeos: aceitar ficheiros grandes da câmara e comprimir no browser
+ * até ficar abaixo do limite de Storage.
+ */
+export const MAX_RAW_VIDEO_MB = 2048;
+export const MAX_RAW_VIDEO_BYTES = MAX_RAW_VIDEO_MB * 1024 * 1024;
+/** Tamanho alvo após optimização (abaixo do teto de Storage). */
+export const VIDEO_OPTIMIZE_TARGET_MB = 180;
+export const VIDEO_OPTIMIZE_TARGET_BYTES = VIDEO_OPTIMIZE_TARGET_MB * 1024 * 1024;
+/** Teto final enviado ao Storage (alinhado com Supabase bucket). */
+export const MAX_VIDEO_UPLOAD_MB = 200;
+export const MAX_VIDEO_UPLOAD_BYTES = MAX_VIDEO_UPLOAD_MB * 1024 * 1024;
+
+/** @deprecated usar MAX_VIDEO_UPLOAD_* / MAX_RAW_VIDEO_* */
+export const MAX_UPLOAD_MB = MAX_VIDEO_UPLOAD_MB;
+export const MAX_UPLOAD_BYTES = MAX_VIDEO_UPLOAD_BYTES;
 
 export type SectionType = "home" | "gallery" | "team" | "partners" | "media";
 
