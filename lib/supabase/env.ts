@@ -1,26 +1,24 @@
-function requirePublicEnv(name: string): string {
-  const value = process.env[name]?.trim();
-  if (!value) {
-    throw new Error(
-      `${name} não configurado. Copia .env.example para .env.local e preenche as variáveis Supabase.`
-    );
-  }
-  return value;
-}
-
 /** Chave pública (publishable ou anon). Nunca service_role. */
 export function getSupabasePublishableKey(): string {
+  // Acesso ESTÁTICO obrigatório — Next.js só injeta NEXT_PUBLIC_* no browser assim.
   const publishable = process.env.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY?.trim();
   if (publishable) return publishable;
   const anon = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY?.trim();
   if (anon) return anon;
   throw new Error(
-    "NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY ou NEXT_PUBLIC_SUPABASE_ANON_KEY em falta."
+    "NEXT_PUBLIC_SUPABASE_ANON_KEY (ou PUBLISHABLE_KEY) em falta. Na Vercel: Environment Variables + Redeploy."
   );
 }
 
 export function getSupabaseUrl(): string {
-  return requirePublicEnv("NEXT_PUBLIC_SUPABASE_URL");
+  // Acesso ESTÁTICO obrigatório — `process.env[name]` dinâmico NÃO funciona no client.
+  const url = process.env.NEXT_PUBLIC_SUPABASE_URL?.trim();
+  if (!url) {
+    throw new Error(
+      "NEXT_PUBLIC_SUPABASE_URL em falta. Na Vercel: Environment Variables + Redeploy."
+    );
+  }
+  return url;
 }
 
 export function isSupabaseConfigured(): boolean {
