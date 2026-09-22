@@ -110,13 +110,18 @@ async function recordVideoPass(
   targetWidth: number,
   targetHeight: number,
   duration: number,
-  maxBytes: number
+  maxBytes: number,
+  bitrateScale = 1
 ): Promise<Blob> {
   const mimeType = pickVideoMimeType();
-  const targetBytes = maxBytes * 0.9;
-  const totalBps = Math.floor((targetBytes * 8) / duration);
-  const videoBps = Math.max(350_000, Math.min(4_500_000, Math.floor(totalBps * 0.88)));
-  const audioBps = Math.min(96_000, Math.floor(totalBps * 0.12));
+  const targetBytes = maxBytes * 0.94;
+  const totalBps = Math.floor((targetBytes * 8) / Math.max(duration, 0.5));
+  // Qualidade: bitrate alto quando o teto e a duração permitem (até ~14 Mbps).
+  const videoBps = Math.max(
+    600_000,
+    Math.min(14_000_000, Math.floor(totalBps * 0.9 * bitrateScale))
+  );
+  const audioBps = Math.min(160_000, Math.max(64_000, Math.floor(totalBps * 0.08)));
 
   const needScale = targetWidth !== video.videoWidth || targetHeight !== video.videoHeight;
 
@@ -180,17 +185,33 @@ async function recordVideoPass(
   });
 }
 
-async function compressVideo(file: File, maxBytes: number): Promise<File> {
+/**
+ * Comprime até maxBytes privilegiando qualidade:
+ * 1) resolução original + bitrate adequado ao teto
+ * 2) só depois reduz bitrate / escala gradualmente
+ */
+async function compressVideo(
+  file: File,
+  maxBytes: number,
+  onProgress?: (message: string) => void
+): Promise<File> {
   if (file.size <= maxBytes) return file;
 
   const { video, objectUrl, duration, width, height } = await loadVideoMetadata(file);
 
   try {
-    let scale = Math.min(1, Math.sqrt((maxBytes * 0.92) / file.size));
+    let best: Blob | null = null;
+    let scale = 1;
+    let bitrateScale = 1;
 
-    for (let pass = 0; pass < 4; pass++) {
-      const targetWidth = Math.max(480, Math.floor(width * scale) & ~1);
-      const targetHeight = Math.max(270, Math.floor(height * scale) & ~1);
+    // Até 10 passes: qualidade alta → mais agressivo só se ainda passar do limite
+    for (let pass = 0; pass < 10; pass++) {
+      const targetWidth = Math.max(640, Math.floor(width * scale) & ~1);
+      const targetHeight = Math.max(360, Math.floor(height * scale) & ~1);
+
+      onProgress?.(
+        `A optimizar vídeo (passe ${pass + 1}/10, ${targetWidth}×${targetHeight})…`
+      );
 
       const blob = await recordVideoPass(
         video,
@@ -198,18 +219,31 @@ async function compressVideo(file: File, maxBytes: number): Promise<File> {
         targetWidth,
         targetHeight,
         duration,
-        maxBytes
+        maxBytes,
+        bitrateScale
       );
+
+      if (!best || blob.size < best.size) best = blob;
 
       if (blob.size <= maxBytes) {
         return blobToVideoFile(blob, file);
       }
 
-      scale *= 0.68;
+      // Primeiro reduz bitrate; depois escala (preserva mais detalhe no início)
+      if (pass < 3) {
+        bitrateScale *= 0.72;
+      } else {
+        scale *= 0.82;
+        bitrateScale *= 0.85;
+      }
+    }
+
+    if (best && best.size <= maxBytes) {
+      return blobToVideoFile(best, file);
     }
 
     throw new Error(
-      `"${file.name}" (${formatMb(file.size)}) — não foi possível reduzir abaixo de ${limitLabel(maxBytes)}.`
+      `"${file.name}" (${formatMb(file.size)}) — não foi possível reduzir abaixo de ${limitLabel(maxBytes)} após várias passagens. Tenta um excerto mais curto ou Chrome/Edge.`
     );
   } finally {
     video.pause();
@@ -295,8 +329,8 @@ export async function prepareFileForUpload(
   const label = `"${file.name}" (${formatMb(file.size)})`;
 
   if (isVideoFile(file)) {
-    onProgress?.(`A optimizar vídeo ${label}…`);
-    const compressed = await compressVideo(file, maxBytes);
+    onProgress?.(`A preparar vídeo ${label}…`);
+    const compressed = await compressVideo(file, maxBytes, onProgress);
     if (compressed.size > maxBytes) {
       throw new Error(
         `${label} continua acima de ${limitLabel(maxBytes)} após optimização (${formatMb(compressed.size)}).`

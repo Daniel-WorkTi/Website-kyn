@@ -22,7 +22,7 @@ import {
   saveContent,
   uploadFile
 } from "@/lib/admin/api";
-import { getSectionById, IMAGE_OPTIMIZE_MAX_BYTES, IMAGE_OPTIMIZE_TARGET_BYTES, MAX_RAW_VIDEO_BYTES, MAX_RAW_VIDEO_MB, MAX_VIDEO_UPLOAD_BYTES, MAX_VIDEO_UPLOAD_MB, VIDEO_OPTIMIZE_TARGET_BYTES, previewUrlForSection, type AdminSection, type GalleryData, type MediaFile, type SectionData } from "@/lib/admin/sections";
+import { getSectionById, IMAGE_OPTIMIZE_MAX_BYTES, IMAGE_OPTIMIZE_TARGET_BYTES, MAX_VIDEO_UPLOAD_BYTES, MAX_VIDEO_UPLOAD_MB, VIDEO_OPTIMIZE_TARGET_BYTES, previewUrlForSection, type AdminSection, type GalleryData, type MediaFile, type SectionData } from "@/lib/admin/sections";
 import { prepareGalleryForSection } from "@/lib/gallery-utils";
 import { mediaFileFromUpload } from "@/lib/admin/media-utils";
 import { prepareFileForUpload } from "@/lib/admin/prepare-upload";
@@ -281,16 +281,17 @@ export function AdminProvider({ children }: { children: ReactNode }) {
       const isVideo =
         file.type.startsWith("video/") || /\.(mp4|webm|mov|m4v)$/i.test(file.name);
 
-      // Vídeos grandes: NÃO rejeitar antes do optimizador do browser.
-      if (isVideo && file.size > MAX_RAW_VIDEO_BYTES) {
-        throw new Error(
-          `"${file.name}" (${(file.size / (1024 * 1024)).toFixed(1)} MB) excede o máximo de ${MAX_RAW_VIDEO_MB} MB para optimização.`
-        );
-      }
-
+      // Vídeos: qualquer tamanho de entrada → optimizar até ao teto de Storage.
       const optimizeTarget = isVideo
         ? VIDEO_OPTIMIZE_TARGET_BYTES
         : IMAGE_OPTIMIZE_TARGET_BYTES;
+
+      if (isVideo && file.size > MAX_VIDEO_UPLOAD_BYTES) {
+        showToast(
+          `Vídeo grande (${(file.size / (1024 * 1024)).toFixed(0)} MB) — a optimizar sem perder qualidade desnecessária…`,
+          "pending"
+        );
+      }
 
       let uploadable = file;
       try {
@@ -306,7 +307,7 @@ export function AdminProvider({ children }: { children: ReactNode }) {
       if (isVideo) {
         if (uploadable.size > MAX_VIDEO_UPLOAD_BYTES) {
           throw new Error(
-            `"${file.name}" continua acima de ${MAX_VIDEO_UPLOAD_MB} MB após optimização (${(uploadable.size / (1024 * 1024)).toFixed(1)} MB).`
+            `"${file.name}" continua acima de ${MAX_VIDEO_UPLOAD_MB} MB após optimização (${(uploadable.size / (1024 * 1024)).toFixed(1)} MB). O browser não conseguiu comprimir o suficiente — tenta Chrome/Edge.`
           );
         }
       } else if (uploadable.size > IMAGE_OPTIMIZE_MAX_BYTES) {
