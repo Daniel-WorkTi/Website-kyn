@@ -1,4 +1,4 @@
-import { CLOUDINARY_MAX_UPLOAD_MB } from "@/lib/admin/sections";
+import { IMAGE_OPTIMIZE_MAX_MB } from "@/lib/admin/sections";
 
 function formatMb(bytes: number): string {
   return `${(bytes / (1024 * 1024)).toFixed(1)} MB`;
@@ -319,6 +319,6 @@ export async function prepareFileForUpload(
   }
 
   throw new Error(
-    `${label} excede o máximo de ${CLOUDINARY_MAX_UPLOAD_MB} MB e este tipo de ficheiro não pode ser optimizado automaticamente.`
+    `${label} excede o máximo de ${IMAGE_OPTIMIZE_MAX_MB} MB e este tipo de ficheiro não pode ser optimizado automaticamente.`
   );
 }

@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { Suspense, useState } from "react";
 import { Loader2 } from "lucide-react";
 import { AdminSidebar } from "@/components/admin/AdminSidebar";
 import { LoginForm } from "@/components/admin/LoginForm";
@@ -31,7 +31,17 @@ function AdminShell() {
   }
 
   if (!authenticated) {
-    return <LoginForm />;
+    return (
+      <Suspense
+        fallback={
+          <div className="flex min-h-screen items-center justify-center bg-black">
+            <Loader2 className="size-6 animate-spin text-zinc-500" strokeWidth={1.75} />
+          </div>
+        }
+      >
+        <LoginForm />
+      </Suspense>
+    );
   }
 
   return (

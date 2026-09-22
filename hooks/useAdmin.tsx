@@ -22,7 +22,7 @@ import {
   saveContent,
   uploadFile
 } from "@/lib/admin/api";
-import { getSectionById, CLOUDINARY_MAX_UPLOAD_BYTES, CLOUDINARY_UPLOAD_TARGET_BYTES, MAX_UPLOAD_BYTES, MAX_UPLOAD_MB, previewUrlForSection, type AdminSection, type GalleryData, type MediaFile, type SectionData } from "@/lib/admin/sections";
+import { getSectionById, IMAGE_OPTIMIZE_MAX_BYTES, IMAGE_OPTIMIZE_TARGET_BYTES, MAX_UPLOAD_BYTES, MAX_UPLOAD_MB, previewUrlForSection, type AdminSection, type GalleryData, type MediaFile, type SectionData } from "@/lib/admin/sections";
 import { prepareGalleryForSection } from "@/lib/gallery-utils";
 import { mediaFileFromUpload } from "@/lib/admin/media-utils";
 import { prepareFileForUpload } from "@/lib/admin/prepare-upload";
@@ -55,7 +55,7 @@ type AdminContextValue = {
   previewKey: number;
   loadError: string | null;
   navigate: (id: SidebarSectionId) => void;
-  login: (username: string, password: string) => Promise<void>;
+  login: (email: string, password: string) => Promise<void>;
   logout: () => Promise<void>;
   save: (options?: { silent?: boolean }) => Promise<boolean>;
   setData: (data: SectionData) => void;
@@ -239,8 +239,8 @@ export function AdminProvider({ children }: { children: ReactNode }) {
     [loadSection, sectionId]
   );
 
-  const login = useCallback(async (username: string, password: string) => {
-    await apiLogin(username, password);
+  const login = useCallback(async (email: string, password: string) => {
+    await apiLogin(email, password);
     setAuthenticated(true);
   }, []);
 
@@ -286,7 +286,7 @@ export function AdminProvider({ children }: { children: ReactNode }) {
 
       let uploadable = file;
       try {
-        uploadable = await prepareFileForUpload(file, CLOUDINARY_UPLOAD_TARGET_BYTES, {
+        uploadable = await prepareFileForUpload(file, IMAGE_OPTIMIZE_TARGET_BYTES, {
           onProgress: (message) => showToast(message, "pending")
         });
       } catch (err) {
@@ -295,16 +295,16 @@ export function AdminProvider({ children }: { children: ReactNode }) {
           : new Error(`"${file.name}": não foi possível preparar o ficheiro para envio.`);
       }
 
-      if (uploadable.size > CLOUDINARY_MAX_UPLOAD_BYTES) {
+      if (uploadable.size > IMAGE_OPTIMIZE_MAX_BYTES) {
         throw new Error(
-          `"${file.name}" continua acima de ${CLOUDINARY_MAX_UPLOAD_BYTES / (1024 * 1024)} MB após optimização (${(uploadable.size / (1024 * 1024)).toFixed(1)} MB).`
+          `"${file.name}" continua acima de ${IMAGE_OPTIMIZE_MAX_BYTES / (1024 * 1024)} MB após optimização (${(uploadable.size / (1024 * 1024)).toFixed(1)} MB).`
         );
       }
 
       showToast(`A enviar ${uploadable.name}…`, "pending");
       setUploadCount((c) => c + 1);
       try {
-        const url = await uploadFile(uploadable);
+        const url = await uploadFile(uploadable, sectionId);
         onSuccess(url, uploadable);
         if (updateLibrary) {
           registerUploadedMedia(url, uploadable);
@@ -323,7 +323,7 @@ export function AdminProvider({ children }: { children: ReactNode }) {
         setUploadCount((c) => Math.max(0, c - 1));
       }
     },
-    [markDirty, registerUploadedMedia, showToast, refreshMediaLibrary]
+    [markDirty, registerUploadedMedia, showToast, refreshMediaLibrary, sectionId]
   );
 
   const deleteMedia = useCallback(

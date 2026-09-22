@@ -1,6 +1,6 @@
 # Proimagem.pt
 
-Site de portfólio da **Proimagem.pt** com CMS próprio integrado. O cliente edita conteúdo no painel `/admin` e o site público reflete as alterações após guardar.
+Site de portfólio da **Proimagem.pt** com CMS integrado. O cliente edita conteúdo no painel `/admin` e o site público reflete as alterações após guardar.
 
 | | |
 |---|---|
@@ -14,9 +14,11 @@ Site de portfólio da **Proimagem.pt** com CMS próprio integrado. O cliente edi
 - **React 19**
 - **TypeScript**
 - **Tailwind CSS**
-- **Cloudinary** — imagens e vídeos
-- **GitHub API** — persistência do conteúdo JSON
+- **Supabase** — Auth, PostgreSQL (CMS) e Storage (imagens/vídeos)
 - **Vercel** — hosting e deploy automático
+- **GitHub** — código-fonte (já não é a base de dados operacional do CMS)
+
+Setup detalhado: [`docs/SUPABASE_SETUP.md`](docs/SUPABASE_SETUP.md).
 
 ## Arranque local
 
@@ -41,27 +43,22 @@ O dev server corre em **http://localhost:3000**. O `npm run dev` usa **Turbopack
 
 ### Variáveis de ambiente
 
-Cria `.env.local` na raiz do projeto:
+Cria `.env.local` na raiz (ver `.env.example`):
 
 ```env
-# Login do painel
-ADMIN_USERNAME=teu_utilizador
-ADMIN_PASSWORD=tua_palavra_passe
-SESSION_SECRET=string_aleatoria_longa
-
-# GitHub — gravar e ler conteúdo
-GITHUB_TOKEN=ghp_...
-
-# Cloudinary — upload de mídias
-CLOUDINARY_URL=cloudinary://API_KEY:API_SECRET@CLOUD_NAME
-
-# Email — recuperação de palavra-passe (opcional)
-RESEND_API_KEY=re_...
-EMAIL_FROM=Proimagem.pt <hello@proimagem.pt>
-ADMIN_EMAIL=hello@proimagem.pt
+NEXT_PUBLIC_SUPABASE_URL=https://vnpslhbjlrhfuqajeuqx.supabase.co
+NEXT_PUBLIC_SUPABASE_ANON_KEY=
+# ou NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY=
+SUPABASE_SERVICE_ROLE_KEY=   # só scripts / server — NUNCA no browser
 ```
 
 > **Nunca** commits `.env.local` — já está no `.gitignore`.
+
+Após configurar Supabase (migration + admin), migra o JSON:
+
+```bash
+npm run migrate:supabase
+```
 
 ## Estrutura do projeto
 
@@ -69,21 +66,26 @@ ADMIN_EMAIL=hello@proimagem.pt
 ├── app/
 │   ├── (site)/          # Site público
 │   ├── admin/           # Painel de gestão
-│   ├── api/             # APIs (auth, conteúdo, mídia, cloudinary)
-│   ├── content/         # Rota pública para ler JSON
+│   ├── api/             # APIs legadas (auth cookie / content — em transição)
+│   ├── content/         # Rota pública para ler JSON (fallback)
 │   └── assets/          # Ficheiros estáticos legacy
 ├── components/
 │   ├── site/            # UI do site (Hero, galerias, Nav…)
 │   └── admin/           # UI do painel (editores, sidebar, modais)
-├── content/             # Dados do site em JSON
+├── content/             # JSON de fallback / seed (não é a DB operacional)
 ├── hooks/               # useAdmin — estado global do admin
-├── lib/                 # Auth, content-store, cloudinary, gallery-utils…
-└── private/             # Config admin (gitignored localmente)
+├── lib/
+│   ├── cms/             # compose / persist / upload (Supabase)
+│   ├── supabase/        # clients browser/server/admin + types
+│   └── …                # content, gallery-utils, admin helpers
+├── supabase/migrations/ # SQL versionado (Postgres + RLS + Storage)
+├── scripts/             # migrate-json-to-supabase, etc.
+└── docs/                # SUPABASE_SETUP.md
 ```
 
 ## Site público
 
-Páginas dinâmicas — leem o conteúdo mais recente em cada pedido.
+Páginas dinâmicas — leem do Supabase (com fallback para `content/*.json` se o DB não estiver disponível).
 
 | Rota | Conteúdo |
 |------|----------|
@@ -115,18 +117,20 @@ Páginas dinâmicas — leem o conteúdo mais recente em cada pedido.
 
 ### Secções editáveis
 
-| Secção | Ficheiro JSON |
-|--------|---------------|
-| Home | `content/site.json` |
-| Studio Space | `content/galleries/studio-space.json` |
-| Multicam | `content/galleries/multicam.json` |
-| Aftermovie | `content/galleries/aftermovie.json` |
-| Photography | `content/galleries/photography.json` |
-| FPV / Drone | `content/galleries/fpv-drone.json` |
-| Social Media | `content/galleries/social-media.json` |
-| Equipa | `content/team.json` |
-| Parceiros | `content/partners.json` |
-| Mídias | Biblioteca Cloudinary (sem JSON próprio) |
+| Secção | Origem operacional |
+|--------|--------------------|
+| Home | `site_config` + `media_items` (secção `home`) |
+| Studio Space | `sections` + `media_items` |
+| Multicam | idem |
+| Aftermovie | idem |
+| Photography | idem |
+| FPV / Drone | idem |
+| Social Media | idem |
+| Equipa | `team_members` |
+| Parceiros | `partners` |
+| Mídias | Biblioteca via Storage + `media_items` |
+
+Os ficheiros `content/*.json` servem de **seed/fallback** até a migração e como recuperação.
 
 ### Funcionalidades
 
@@ -134,57 +138,42 @@ Páginas dinâmicas — leem o conteúdo mais recente em cada pedido.
 - **Preview ao vivo** — scroll completo do site real, sem Nav
 - **Status de gravação** — verde (guardado), vermelho (por guardar), âmbar (a processar)
 - **Biblioteca de mídias** — só aparece ao clicar para trocar imagem/vídeo (modal)
-- **Definições** — alterar utilizador; recuperar palavra-passe por código enviado ao email
+- **Definições** — alterar email/password via Supabase Auth
 
 ## Fluxo de dados
 
 ```
-Admin (editores)
+Admin (editores autenticados)
     │
-    ▼ POST /api/content
-GitHub (content/*.json)  ◄────  lib/content-store.ts  ────►  Site público
-    │                              (leitura unificada)
+    ▼ Supabase Auth + is_admin()
+PostgreSQL (sections, media_items, …)
+    │
     ▼
-Disco local (dev)
-
-Upload de mídias
+Storage bucket `media`  ◄──── upload browser (direct / TUS)
     │
-    ▼ POST /api/cloudinary/sign → upload directo
-Cloudinary (imagens e vídeos)
+    ▼
+Site público (lib/content.ts)  ──── fallback ────► content/*.json
 ```
 
-1. O admin edita e guarda → JSON vai para o **GitHub** (e disco local em dev).
-2. Após guardar, o Next.js **invalida o cache** das páginas afectadas (`revalidatePath`).
-3. O site público lê sempre o JSON mais recente via `GITHUB_TOKEN`.
-4. Imagens e vídeos são enviados para o **Cloudinary** e referenciados por URL no JSON.
-
-## APIs
-
-| Endpoint | Função |
-|----------|--------|
-| `POST /api/login` | Iniciar sessão (cookie 7 dias) |
-| `GET /api/session` | Verificar sessão |
-| `POST /api/logout` | Terminar sessão |
-| `GET/POST /api/content` | Ler/gravar JSON (admin) |
-| `GET /content/[...path]` | Ler JSON (público, para o admin) |
-| `GET/DELETE /api/media` | Listar/apagar ficheiros Cloudinary |
-| `POST /api/cloudinary/sign` | Assinatura para upload directo |
-| `GET/PUT /api/admin/settings` | Perfil do utilizador admin |
-| `POST/PATCH /api/admin/settings/password` | Nova palavra-passe com verificação por email |
+1. Login no `/admin` com email/password (Supabase Auth + linha em `admin_profiles`).
+2. Upload de mídia → Storage + metadata em `media_items`.
+3. Guardar secção → `persist` actualiza Postgres (e mantém ordem com `sort_order`).
+4. Site público lê Postgres; se falhar, usa JSON local.
 
 ## Autenticação
 
-- Login com `ADMIN_USERNAME` + `ADMIN_PASSWORD` (variáveis de ambiente ou `private/admin.json` no GitHub).
-- Sessão em cookie `proimagem_session`, assinado com `SESSION_SECRET`.
-- Palavra-passe guardada com hash **scrypt** — nunca em texto simples.
-- Recuperação de palavra-passe: código de 6 dígitos enviado por email (requer `RESEND_API_KEY`).
+- **Supabase Auth** (email + password).
+- Autorização admin: tabela `admin_profiles` + função SQL `is_admin()`.
+- RLS: anónimos só leem conteúdo publicado; escrita só para admins.
+- Middleware refresca a sessão nos requests.
 
-## Mídias (Cloudinary)
+## Mídias (Supabase Storage)
 
-- Upload directo do browser para o Cloudinary (signed upload).
-- Compressão automática de vídeos grandes antes do envio.
-- Biblioteca global no admin: listar, enviar, apagar, copiar URL.
-- URLs no formato `https://res.cloudinary.com/zk5df6k0/...`
+- Upload autenticado do browser para o bucket `media`.
+- Vídeos grandes: upload resumable (TUS) com progresso.
+- Thumbnails/posters: `thumbnail_path` + `<video poster>`.
+- Compressão local de imagens antes do upload (substitui transforms Cloudinary no upload).
+- URLs Cloudinary antigas em `legacy_*` continuam a renderizar até reupload.
 
 ## Deploy
 
@@ -195,33 +184,15 @@ npm run build   # verificar build localmente
 git push origin main
 ```
 
-Confirma na Vercel (**Settings → Environment Variables**) que todas as variáveis de `.env.local` estão definidas para **Production**.
+Confirma na Vercel (**Settings → Environment Variables**) as variáveis Supabase para **Production** e **Preview**.
 
-## Scripts
+**Não** cries `NEXT_PUBLIC_` para `SUPABASE_SERVICE_ROLE_KEY`.
 
-| Comando | Descrição |
-|---------|-----------|
-| `npm run dev` | Dev server com Turbopack (porta 3000; limpa cache ao arrancar) |
-| `npm run dev:webpack` | Dev server legado Webpack (só se Turbopack falhar) |
-| `npm run build` | Build de produção |
-| `npm run start` | Servidor de produção |
-| `npm run lint` | ESLint |
+## Scripts úteis
 
-## Ficheiros de conteúdo
-
-| Ficheiro | Conteúdo |
-|----------|----------|
-| `content/site.json` | Home, navegação, hero, homeStack |
-| `content/galleries/*.json` | Galerias (título, items, layout) |
-| `content/team.json` | Membros da equipa |
-| `content/partners.json` | Logótipos de parceiros |
-
-Layouts de galeria suportados: `default`, `studio`, `multicam`, `reels` — processados em `lib/gallery-utils.ts`.
-
-## Documentação adicional
-
-- [GUIA-CMS.md](./GUIA-CMS.md) — guia para o cliente editar conteúdo no painel
-
----
-
-**Proimagem.pt** — Multicam · Aftermovie · Photography · FPV/Drone · Social Media · Studio Space
+```bash
+npm run typecheck
+npm run lint
+npm run build
+npm run migrate:supabase
+```

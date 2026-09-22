@@ -1,14 +1,13 @@
 import type { SidebarSectionId } from "@/components/admin/AdminSidebar";
 import { buildSitePreviewUrl } from "@/lib/admin/preview";
 
-/** Limite do envio directo ao Cloudinary (signed upload). */
-export const CLOUDINARY_MAX_UPLOAD_MB = 10;
-export const CLOUDINARY_MAX_UPLOAD_BYTES = CLOUDINARY_MAX_UPLOAD_MB * 1024 * 1024;
-/** Alvo da compressão (margem abaixo do limite exacto do Cloudinary). */
-export const CLOUDINARY_UPLOAD_TARGET_BYTES = Math.floor(9.5 * 1024 * 1024);
+/** Limite de compressão de imagem antes do upload. */
+export const IMAGE_OPTIMIZE_MAX_MB = 15;
+export const IMAGE_OPTIMIZE_MAX_BYTES = IMAGE_OPTIMIZE_MAX_MB * 1024 * 1024;
+export const IMAGE_OPTIMIZE_TARGET_BYTES = Math.floor(14 * 1024 * 1024);
 
 /** Ficheiros acima disto são rejeitados antes de tentar optimizar. */
-export const MAX_UPLOAD_MB = 100;
+export const MAX_UPLOAD_MB = 200;
 export const MAX_UPLOAD_BYTES = MAX_UPLOAD_MB * 1024 * 1024;
 
 export type SectionType = "home" | "gallery" | "team" | "partners" | "media";

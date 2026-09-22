@@ -84,8 +84,11 @@ function cloudNameFromUrl(url: string): string | null {
   return url.match(/res\.cloudinary\.com\/([^/]+)/)?.[1] ?? null;
 }
 
-/** URL que o browser consegue mostrar (HEIC → JPG/WEBP, vídeo → frame). */
+/** URL que o browser consegue mostrar. */
 export function mediaThumbnailUrl(file: MediaFile): string {
+  // Supabase / URLs diretas — sem transforms server-side
+  if (!file.url.includes("res.cloudinary.com")) return file.url;
+
   const cloud = cloudNameFromUrl(file.url);
   const publicId = file.publicId ?? publicIdFromUrl(file.url);
   if (!cloud || !publicId) return file.url;
@@ -97,9 +100,10 @@ export function mediaThumbnailUrl(file: MediaFile): string {
   return `https://res.cloudinary.com/${cloud}/image/upload/f_auto,q_auto,w_1200,c_limit/${publicId}`;
 }
 
-/** URL de reprodução para vídeos (MP4 compatível com Chrome). */
+/** URL de reprodução para vídeos. */
 export function mediaPlaybackUrl(file: MediaFile): string {
   if (file.type !== "video") return file.url;
+  if (!file.url.includes("res.cloudinary.com")) return file.url;
 
   const cloud = cloudNameFromUrl(file.url);
   const publicId = file.publicId ?? publicIdFromUrl(file.url);
@@ -111,6 +115,9 @@ export function mediaPlaybackUrl(file: MediaFile): string {
 export function mediaFileFromUpload(url: string, file: File): MediaFile {
   const name = file.name || url.split("/").pop() || url;
   const type = file.type.startsWith("video/") ? "video" : guessMediaType(url);
+  const storagePath = url.includes("/storage/v1/object/public/media/")
+    ? decodeURIComponent(url.split("/storage/v1/object/public/media/")[1]?.split("?")[0] || "")
+    : undefined;
 
   return {
     url,
@@ -118,6 +125,6 @@ export function mediaFileFromUpload(url: string, file: File): MediaFile {
     type: type === "video" ? "video" : "image",
     size: file.size,
     createdAt: new Date().toISOString(),
-    publicId: publicIdFromUrl(url) ?? undefined
+    publicId: storagePath || publicIdFromUrl(url) || undefined
   };
 }

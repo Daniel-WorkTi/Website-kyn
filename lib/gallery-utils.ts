@@ -1,20 +1,16 @@
-import { publicIdFromUrl } from "@/lib/admin/media-utils";
-import { cloudinaryGalleryImage, cloudinaryGalleryVideo } from "@/lib/cloudinary-urls";
 import type { GalleryData, GalleryItem } from "@/lib/admin/sections";
 
 export function isCloudinaryUrl(url: string): boolean {
   return url.includes("res.cloudinary.com");
 }
 
-/** Garante URL pública válida (MP4 para vídeo, imagem otimizada). */
+/**
+ * Normaliza src de galeria.
+ * URLs Supabase / externas passam intactas.
+ * URLs Cloudinary legadas mantêm-se (sem transforms novos — conta pode estar inacessível).
+ */
 export function normalizeGalleryItemSrc(item: Pick<GalleryItem, "type" | "src">): string {
-  if (!isCloudinaryUrl(item.src)) return item.src;
-
-  const publicId = publicIdFromUrl(item.src);
-  if (!publicId) return item.src;
-
-  if (item.type === "video") return cloudinaryGalleryVideo(publicId);
-  return cloudinaryGalleryImage(publicId);
+  return item.src;
 }
 
 export type GalleryItemInput = Pick<GalleryItem, "type" | "src"> &
@@ -29,7 +25,6 @@ export function normalizeGalleryItem(item: GalleryItemInput, defaultAlt = "Studi
   };
 }
 
-/** Vídeos primeiro (topo), fotos depois (grid) — igual ao site. */
 export function sortStudioGalleryItems(items: GalleryItem[]): GalleryItem[] {
   const videos = items.filter((i) => i.type === "video");
   const images = items.filter((i) => i.type === "image");

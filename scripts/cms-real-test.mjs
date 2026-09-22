@@ -180,65 +180,26 @@ async function runApiTests(env) {
   pass("galeria-reordenar", "setas up/down em GalleryEditor (MediaCard.onMove)");
   pass("galeria-remover", "MediaCard.onRemove + confirm");
 
-  // MÍDIAS
+  // MÍDIAS — upload agora é browser → Supabase Storage (não /api/cloudinary)
   {
     const media = await client.json("/api/media");
-    media.res.ok && Array.isArray(media.body?.files)
-      ? pass("media-listar", `${media.body.files.length} ficheiros`)
-      : fail("media-listar", media.body?.error);
-
-    const signImg = await client.json("/api/cloudinary/sign", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ resourceType: "image" })
-    });
-    signImg.res.ok && signImg.body?.signature ? pass("media-sign-imagem") : fail("media-sign-imagem");
-
-    const signVid = await client.json("/api/cloudinary/sign", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ resourceType: "video" })
-    });
-    signVid.res.ok ? pass("media-sign-video") : fail("media-sign-video");
-
-    // Upload imagem 1x1 PNG
-    if (signImg.body?.signature) {
-      const png = Buffer.from(
-        "iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mP8z8BQDwAEhQGAhKmMIQAAAABJRU5ErkJggg==",
-        "base64"
-      );
-      const form = new FormData();
-      form.append("file", new Blob([png], { type: "image/png" }), "cms-test.png");
-      form.append("api_key", signImg.body.api_key);
-      form.append("timestamp", String(signImg.body.timestamp));
-      form.append("signature", signImg.body.signature);
-      form.append("folder", signImg.body.folder);
-      const up = await fetch(
-        `https://api.cloudinary.com/v1_1/${signImg.body.cloud_name}/image/upload`,
-        { method: "POST", body: form }
-      );
-      const upBody = await up.json();
-      if (up.ok && upBody.secure_url) {
-        pass("media-upload-imagem", upBody.secure_url.slice(0, 60) + "...");
-        pass("media-copiar-url", "secure_url devolvida");
-        // Apagar teste
-        if (upBody.public_id) {
-          const del = await client.json("/api/media", {
-            method: "DELETE",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({ publicId: upBody.public_id, type: "image" })
-          });
-          del.res.ok ? pass("media-apagar") : fail("media-apagar", del.body?.error);
-        }
-      } else {
-        fail("media-upload-imagem", upBody.error?.message);
-        skip("media-apagar", "upload falhou");
-      }
+    // Endpoint legado responde 410; listagem real vem do CMS/Supabase no admin
+    if (media.res.status === 410) {
+      pass("media-listar", "API Cloudinary desactivada (410) — usar admin/Supabase");
+    } else if (media.res.ok && Array.isArray(media.body?.files)) {
+      pass("media-listar", `${media.body.files.length} ficheiros`);
+    } else {
+      fail("media-listar", media.body?.error);
     }
 
+    skip("media-sign-imagem", "Cloudinary removido — upload via Supabase Storage");
+    skip("media-sign-video", "Cloudinary removido — upload TUS/direct via Supabase");
+    skip("media-upload-imagem", "testar manualmente no /admin após setup Supabase");
+    skip("media-copiar-url", "URLs geradas a partir de storage_path");
+    skip("media-apagar", "delete via lib/cms + Storage");
     pass("media-escolher-existente", "MediaPickerModal + biblioteca");
     pass("media-substituir", "MediaPickerField.onChange");
-    skip("media-upload-video", "omitido para não enviar vídeo grande; sign OK");
+    skip("media-upload-video", "testar manualmente no /admin (TUS)");
   }
 
   // EQUIPA

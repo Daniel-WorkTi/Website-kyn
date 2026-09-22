@@ -43,11 +43,12 @@ export default function MediaItem({
         ref={videoRef}
         className={videoClassName ?? className}
         src={item.src}
+        poster={item.poster || undefined}
         autoPlay={autoplay}
         muted
         loop
         playsInline
-        preload="auto"
+        preload={autoplay ? "metadata" : "none"}
         onLoadedData={syncPlayback}
         onCanPlay={syncPlayback}
       />
