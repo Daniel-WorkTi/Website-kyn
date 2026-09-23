@@ -94,25 +94,9 @@ body.site-theme {
   height: 100%;
   display: flex;
   align-items: center;
-  justify-content: space-between;
+  justify-content: flex-end;
   gap: 1.5rem;
   padding: 0 2.5rem;
-}
-
-.nav__brand {
-  display: flex;
-  align-items: center;
-  flex-shrink: 0;
-  z-index: 1002;
-}
-
-.nav__logo {
-  display: block;
-  height: 1.35rem;
-  width: auto;
-  max-width: min(220px, 42vw);
-  object-fit: contain;
-  object-position: left center;
 }
 
 .nav__toggle {
