@@ -45,7 +45,7 @@ export function MediaGrid({
     <div className={gridClass}>
       {files.map((file) => (
         <MediaCard
-          key={file.url}
+          key={file.id || file.publicId || file.url}
           file={file}
           variant={variant}
           selected={selectedUrl === file.url}

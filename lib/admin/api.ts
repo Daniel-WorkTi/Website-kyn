@@ -163,20 +163,32 @@ export async function loadMediaLibrary(
   if (cache && !force) return cache;
 
   const supabase = createClient();
+  // Só a secção "library" — itens de gallery/home/hero são uso no site,
+  // não entradas da biblioteca (senão cada upload aparece duplicado após guardar).
   const { data, error } = await supabase
     .from("media_items")
     .select("*")
+    .eq("section_id", "library")
     .order("created_at", { ascending: false })
     .limit(500);
 
   if (error) throw new Error(error.message);
 
-  return (data || []).map((row) => {
+  const seen = new Set<string>();
+  const files: MediaFile[] = [];
+
+  for (const row of data || []) {
+    const dedupeKey = row.storage_path || row.legacy_url || row.id;
+    if (seen.has(dedupeKey)) continue;
+    seen.add(dedupeKey);
+
     const url = resolveMediaUrl({
       storagePath: row.storage_path,
       legacyUrl: row.legacy_url,
     });
-    return {
+
+    files.push({
+      id: row.id,
       url,
       name: row.title || row.storage_path?.split("/").pop() || row.id,
       type: row.type === "video" ? "video" : "image",
@@ -185,18 +197,34 @@ export async function loadMediaLibrary(
       width: row.width ?? undefined,
       height: row.height ?? undefined,
       createdAt: row.created_at,
-    } satisfies MediaFile;
-  });
+    });
+  }
+
+  return files;
 }
 
 export async function deleteMediaFile(file: MediaFile): Promise<void> {
   const supabase = createClient();
   const storagePaths = new Set<string>();
 
-  if (file.publicId && !file.publicId.startsWith("http") && file.publicId.includes("/")) {
+  // Preferir apagar só a linha da biblioteca pelo id.
+  if (file.id) {
+    const { data: row } = await supabase
+      .from("media_items")
+      .select("id, storage_path, thumbnail_path, section_id")
+      .eq("id", file.id)
+      .maybeSingle();
+
+    if (row) {
+      if (row.storage_path) storagePaths.add(row.storage_path);
+      if (row.thumbnail_path) storagePaths.add(row.thumbnail_path);
+      await supabase.from("media_items").delete().eq("id", row.id);
+    }
+  } else if (file.publicId && !file.publicId.startsWith("http") && file.publicId.includes("/")) {
     const { data: byPath } = await supabase
       .from("media_items")
       .select("id, storage_path, thumbnail_path")
+      .eq("section_id", "library")
       .eq("storage_path", file.publicId);
 
     for (const row of byPath || []) {
@@ -212,12 +240,25 @@ export async function deleteMediaFile(file: MediaFile): Promise<void> {
     const { data: byUrl } = await supabase
       .from("media_items")
       .select("id, storage_path, thumbnail_path")
+      .eq("section_id", "library")
       .eq("legacy_url", file.url);
 
     for (const row of byUrl || []) {
       if (row.storage_path) storagePaths.add(row.storage_path);
       if (row.thumbnail_path) storagePaths.add(row.thumbnail_path);
       await supabase.from("media_items").delete().eq("id", row.id);
+    }
+  }
+
+  // Só remove do Storage se nenhum outro sítio (galeria/home) ainda usa o ficheiro.
+  for (const path of [...storagePaths]) {
+    const { count } = await supabase
+      .from("media_items")
+      .select("id", { count: "exact", head: true })
+      .eq("storage_path", path);
+
+    if ((count ?? 0) > 0) {
+      storagePaths.delete(path);
     }
   }
 

@@ -55,7 +55,7 @@ export function MediaLibrary({
         >
           {filtered.map((file) => (
             <button
-              key={file.url}
+              key={file.id || file.publicId || file.url}
               type="button"
               title={file.name}
               onClick={() => onSelect(file.url, file.type)}

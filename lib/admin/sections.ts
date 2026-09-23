@@ -215,6 +215,7 @@ export type PartnersData = {
 export type SectionData = GalleryData | HomeData | TeamData | PartnersData;
 
 export type MediaFile = {
+  id?: string;
   url: string;
   name: string;
   type: "image" | "video" | "file";
