@@ -50,6 +50,8 @@ export default function Nav({ items }: NavProps) {
     return pathname === href || pathname.startsWith(`${href}/`);
   };
 
+  const isHome = pathname === "/";
+
   return (
     <>
       {menuOpen && (
@@ -61,7 +63,16 @@ export default function Nav({ items }: NavProps) {
         />
       )}
 
-      <nav className={`nav${scrolled ? " nav--scrolled" : ""}`}>
+      <nav
+        className={[
+          "nav",
+          isHome ? "nav--home" : "",
+          scrolled ? "nav--scrolled" : "",
+          menuOpen ? "nav--open" : ""
+        ]
+          .filter(Boolean)
+          .join(" ")}
+      >
         <div className="nav__inner">
           <button
             type="button"

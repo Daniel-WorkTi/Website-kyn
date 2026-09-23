@@ -5,7 +5,7 @@
   --text: #ffffff;
   --text-muted: rgba(255, 255, 255, 0.55);
   --border: rgba(255, 255, 255, 0.12);
-  --nav-height: 56px;
+  --nav-height: 48px;
   --font-body: var(--font-inter, "Inter"), -apple-system, BlinkMacSystemFont, sans-serif;
   --ease-out: cubic-bezier(0.22, 1, 0.36, 1);
   --ease-in: cubic-bezier(0.55, 0, 1, 0.45);
@@ -84,6 +84,20 @@ body.site-theme {
   transition: background var(--transition);
 }
 
+/* Home: nav fina sobre o vídeo — sem bloco preto alto */
+.nav--home:not(.nav--scrolled):not(.nav--open) {
+  background: transparent;
+}
+
+.nav--home.nav--scrolled,
+.nav--home.nav--open {
+  background: #000000;
+}
+
+.nav--home:not(.nav--scrolled):not(.nav--open) .nav__link {
+  text-shadow: 0 1px 8px rgba(0, 0, 0, 0.55);
+}
+
 .nav--scrolled {
   background: #000000;
 }
@@ -95,8 +109,8 @@ body.site-theme {
   display: flex;
   align-items: center;
   justify-content: flex-end;
-  gap: 1.5rem;
-  padding: 0 2.5rem;
+  gap: 1.25rem;
+  padding: 0 2rem;
 }
 
 .nav__toggle {
@@ -423,15 +437,19 @@ body.site-theme {
   object-fit: cover;
 }
 
-/* ── Galeria full-bleed (5 colunas, largura total) ── */
+/* ── Galerias: colunas regulares, ratio original (sem crop) ── */
 
-.supd-grid {
+.supd-grid,
+.studio-gallery__masonry,
+.multicam-gallery,
+.reels-gallery {
   display: grid;
-  grid-template-columns: repeat(5, 1fr);
-  gap: 3px;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 8px;
+  align-items: start;
   width: 100%;
   margin: 0 auto;
-  padding: 0 0 2.5rem;
+  padding: 0 8px 2.5rem;
   background: #000;
 }
 
@@ -443,196 +461,81 @@ body.site-theme {
   grid-template-columns: repeat(3, 1fr);
 }
 
-.supd-grid__cell {
+.supd-grid__cell,
+.studio-gallery__tile,
+.multicam-gallery__tile,
+.reels-gallery__tile {
+  position: relative;
+  display: block;
+  width: 100%;
   line-height: 0;
-  overflow: hidden;
   cursor: pointer;
-  background: #000;
+  background: #111;
+  overflow: hidden;
+}
+
+.supd-grid__cell--wide {
+  grid-column: span 2;
 }
 
 .supd-grid__cell img,
-.supd-grid__cell video {
+.supd-grid__cell video,
+.studio-gallery__tile img,
+.studio-gallery__tile video,
+.multicam-gallery__tile img,
+.multicam-gallery__tile video,
+.reels-gallery__tile img,
+.reels-gallery__tile video {
   width: 100%;
-  height: 100%;
-  object-fit: cover;
-  aspect-ratio: 9 / 16;
+  height: auto;
+  max-width: 100%;
   display: block;
-  transition: transform 0.5s var(--ease-out);
+  object-fit: contain;
+  object-position: center;
+  vertical-align: top;
+  transition: opacity 0.35s var(--ease-out);
 }
 
 .supd-grid__cell:hover img,
-.supd-grid__cell:hover video {
-  transform: scale(1.02);
+.supd-grid__cell:hover video,
+.studio-gallery__tile:hover img,
+.studio-gallery__tile:hover video,
+.multicam-gallery__tile:hover img,
+.multicam-gallery__tile:hover video,
+.reels-gallery__tile:hover img,
+.reels-gallery__tile:hover video {
+  opacity: 0.9;
 }
 
-.supd-grid__cell:last-child:nth-child(5n + 1) {
-  grid-column: 3;
-}
-
-.supd-grid__cell--wide img,
-.supd-grid__cell--wide video {
-  aspect-ratio: 16 / 9;
-}
-
-/* ── Studio Space gallery (masonry + vídeos lado a lado) ── */
+/* ── Studio: 2 vídeos topo (lado a lado, ratio original) ── */
 
 .studio-gallery__videos {
   display: grid;
+  grid-template-columns: 1fr;
+  gap: 8px;
   width: 100%;
-  gap: 0;
+  padding: 0 8px 8px;
   background: #000;
 }
 
-.studio-gallery__videos--1 {
-  grid-template-columns: 1fr;
-  min-height: min(58vh, 720px);
-}
-
 .studio-gallery__videos--2 {
-  grid-template-columns: repeat(12, 1fr);
-  min-height: min(58vh, 720px);
+  grid-template-columns: repeat(2, 1fr);
 }
 
 .studio-gallery__videos .studio-gallery__tile {
   display: block;
-  overflow: hidden;
-  cursor: pointer;
-  background: #000;
-}
-
-.studio-gallery__videos .studio-gallery__tile--video {
-  min-height: min(58vh, 720px);
-}
-
-.studio-gallery__videos--1 .studio-gallery__tile--video {
-  grid-column: 1 / -1;
-}
-
-.studio-gallery__videos--2 .studio-gallery__tile--video:first-child {
-  grid-column: span 8;
-}
-
-.studio-gallery__videos--2 .studio-gallery__tile--video:last-child {
-  grid-column: span 4;
+  margin: 0;
+  background: #111;
 }
 
 .studio-gallery__videos .studio-gallery__tile--video video {
   width: 100%;
-  height: 100%;
-  min-height: min(58vh, 720px);
-  max-height: none;
-  object-fit: cover;
+  height: auto;
   display: block;
-}
-
-.studio-gallery__tile--video:hover video {
-  transform: none;
-}
-
-.studio-gallery__masonry {
-  display: grid;
-  grid-template-columns: repeat(12, 1fr);
-  gap: 0;
-  width: 100%;
-  background: #000;
-  padding-bottom: 0;
-}
-
-.studio-gallery__tile {
-  line-height: 0;
-  overflow: hidden;
-  cursor: pointer;
-  background: #000;
-}
-
-.studio-gallery__tile img,
-.studio-gallery__tile video {
-  width: 100%;
-  height: 100%;
-  object-fit: cover;
-  display: block;
-  transition: transform 0.55s var(--ease-out);
-}
-
-.studio-gallery__tile:hover img,
-.studio-gallery__tile:hover video {
-  transform: scale(1.015);
-}
-
-/* Bento — 12 colunas, imagens maiores e coladas */
-.studio-gallery__tile--1 { grid-column: span 4; grid-row: span 2; min-height: 400px; }
-.studio-gallery__tile--2 { grid-column: span 4; min-height: 200px; }
-.studio-gallery__tile--3 { grid-column: span 4; min-height: 200px; }
-.studio-gallery__tile--4 { grid-column: span 3; grid-row: span 2; min-height: 360px; }
-.studio-gallery__tile--5 { grid-column: span 3; min-height: 180px; }
-.studio-gallery__tile--6 { grid-column: span 6; min-height: 230px; }
-.studio-gallery__tile--1 img,
-.studio-gallery__tile--1 video,
-.studio-gallery__tile--4 img,
-.studio-gallery__tile--4 video {
-  min-height: 100%;
-}
-
-/* ── Multicam gallery (vertical 9:16, vídeo inteiro) ── */
-
-.multicam-gallery {
-  display: grid;
-  grid-template-columns: repeat(5, 1fr);
-  gap: 3px;
-  width: 100%;
-  margin: 0 auto;
-  padding: 0 0 2.5rem;
-  background: #000;
-}
-
-.multicam-gallery__tile {
-  position: relative;
-  aspect-ratio: 9 / 16;
-  overflow: hidden;
-  cursor: pointer;
-  background: #000;
-  line-height: 0;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-}
-
-.multicam-gallery__tile video,
-.multicam-gallery__tile img {
-  width: 100%;
-  height: 100%;
   object-fit: contain;
-  display: block;
-  transition: opacity 0.45s var(--ease-out);
-}
-
-.multicam-gallery__tile:hover video,
-.multicam-gallery__tile:hover img {
-  opacity: 0.92;
-}
-
-/* ── Aftermovie / Reels (vertical 9:16, 5 por linha) ── */
-
-.reels-gallery {
-  display: grid;
-  grid-template-columns: repeat(5, 1fr);
-  gap: 3px;
-  width: 100%;
-  margin: 0 auto;
-  padding: 0 0 2.5rem;
-  background: #000;
 }
 
 .reels-gallery__tile {
-  position: relative;
-  aspect-ratio: 9 / 16;
-  overflow: hidden;
-  cursor: pointer;
-  background: #000;
-  line-height: 0;
-  display: flex;
-  align-items: center;
-  justify-content: center;
   animation: reels-fade-in 0.55s var(--ease-out) both;
 }
 
@@ -645,25 +548,6 @@ body.site-theme {
     opacity: 1;
     transform: translateY(0);
   }
-}
-
-.reels-gallery__tile video,
-.reels-gallery__tile img {
-  width: 100%;
-  height: 100%;
-  object-fit: contain;
-  display: block;
-  transition: opacity 0.45s var(--ease-out), transform 0.5s var(--ease-out);
-}
-
-.reels-gallery__tile:hover video,
-.reels-gallery__tile:hover img {
-  opacity: 0.92;
-}
-
-/* Último reel sozinho na linha (ex.: 6 vídeos em grid de 5) */
-.reels-gallery__tile:last-child:nth-child(5n + 1) {
-  grid-column: 3;
 }
 
 html.site-theme[data-page="team"],
@@ -941,28 +825,11 @@ html.site-theme[data-page="team"] body::-webkit-scrollbar {
 /* ── Responsive ── */
 
 @media (max-width: 1024px) {
+  .supd-grid,
+  .studio-gallery__masonry,
+  .multicam-gallery,
   .reels-gallery {
-    grid-template-columns: repeat(4, 1fr);
-  }
-
-  .reels-gallery__tile:last-child:nth-child(5n + 1) {
-    grid-column: auto;
-  }
-
-  .reels-gallery__tile:last-child:nth-child(4n + 1) {
-    grid-column: 2 / span 2;
-  }
-
-  .supd-grid {
-    grid-template-columns: repeat(4, 1fr);
-  }
-
-  .supd-grid__cell:last-child:nth-child(5n + 1) {
-    grid-column: auto;
-  }
-
-  .supd-grid__cell:last-child:nth-child(4n + 1) {
-    grid-column: 2 / span 2;
+    grid-template-columns: repeat(3, 1fr);
   }
 
   .partners-grid--main,
@@ -1070,90 +937,24 @@ html.site-theme[data-page="team"] body::-webkit-scrollbar {
 
   .supd-grid,
   .supd-grid--2,
-  .supd-grid--3 {
-    grid-template-columns: repeat(3, 1fr);
-    padding: 0 0 2rem;
+  .supd-grid--3,
+  .studio-gallery__masonry,
+  .multicam-gallery,
+  .reels-gallery {
+    grid-template-columns: repeat(2, 1fr);
+    padding: 0 6px 2rem;
+    gap: 6px;
   }
 
-  .supd-grid__cell:last-child:nth-child(4n + 1) {
-    grid-column: auto;
+  .supd-grid__cell--wide {
+    grid-column: span 2;
   }
 
-  .supd-grid__cell:last-child:nth-child(3n + 1) {
-    grid-column: 2;
-  }
-
+  .studio-gallery__videos,
   .studio-gallery__videos--2 {
     grid-template-columns: 1fr;
-    min-height: 0;
-  }
-
-  .studio-gallery__videos--2 .studio-gallery__tile--video:first-child,
-  .studio-gallery__videos--2 .studio-gallery__tile--video:last-child {
-    grid-column: 1 / -1;
-  }
-
-  .studio-gallery__videos .studio-gallery__tile--video {
-    min-height: min(42vh, 360px);
-  }
-
-  .studio-gallery__videos--2 .studio-gallery__tile--video:first-child {
-    min-height: min(48vh, 420px);
-  }
-
-  .studio-gallery__videos .studio-gallery__tile--video video {
-    width: 100%;
-    height: 100%;
-    min-height: inherit;
-    max-height: none;
-    object-fit: cover;
-  }
-
-  .studio-gallery__masonry {
-    grid-template-columns: repeat(2, 1fr);
-  }
-
-  .studio-gallery__tile--1,
-  .studio-gallery__tile--2,
-  .studio-gallery__tile--3,
-  .studio-gallery__tile--4,
-  .studio-gallery__tile--5,
-  .studio-gallery__tile--6 {
-    grid-column: span 1;
-    grid-row: span 1;
-    min-height: 170px;
-  }
-
-  .studio-gallery__tile--1,
-  .studio-gallery__tile--4,
-  .studio-gallery__tile--6 {
-    grid-column: span 2;
-    min-height: 220px;
-  }
-
-  .multicam-gallery {
-    grid-template-columns: repeat(3, 1fr);
-    gap: 3px;
-    max-width: none;
-    padding: 0 0 2rem;
-  }
-
-  .multicam-gallery__tile:last-child:nth-child(3n + 1) {
-    grid-column: 2;
-  }
-
-  .reels-gallery {
-    grid-template-columns: repeat(3, 1fr);
-    gap: 3px;
-    padding: 0 0 2rem;
-  }
-
-  .reels-gallery__tile:last-child:nth-child(4n + 1) {
-    grid-column: auto;
-  }
-
-  .reels-gallery__tile:last-child:nth-child(3n + 1) {
-    grid-column: 2;
+    padding: 0 6px 6px;
+    gap: 6px;
   }
 
   .partners-grid--main,
@@ -1163,27 +964,18 @@ html.site-theme[data-page="team"] body::-webkit-scrollbar {
 }
 
 @media (max-width: 480px) {
-  .multicam-gallery {
-    grid-template-columns: repeat(2, 1fr);
-  }
-
-  .multicam-gallery__tile:last-child:nth-child(3n + 1) {
-    grid-column: auto;
-  }
-
-  .reels-gallery {
-    grid-template-columns: repeat(2, 1fr);
-    gap: 3px;
-  }
-
   .supd-grid,
   .supd-grid--2,
-  .supd-grid--3 {
+  .supd-grid--3,
+  .studio-gallery__masonry,
+  .multicam-gallery,
+  .reels-gallery {
     grid-template-columns: repeat(2, 1fr);
-    gap: 3px;
+    gap: 4px;
+    padding: 0 4px 1.5rem;
   }
 
-  .supd-grid__cell:last-child:nth-child(3n + 1) {
-    grid-column: auto;
+  .supd-grid__cell--wide {
+    grid-column: span 2;
   }
 }

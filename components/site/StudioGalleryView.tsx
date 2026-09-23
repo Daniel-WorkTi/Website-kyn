@@ -68,7 +68,6 @@ export default function StudioGalleryView({ data }: StudioGalleryViewProps) {
             <MediaTile
               key={`tile-${item.src}-${i}`}
               item={item}
-              className={`studio-gallery__tile--${(i % 6) + 1}`}
               onOpen={open}
             />
           ))}
