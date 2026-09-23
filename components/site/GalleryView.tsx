@@ -33,7 +33,7 @@ export default function GalleryView({ data }: GalleryViewProps) {
                 }
               }}
             >
-              <MediaItem item={item} autoplay={item.type === "video"} />
+              <MediaItem item={item} />
             </div>
           ))}
         </div>

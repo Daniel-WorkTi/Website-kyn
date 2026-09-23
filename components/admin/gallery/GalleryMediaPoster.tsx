@@ -23,7 +23,7 @@ export function GalleryMediaPoster({
   return (
     <div className="space-y-2">
       <p className="text-[11px] font-medium uppercase tracking-[0.12em] text-zinc-500">
-        Poster
+        Capa
       </p>
       <div className="flex items-center gap-3">
         <div className="size-14 shrink-0 overflow-hidden rounded-md border border-white/[0.08] bg-zinc-950">
@@ -55,7 +55,7 @@ export function GalleryMediaPoster({
             onClick={() => inputRef.current?.click()}
             className="rounded-lg border border-white/10 bg-white/[0.03] px-3 py-1.5 text-[11px] text-zinc-300 transition hover:bg-white/[0.06] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-white/40 disabled:opacity-50"
           >
-            {loading ? "A enviar…" : posterUrl ? "Alterar" : "Adicionar"}
+            {loading ? "A enviar…" : posterUrl ? "Alterar capa" : "Definir capa"}
           </button>
           {posterUrl ? (
             <button

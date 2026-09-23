@@ -64,7 +64,16 @@ type AdminContextValue = {
   dismissToast: () => void;
   processUpload: (
     file: File,
-    onSuccess: (url: string, file: File) => void,
+    onSuccess: (
+      url: string,
+      file: File,
+      meta?: {
+        posterUrl?: string;
+        duration?: number;
+        width?: number;
+        height?: number;
+      }
+    ) => void,
     options?: ProcessUploadOptions
   ) => Promise<void>;
   refreshMediaLibrary: () => Promise<void>;
@@ -267,7 +276,16 @@ export function AdminProvider({ children }: { children: ReactNode }) {
   const processUpload = useCallback(
     async (
       file: File,
-      onSuccess: (url: string, file: File) => void,
+      onSuccess: (
+        url: string,
+        file: File,
+        meta?: {
+          posterUrl?: string;
+          duration?: number;
+          width?: number;
+          height?: number;
+        }
+      ) => void,
       options: ProcessUploadOptions = {}
     ) => {
       const {
@@ -281,28 +299,31 @@ export function AdminProvider({ children }: { children: ReactNode }) {
       const isVideo =
         file.type.startsWith("video/") || /\.(mp4|webm|mov|m4v)$/i.test(file.name);
 
-      // Vídeos: qualquer tamanho de entrada → optimizar até ao teto de Storage.
       const optimizeTarget = isVideo
         ? VIDEO_OPTIMIZE_TARGET_BYTES
         : IMAGE_OPTIMIZE_TARGET_BYTES;
 
       if (isVideo && file.size > MAX_VIDEO_UPLOAD_BYTES) {
         showToast(
-          `Vídeo grande (${(file.size / (1024 * 1024)).toFixed(0)} MB) — a optimizar sem perder qualidade desnecessária…`,
+          `Vídeo grande (${(file.size / (1024 * 1024)).toFixed(0)} MB) — a gerar preview ≤10s…`,
           "pending"
         );
       }
 
-      let uploadable = file;
+      let prepared;
       try {
-        uploadable = await prepareFileForUpload(file, optimizeTarget, {
+        prepared = await prepareFileForUpload(file, optimizeTarget, {
           onProgress: (message) => showToast(message, "pending")
         });
       } catch (err) {
         throw err instanceof Error
           ? err
-          : new Error(`"${file.name}": não foi possível preparar o ficheiro para envio.`);
+          : new Error(
+              "Não foi possível preparar este vídeo. Tenta novamente ou usa outro ficheiro."
+            );
       }
+
+      const uploadable = prepared.file;
 
       if (isVideo) {
         if (uploadable.size > MAX_VIDEO_UPLOAD_BYTES) {
@@ -319,10 +340,21 @@ export function AdminProvider({ children }: { children: ReactNode }) {
       showToast(`A enviar ${uploadable.name}…`, "pending");
       setUploadCount((c) => c + 1);
       try {
-        const url = await uploadFile(uploadable, sectionId);
-        onSuccess(url, uploadable);
+        const result = await uploadFile(uploadable, sectionId, {
+          posterFile: prepared.posterFile,
+          duration: prepared.duration,
+          width: prepared.width,
+          height: prepared.height
+        });
+        const meta = {
+          posterUrl: result.posterUrl,
+          duration: prepared.duration,
+          width: prepared.width,
+          height: prepared.height
+        };
+        onSuccess(result.url, uploadable, meta);
         if (updateLibrary) {
-          registerUploadedMedia(url, uploadable);
+          registerUploadedMedia(result.url, uploadable);
         }
         if (shouldMarkDirty) {
           markDirty();
@@ -334,7 +366,6 @@ export function AdminProvider({ children }: { children: ReactNode }) {
           mediaCacheRef.current = null;
           await refreshMediaLibrary();
         }
-        // Garante persistência após onSuccess actualizar o estado da galeria/home.
         if (shouldMarkDirty) {
           window.setTimeout(() => {
             void saveRef.current({ silent: true });

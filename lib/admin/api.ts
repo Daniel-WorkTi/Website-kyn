@@ -150,10 +150,32 @@ export async function saveContent(
 
 export async function uploadFile(
   file: File,
-  sectionId = "home"
-): Promise<string> {
-  const result = await uploadMediaFile(file, { sectionId });
-  return result.url;
+  sectionId = "home",
+  extras?: {
+    posterFile?: File;
+    duration?: number;
+    width?: number;
+    height?: number;
+  }
+): Promise<{
+  url: string;
+  posterUrl?: string;
+  storagePath: string;
+  type: "image" | "video";
+}> {
+  const result = await uploadMediaFile(file, {
+    sectionId,
+    posterFile: extras?.posterFile,
+    duration: extras?.duration,
+    width: extras?.width,
+    height: extras?.height,
+  });
+  return {
+    url: result.url,
+    posterUrl: result.posterUrl,
+    storagePath: result.storagePath,
+    type: result.type,
+  };
 }
 
 export async function loadMediaLibrary(

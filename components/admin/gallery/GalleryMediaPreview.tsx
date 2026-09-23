@@ -1,5 +1,13 @@
 "use client";
 
+import { useRef } from "react";
+import {
+  canHoverFine,
+  pauseHoverPreview,
+  playHoverPreview,
+  prefersReducedMotion,
+} from "@/lib/media/hover-video";
+
 type GalleryMediaPreviewProps = {
   src: string;
   type: "image" | "video";
@@ -13,8 +21,23 @@ export function GalleryMediaPreview({
   type,
   poster,
   title,
-  onReplace
+  onReplace,
 }: GalleryMediaPreviewProps) {
+  const videoRef = useRef<HTMLVideoElement>(null);
+
+  const onEnter = () => {
+    const video = videoRef.current;
+    if (!video || type !== "video") return;
+    if (prefersReducedMotion() || !canHoverFine()) return;
+    void playHoverPreview(video);
+  };
+
+  const onLeave = () => {
+    const video = videoRef.current;
+    if (!video) return;
+    pauseHoverPreview(video);
+  };
+
   return (
     <button
       type="button"
@@ -25,31 +48,30 @@ export function GalleryMediaPreview({
           onReplace();
         }
       }}
+      onMouseEnter={onEnter}
+      onMouseLeave={onLeave}
+      onFocus={onEnter}
+      onBlur={onLeave}
       aria-label={`Substituir ${title}`}
       className="group relative block w-full overflow-hidden bg-zinc-950 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-white/40"
     >
       <div className="aspect-video w-full">
         {type === "video" ? (
           <video
+            ref={videoRef}
             src={src}
             poster={poster || undefined}
-            className="h-full w-full object-cover"
+            className="h-full w-full object-contain bg-black"
             muted
+            loop
             playsInline
-            preload="metadata"
-            onLoadedMetadata={(e) => {
-              try {
-                e.currentTarget.currentTime = 0.05;
-              } catch {
-                /* ignore */
-              }
-            }}
+            preload="none"
           />
         ) : (
           <img src={src} alt="" className="h-full w-full object-cover" />
         )}
       </div>
-      {type === "video" ? (
+      {type === "video" && !poster ? (
         <span
           className="pointer-events-none absolute inset-0 flex items-center justify-center"
           aria-hidden

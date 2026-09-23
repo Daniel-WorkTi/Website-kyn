@@ -131,7 +131,8 @@ export function prepareGalleryForSection(sectionId: string, data: GalleryData): 
 export function createGalleryItemFromUpload(
   url: string,
   file: File,
-  sectionId: string
+  sectionId: string,
+  meta?: Partial<Pick<GalleryItem, "width" | "height" | "duration" | "size" | "poster">>
 ): GalleryItem {
   const type = inferGalleryMediaType(file.name || url, file.type);
   const base: GalleryItem = {
@@ -140,7 +141,8 @@ export function createGalleryItemFromUpload(
     src: url,
     alt: "",
     title: formatHumanTitle(file.name) || undefined,
-    size: file.size || undefined
+    size: file.size || undefined,
+    ...meta
   };
 
   if (sectionId === "studio-space") {

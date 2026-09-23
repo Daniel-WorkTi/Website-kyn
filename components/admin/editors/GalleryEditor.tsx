@@ -29,7 +29,11 @@ type EditorCommonProps = {
   onDirty: () => void;
   processUpload: (
     file: File,
-    onSuccess: (url: string, file: File) => void,
+    onSuccess: (
+      url: string,
+      file: File,
+      meta?: { posterUrl?: string; duration?: number; width?: number; height?: number }
+    ) => void,
     options?: {
       markDirty?: boolean;
       refreshLibrary?: boolean;
@@ -150,9 +154,14 @@ export function GalleryEditor({
       let uploadedUrl = "";
       await processUpload(
         file,
-        (url, f) => {
+        (url, f, meta) => {
           uploadedUrl = url;
-          const created = createGalleryItemFromUpload(url, f, sectionId);
+          const created = createGalleryItemFromUpload(url, f, sectionId, {
+            poster: meta?.posterUrl,
+            duration: meta?.duration,
+            width: meta?.width,
+            height: meta?.height
+          });
           if (typeof replaceIndex === "number") {
             const prev = items[replaceIndex];
             const next = [...items];
@@ -160,7 +169,8 @@ export function GalleryEditor({
               ...created,
               alt: prev?.alt || "",
               featured: showFeatured ? prev?.featured ?? false : false,
-              poster: created.type === "video" ? prev?.poster : undefined
+              // Novo upload traz poster automático; mantém o anterior só se o novo não tiver
+              poster: created.poster || (created.type === "video" ? prev?.poster : undefined)
             });
             commit(next);
           } else {
@@ -191,8 +201,16 @@ export function GalleryEditor({
       try {
         await processUpload(
           file,
-          (url, f) => {
-            next = [...next, createGalleryItemFromUpload(url, f, sectionId)];
+          (url, f, meta) => {
+            next = [
+              ...next,
+              createGalleryItemFromUpload(url, f, sectionId, {
+                poster: meta?.posterUrl,
+                duration: meta?.duration,
+                width: meta?.width,
+                height: meta?.height
+              })
+            ];
             onChange(prepareGalleryForSection(sectionId, { ...data, items: next }));
           },
           { showSuccessToast: false }
@@ -210,7 +228,7 @@ export function GalleryEditor({
     setPosterUploadingIndex(index);
     try {
       const prepared = await prepareFileForUpload(file, 2 * 1024 * 1024);
-      const { url } = await uploadPosterFile(prepared, sectionId);
+      const { url } = await uploadPosterFile(prepared.file, sectionId);
       const next = [...items];
       next[index] = { ...next[index], poster: url };
       commit(next);

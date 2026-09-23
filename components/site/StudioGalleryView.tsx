@@ -32,7 +32,7 @@ function MediaTile({
         }
       }}
     >
-      <MediaItem item={item} autoplay={item.type === "video"} />
+      <MediaItem item={item} />
     </div>
   );
 }

@@ -130,8 +130,18 @@ export async function uploadMediaFile(
   opts: {
     sectionId: string;
     onProgress?: (p: UploadProgress) => void;
+    posterFile?: File;
+    duration?: number;
+    width?: number;
+    height?: number;
   }
-): Promise<{ url: string; storagePath: string; type: "image" | "video" }> {
+): Promise<{
+  url: string;
+  storagePath: string;
+  type: "image" | "video";
+  posterUrl?: string;
+  thumbnailPath?: string;
+}> {
   const { kind } = validateUploadFile(file);
   const supabase = createClient();
 
@@ -170,7 +180,24 @@ export async function uploadMediaFile(
     opts.onProgress?.({ percent: 100, phase: "uploading" });
   }
 
-  // Garante que aparece na Biblioteca de Mídia (não depende só do save da galeria).
+  let thumbnailPath: string | undefined;
+  let posterUrl: string | undefined;
+
+  if (kind === "video" && opts.posterFile) {
+    opts.onProgress?.({ percent: 100, phase: "saving", message: "A enviar capa…" });
+    try {
+      const poster = await uploadPosterFile(opts.posterFile, opts.sectionId);
+      thumbnailPath = poster.storagePath;
+      posterUrl = poster.url;
+    } catch (err) {
+      // Vídeo já no Storage — limpar e falhar (capa é obrigatória no novo fluxo)
+      await supabase.storage.from(MEDIA_BUCKET).remove([storagePath]);
+      throw err instanceof Error
+        ? err
+        : new Error("Falha ao enviar a capa automática do vídeo.");
+    }
+  }
+
   opts.onProgress?.({ percent: 100, phase: "saving", message: "A registar na biblioteca…" });
 
   const librarySectionId = "library";
@@ -185,7 +212,6 @@ export async function uploadMediaFile(
     { onConflict: "id" }
   );
   if (ensureSectionError) {
-    // Secção pode já existir; só falha se for erro real sem a tabela
     console.warn("[upload] ensure library section:", ensureSectionError.message);
   }
 
@@ -194,15 +220,19 @@ export async function uploadMediaFile(
     slot: "gallery",
     type: kind,
     storage_path: storagePath,
+    thumbnail_path: thumbnailPath ?? null,
     title: file.name,
     mime_type: file.type || null,
     file_size: file.size,
+    duration_seconds: opts.duration ?? null,
+    width: opts.width ?? null,
+    height: opts.height ?? null,
     sort_order: Date.now() % 1_000_000_000,
   });
 
   if (dbError) {
-    // Ficheiro já está no Storage — limpar órfão e falhar de forma clara
-    await supabase.storage.from(MEDIA_BUCKET).remove([storagePath]);
+    const toRemove = [storagePath, thumbnailPath].filter(Boolean) as string[];
+    await supabase.storage.from(MEDIA_BUCKET).remove(toRemove);
     throw new Error(
       `Upload no Storage OK, mas falhou ao registar na biblioteca: ${dbError.message}. Corre a migration da secção library no Supabase.`
     );
@@ -214,6 +244,8 @@ export async function uploadMediaFile(
     url: publicUrlForPath(storagePath),
     storagePath,
     type: kind,
+    posterUrl,
+    thumbnailPath,
   };
 }
 

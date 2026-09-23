@@ -1,5 +1,12 @@
 import { IMAGE_MAX_EDGE_PX } from "@/lib/admin/sections";
 
+/** Duração máxima do ficheiro persistido (segundos). */
+export const VIDEO_PREVIEW_MAX_SECONDS = 10;
+/** Tolerância de encoding na validação. */
+export const VIDEO_PREVIEW_DURATION_TOLERANCE = 0.15;
+/** Aresta máxima (portrait ou landscape). */
+export const VIDEO_PREVIEW_MAX_EDGE = 1080;
+
 function formatMb(bytes: number): string {
   return `${(bytes / (1024 * 1024)).toFixed(1)} MB`;
 }
@@ -50,14 +57,12 @@ async function heicViaServer(file: File): Promise<ImageBitmap> {
 }
 
 async function heicFileToBitmap(file: File): Promise<ImageBitmap> {
-  // 1) Safari / browsers com suporte nativo a HEIC
   try {
     return await createImageBitmap(file);
   } catch {
     /* fall through */
   }
 
-  // 2) heic-to no browser (libheif actualizado — iOS 18+)
   try {
     const { heicTo } = await import("heic-to");
     const converted = await heicTo({
@@ -70,7 +75,6 @@ async function heicFileToBitmap(file: File): Promise<ImageBitmap> {
     /* fall through to server */
   }
 
-  // 3) Fallback no servidor (heic-convert)
   try {
     return await heicViaServer(file);
   } catch (err) {
@@ -89,7 +93,6 @@ async function decodeImageToBitmap(file: File): Promise<ImageBitmap> {
   try {
     return await createImageBitmap(file);
   } catch {
-    // Alguns browsers reportam type vazio mas o ficheiro é HEIC
     if (/\.(heic|heif)$/i.test(file.name) || /heic|heif/i.test(file.type)) {
       return heicFileToBitmap(file);
     }
@@ -101,41 +104,45 @@ async function decodeImageToBitmap(file: File): Promise<ImageBitmap> {
 
 function fitWithinMaxEdge(width: number, height: number, maxEdge: number): { width: number; height: number } {
   const longest = Math.max(width, height);
-  if (longest <= maxEdge) return { width, height };
+  if (longest <= maxEdge) {
+    return {
+      width: Math.max(2, width & ~1),
+      height: Math.max(2, height & ~1),
+    };
+  }
   const scale = maxEdge / longest;
   return {
-    width: Math.max(1, Math.floor(width * scale)),
-    height: Math.max(1, Math.floor(height * scale))
+    width: Math.max(2, Math.floor(width * scale) & ~1),
+    height: Math.max(2, Math.floor(height * scale) & ~1),
   };
 }
 
-function pickVideoMimeType(): string {
-  const candidates = [
-    "video/webm;codecs=vp9,opus",
-    "video/webm;codecs=vp8,opus",
-    "video/webm;codecs=vp9",
-    "video/webm;codecs=vp8",
-    "video/webm"
+/**
+ * MediaRecorder: H.264 MP4 NÃO é fiável cross-browser.
+ * Preferimos WebM VP9/VP8 (Chrome/Edge). Safari pode oferecer mp4.
+ * H.264 normalização fica para o backfill FFmpeg.
+ */
+function pickVideoMimeType(): { mimeType: string; container: "webm" | "mp4" } {
+  const candidates: Array<{ mimeType: string; container: "webm" | "mp4" }> = [
+    { mimeType: "video/mp4;codecs=avc1.42E01E", container: "mp4" },
+    { mimeType: "video/mp4", container: "mp4" },
+    { mimeType: "video/webm;codecs=vp9", container: "webm" },
+    { mimeType: "video/webm;codecs=vp8", container: "webm" },
+    { mimeType: "video/webm", container: "webm" },
   ];
-  return candidates.find((t) => MediaRecorder.isTypeSupported(t)) ?? "video/webm";
+  for (const c of candidates) {
+    if (typeof MediaRecorder !== "undefined" && MediaRecorder.isTypeSupported(c.mimeType)) {
+      return c;
+    }
+  }
+  return { mimeType: "video/webm", container: "webm" };
 }
 
-function captureStreamFromVideo(video: HTMLVideoElement): MediaStream {
-  const el = video as HTMLVideoElement & {
-    captureStream?: () => MediaStream;
-    mozCaptureStream?: () => MediaStream;
-  };
-  if (el.captureStream) return el.captureStream();
-  if (el.mozCaptureStream) return el.mozCaptureStream();
-  throw new Error(
-    "O browser não suporta optimização automática de vídeo. Tenta Chrome ou Edge."
-  );
-}
-
-function blobToVideoFile(blob: Blob, original: File): File {
-  const ext = blob.type.includes("webm") ? "webm" : "mp4";
-  const base = original.name.replace(/\.[^.]+$/, "");
-  return new File([blob], `${base}-optim.${ext}`, { type: blob.type || "video/webm" });
+function blobToVideoFile(blob: Blob, original: File, container: "webm" | "mp4"): File {
+  const base = original.name.replace(/\.[^.]+$/, "") || "video";
+  const ext = container === "mp4" ? "mp4" : "webm";
+  const type = blob.type || (container === "mp4" ? "video/mp4" : "video/webm");
+  return new File([blob], `${base}-preview.${ext}`, { type });
 }
 
 async function loadVideoMetadata(file: File): Promise<{
@@ -150,26 +157,34 @@ async function loadVideoMetadata(file: File): Promise<{
   video.src = objectUrl;
   video.playsInline = true;
   video.muted = true;
+  video.defaultMuted = true;
   video.volume = 0;
   video.preload = "auto";
 
-  await new Promise<void>((resolve, reject) => {
-    video.onloadedmetadata = () => resolve();
-    video.onerror = () =>
-      reject(new Error(`"${file.name}": não foi possível ler o vídeo para optimização.`));
-  });
+  try {
+    await new Promise<void>((resolve, reject) => {
+      video.onloadedmetadata = () => resolve();
+      video.onerror = () =>
+        reject(
+          new Error(
+            "Não foi possível preparar este vídeo. Tenta novamente ou usa outro ficheiro."
+          )
+        );
+    });
+  } catch (err) {
+    URL.revokeObjectURL(objectUrl);
+    throw err;
+  }
 
   const duration = video.duration;
   const width = video.videoWidth;
   const height = video.videoHeight;
 
-  if (!duration || !Number.isFinite(duration) || duration <= 0) {
+  if (!duration || !Number.isFinite(duration) || duration <= 0 || !width || !height) {
     URL.revokeObjectURL(objectUrl);
-    throw new Error(`"${file.name}": duração do vídeo inválida.`);
-  }
-  if (!width || !height) {
-    URL.revokeObjectURL(objectUrl);
-    throw new Error(`"${file.name}": não foi possível ler as dimensões do vídeo.`);
+    throw new Error(
+      "Não foi possível preparar este vídeo. Tenta novamente ou usa outro ficheiro."
+    );
   }
 
   return { video, objectUrl, duration, width, height };
@@ -186,7 +201,7 @@ function startCanvasDraw(
 
   let raf = 0;
   const draw = () => {
-    if (!video.ended) {
+    if (!video.paused && !video.ended) {
       ctx.drawImage(video, 0, 0, width, height);
       raf = requestAnimationFrame(draw);
     }
@@ -195,50 +210,132 @@ function startCanvasDraw(
   return () => cancelAnimationFrame(raf);
 }
 
-async function recordVideoPass(
+async function seekVideo(video: HTMLVideoElement, time: number): Promise<void> {
+  const target = Math.min(Math.max(0, time), Math.max(0, video.duration - 0.05));
+  if (Math.abs(video.currentTime - target) < 0.01) return;
+  await new Promise<void>((resolve, reject) => {
+    const onSeeked = () => {
+      cleanup();
+      resolve();
+    };
+    const onError = () => {
+      cleanup();
+      reject(new Error("seek failed"));
+    };
+    const cleanup = () => {
+      video.removeEventListener("seeked", onSeeked);
+      video.removeEventListener("error", onError);
+    };
+    video.addEventListener("seeked", onSeeked);
+    video.addEventListener("error", onError);
+    try {
+      video.currentTime = target;
+    } catch (err) {
+      cleanup();
+      reject(err);
+    }
+  });
+}
+
+async function extractFirstFramePoster(
+  video: HTMLVideoElement,
+  width: number,
+  height: number,
+  originalName: string
+): Promise<File> {
+  const canvas = document.createElement("canvas");
+  canvas.width = width;
+  canvas.height = height;
+  const ctx = canvas.getContext("2d");
+  if (!ctx) {
+    throw new Error(
+      "Não foi possível preparar este vídeo. Tenta novamente ou usa outro ficheiro."
+    );
+  }
+
+  const tryTimes = [0.05, 0.1, 0.2, 0];
+  for (const t of tryTimes) {
+    try {
+      await seekVideo(video, t);
+    } catch {
+      continue;
+    }
+    ctx.drawImage(video, 0, 0, width, height);
+    const sample = ctx.getImageData(
+      Math.floor(width / 2),
+      Math.floor(height / 2),
+      1,
+      1
+    ).data;
+    const brightness = (sample[0] + sample[1] + sample[2]) / 3;
+    // Aceita se não for quase preto puro; no último try aceita sempre
+    if (brightness > 8 || t === tryTimes[tryTimes.length - 1]) {
+      break;
+    }
+  }
+
+  const blob =
+    (await new Promise<Blob | null>((resolve) => {
+      canvas.toBlob(resolve, "image/webp", 0.9);
+    })) ||
+    (await new Promise<Blob | null>((resolve) => {
+      canvas.toBlob(resolve, "image/jpeg", 0.9);
+    }));
+
+  if (!blob || blob.size <= 0) {
+    throw new Error(
+      "Não foi possível preparar este vídeo. Tenta novamente ou usa outro ficheiro."
+    );
+  }
+
+  const base = originalName.replace(/\.[^.]+$/, "") || "poster";
+  const ext = blob.type.includes("jpeg") ? "jpg" : "webp";
+  return new File([blob], `${base}-poster.${ext}`, {
+    type: blob.type || "image/webp",
+  });
+}
+
+/**
+ * Grava preview: 0→clipSeconds, sem áudio, escala exacta, via canvas.
+ */
+async function recordPreviewPass(
   video: HTMLVideoElement,
   file: File,
   targetWidth: number,
   targetHeight: number,
-  duration: number,
+  clipSeconds: number,
   maxBytes: number,
-  bitrateScale = 1
-): Promise<Blob> {
-  const mimeType = pickVideoMimeType();
+  bitrateScale: number
+): Promise<{ blob: Blob; container: "webm" | "mp4" }> {
+  const { mimeType, container } = pickVideoMimeType();
   const targetBytes = maxBytes * 0.94;
-  const totalBps = Math.floor((targetBytes * 8) / Math.max(duration, 0.5));
-  // Qualidade: bitrate alto quando o teto e a duração permitem (até ~14 Mbps).
+  const totalBps = Math.floor((targetBytes * 8) / Math.max(clipSeconds, 0.5));
   const videoBps = Math.max(
-    600_000,
-    Math.min(14_000_000, Math.floor(totalBps * 0.9 * bitrateScale))
+    800_000,
+    Math.min(12_000_000, Math.floor(totalBps * 0.95 * bitrateScale))
   );
-  const audioBps = Math.min(160_000, Math.max(64_000, Math.floor(totalBps * 0.08)));
 
-  const needScale = targetWidth !== video.videoWidth || targetHeight !== video.videoHeight;
-
-  let stream: MediaStream;
-  let stopDraw: (() => void) | undefined;
-  let canvas: HTMLCanvasElement | undefined;
-
-  if (needScale) {
-    canvas = document.createElement("canvas");
-    canvas.width = targetWidth;
-    canvas.height = targetHeight;
-    const canvasStream = canvas.captureStream(30);
-    const sourceStream = captureStreamFromVideo(video);
-    sourceStream.getAudioTracks().forEach((track) => canvasStream.addTrack(track));
-    stream = canvasStream;
-  } else {
-    stream = captureStreamFromVideo(video);
-  }
+  const canvas = document.createElement("canvas");
+  canvas.width = targetWidth;
+  canvas.height = targetHeight;
+  const canvasStream = canvas.captureStream(30);
+  // Sem áudio — só tracks de vídeo do canvas
+  const stream = new MediaStream(canvasStream.getVideoTracks());
 
   const chunks: BlobPart[] = [];
+  let stopDraw: (() => void) | undefined;
 
-  return new Promise<Blob>((resolve, reject) => {
+  return new Promise((resolve, reject) => {
+    let settled = false;
+    const finish = (fn: () => void) => {
+      if (settled) return;
+      settled = true;
+      fn();
+    };
+
     const recorder = new MediaRecorder(stream, {
       mimeType,
       videoBitsPerSecond: videoBps,
-      audioBitsPerSecond: audioBps
     });
 
     recorder.ondataavailable = (event) => {
@@ -248,94 +345,137 @@ async function recordVideoPass(
     recorder.onerror = () => {
       stopDraw?.();
       stream.getTracks().forEach((t) => t.stop());
-      reject(new Error(`"${file.name}": erro ao comprimir o vídeo.`));
+      finish(() =>
+        reject(
+          new Error(
+            "Não foi possível preparar este vídeo. Tenta novamente ou usa outro ficheiro."
+          )
+        )
+      );
     };
 
     recorder.onstop = () => {
       stopDraw?.();
       stream.getTracks().forEach((t) => t.stop());
-      resolve(new Blob(chunks, { type: mimeType.split(";")[0] }));
+      const blob = new Blob(chunks, { type: mimeType.split(";")[0] });
+      finish(() => resolve({ blob, container }));
     };
+
+    const stopRecording = () => {
+      try {
+        video.pause();
+      } catch {
+        /* */
+      }
+      if (recorder.state !== "inactive") {
+        try {
+          recorder.stop();
+        } catch {
+          /* */
+        }
+      }
+    };
+
+    const hardStopMs = Math.ceil(clipSeconds * 1000) + 200;
+    const timer = window.setTimeout(stopRecording, hardStopMs);
 
     video.onended = () => {
-      if (recorder.state !== "inactive") recorder.stop();
+      window.clearTimeout(timer);
+      stopRecording();
     };
 
-    recorder.start(1000);
+    video.ontimeupdate = () => {
+      if (video.currentTime >= clipSeconds - 0.05) {
+        window.clearTimeout(timer);
+        stopRecording();
+      }
+    };
+
+    recorder.start(250);
     video.currentTime = 0;
+    stopDraw = startCanvasDraw(video, canvas, targetWidth, targetHeight);
 
-    const playPromise = video.play();
-    if (needScale && canvas) {
-      stopDraw = startCanvasDraw(video, canvas, targetWidth, targetHeight);
-    }
-
-    playPromise.catch(() => {
-      if (recorder.state !== "inactive") recorder.stop();
-      reject(new Error(`"${file.name}": não foi possível reproduzir o vídeo para optimização.`));
+    video.play().catch(() => {
+      window.clearTimeout(timer);
+      stopDraw?.();
+      stream.getTracks().forEach((t) => t.stop());
+      finish(() =>
+        reject(
+          new Error(
+            "Não foi possível preparar este vídeo. Tenta novamente ou usa outro ficheiro."
+          )
+        )
+      );
     });
+
+    // Evita referência unused
+    void file;
   });
 }
 
-/**
- * Comprime até maxBytes privilegiando qualidade:
- * 1) resolução original + bitrate adequado ao teto
- * 2) só depois reduz bitrate / escala gradualmente
- */
-async function compressVideo(
-  file: File,
-  maxBytes: number,
-  onProgress?: (message: string) => void
-): Promise<File> {
-  if (file.size <= maxBytes) return file;
+async function validatePreparedVideo(
+  blob: Blob,
+  expectedMaxSeconds: number
+): Promise<{
+  duration: number;
+  width: number;
+  height: number;
+}> {
+  if (!blob || blob.size <= 0) {
+    throw new Error(
+      "Não foi possível preparar este vídeo. Tenta novamente ou usa outro ficheiro."
+    );
+  }
 
-  const { video, objectUrl, duration, width, height } = await loadVideoMetadata(file);
+  const objectUrl = URL.createObjectURL(blob);
+  const video = document.createElement("video");
+  video.preload = "auto";
+  video.muted = true;
+  video.playsInline = true;
+  video.src = objectUrl;
 
   try {
-    let best: Blob | null = null;
-    let scale = 1;
-    let bitrateScale = 1;
+    await new Promise<void>((resolve, reject) => {
+      video.onloadedmetadata = () => resolve();
+      video.onerror = () =>
+        reject(
+          new Error(
+            "Não foi possível preparar este vídeo. Tenta novamente ou usa outro ficheiro."
+          )
+        );
+    });
 
-    // Até 10 passes: qualidade alta → mais agressivo só se ainda passar do limite
-    for (let pass = 0; pass < 10; pass++) {
-      const targetWidth = Math.max(640, Math.floor(width * scale) & ~1);
-      const targetHeight = Math.max(360, Math.floor(height * scale) & ~1);
+    const width = video.videoWidth;
+    const height = video.videoHeight;
 
-      onProgress?.(
-        `A optimizar vídeo (passe ${pass + 1}/10, ${targetWidth}×${targetHeight})…`
-      );
-
-      const blob = await recordVideoPass(
-        video,
-        file,
-        targetWidth,
-        targetHeight,
-        duration,
-        maxBytes,
-        bitrateScale
-      );
-
-      if (!best || blob.size < best.size) best = blob;
-
-      if (blob.size <= maxBytes) {
-        return blobToVideoFile(blob, file);
+    let duration = video.duration;
+    if (!Number.isFinite(duration) || duration <= 0) {
+      // WebM do MediaRecorder muitas vezes sem duração no container —
+      // confirma que decodifica e usa o teto esperado do clip.
+      try {
+        await video.play();
+        await new Promise((r) => setTimeout(r, 120));
+        video.pause();
+        video.currentTime = 0;
+      } catch {
+        /* ignore */
       }
-
-      // Primeiro reduz bitrate; depois escala (preserva mais detalhe no início)
-      if (pass < 3) {
-        bitrateScale *= 0.72;
-      } else {
-        scale *= 0.82;
-        bitrateScale *= 0.85;
-      }
+      duration = expectedMaxSeconds;
     }
 
-    if (best && best.size <= maxBytes) {
-      return blobToVideoFile(best, file);
+    if (
+      !duration ||
+      duration <= 0 ||
+      duration > VIDEO_PREVIEW_MAX_SECONDS + VIDEO_PREVIEW_DURATION_TOLERANCE ||
+      !width ||
+      !height
+    ) {
+      throw new Error(
+        "Não foi possível preparar este vídeo. Tenta novamente ou usa outro ficheiro."
+      );
     }
 
-    throw new Error(
-      `"${file.name}" (${formatMb(file.size)}) — não foi possível reduzir abaixo de ${limitLabel(maxBytes)} após várias passagens. Tenta um excerto mais curto ou Chrome/Edge.`
-    );
+    return { duration, width, height };
   } finally {
     video.pause();
     video.removeAttribute("src");
@@ -345,16 +485,131 @@ async function compressVideo(
 }
 
 /**
- * Converte qualquer imagem (incl. HEIC) para WebP leve.
- * Sempre produz WebP — mesmo ficheiros pequenos — para uniformizar o Storage.
+ * Pipeline definitivo: trim ≤10s, ≤1080p, sem áudio, poster first-frame.
+ * O original longo NÃO é devolvido — só o preview final.
  */
+async function prepareVideoPreview(
+  file: File,
+  maxBytes: number,
+  onProgress?: (message: string) => void
+): Promise<PreparedUpload> {
+  onProgress?.(`A analisar vídeo…`);
+  const { video, objectUrl, duration, width, height } = await loadVideoMetadata(file);
+
+  try {
+    const clipSeconds = Math.min(duration, VIDEO_PREVIEW_MAX_SECONDS);
+    const { width: tw, height: th } = fitWithinMaxEdge(width, height, VIDEO_PREVIEW_MAX_EDGE);
+
+    onProgress?.(
+      `A gerar preview ${clipSeconds.toFixed(1)}s (${tw}×${th})…`
+    );
+
+    let best: { blob: Blob; container: "webm" | "mp4" } | null = null;
+    let bitrateScale = 1;
+
+    for (let pass = 0; pass < 8; pass++) {
+      // Reinicia no início de cada passe
+      try {
+        video.pause();
+        await seekVideo(video, 0);
+      } catch {
+        video.currentTime = 0;
+      }
+
+      onProgress?.(
+        `A gerar preview (passe ${pass + 1}/8, ${tw}×${th})…`
+      );
+
+      const result = await recordPreviewPass(
+        video,
+        file,
+        tw,
+        th,
+        clipSeconds,
+        maxBytes,
+        bitrateScale
+      );
+
+      if (!best || result.blob.size < best.blob.size) best = result;
+      if (result.blob.size <= maxBytes && result.blob.size > 0) {
+        best = result;
+        break;
+      }
+      bitrateScale *= 0.72;
+    }
+
+    if (!best || best.blob.size <= 0) {
+      throw new Error(
+        "Não foi possível preparar este vídeo. Tenta novamente ou usa outro ficheiro."
+      );
+    }
+
+    if (best.blob.size > maxBytes) {
+      throw new Error(
+        `"${file.name}" — preview ainda acima de ${limitLabel(maxBytes)} (${formatMb(best.blob.size)}). Tenta Chrome/Edge ou um excerto mais leve.`
+      );
+    }
+
+    onProgress?.("A validar preview…");
+    const validated = await validatePreparedVideo(best.blob, clipSeconds);
+    const outFile = blobToVideoFile(best.blob, file, best.container);
+
+    onProgress?.("A gerar capa (first frame)…");
+    // Reusa o elemento source para extrair frame (mais fiável que o blob re-encoded em alguns browsers)
+    let posterFile: File;
+    try {
+      await seekVideo(video, 0.05);
+      posterFile = await extractFirstFramePoster(video, tw, th, file.name);
+    } catch {
+      // Fallback: carregar o blob final
+      const tmpUrl = URL.createObjectURL(best.blob);
+      const tmpVideo = document.createElement("video");
+      tmpVideo.src = tmpUrl;
+      tmpVideo.muted = true;
+      tmpVideo.playsInline = true;
+      await new Promise<void>((resolve, reject) => {
+        tmpVideo.onloadedmetadata = () => resolve();
+        tmpVideo.onerror = () => reject(new Error("poster"));
+      });
+      try {
+        posterFile = await extractFirstFramePoster(
+          tmpVideo,
+          validated.width,
+          validated.height,
+          file.name
+        );
+      } finally {
+        tmpVideo.removeAttribute("src");
+        tmpVideo.load();
+        URL.revokeObjectURL(tmpUrl);
+      }
+    }
+
+    onProgress?.(
+      `Preview pronto: ${validated.duration.toFixed(1)}s · ${validated.width}×${validated.height} · ${formatMb(outFile.size)}`
+    );
+
+    return {
+      file: outFile,
+      posterFile,
+      duration: validated.duration,
+      width: validated.width,
+      height: validated.height,
+    };
+  } finally {
+    video.pause();
+    video.removeAttribute("src");
+    video.load();
+    URL.revokeObjectURL(objectUrl);
+  }
+}
+
 async function compressImage(file: File, maxBytes: number): Promise<File> {
   const bitmap = await decodeImageToBitmap(file);
 
   let { width, height } = fitWithinMaxEdge(bitmap.width, bitmap.height, IMAGE_MAX_EDGE_PX);
   let quality = 0.86;
 
-  // Se o original é enorme, começa já mais agressivo
   if (file.size > maxBytes * 3) {
     const fitted = fitWithinMaxEdge(width, height, Math.floor(IMAGE_MAX_EDGE_PX * 0.75));
     width = fitted.width;
@@ -381,7 +636,6 @@ async function compressImage(file: File, maxBytes: number): Promise<File> {
         canvas.toBlob(resolve, "image/webp", quality);
       });
 
-      // Fallback JPEG se o browser não exportar WebP
       const finalBlob =
         blob ||
         (await new Promise<Blob | null>((resolve) => {
@@ -414,26 +668,37 @@ async function compressImage(file: File, maxBytes: number): Promise<File> {
   }
 }
 
-/** Reduz ficheiros grandes antes do envio (vídeo e imagem → WebP). */
+export type PreparedUpload = {
+  file: File;
+  posterFile?: File;
+  duration?: number;
+  width?: number;
+  height?: number;
+};
+
+/** Prepara ficheiro para envio. Vídeos → sempre preview ≤10s + poster. */
 export async function prepareFileForUpload(
   file: File,
   maxBytes: number,
   options?: { onProgress?: (message: string) => void }
-): Promise<File> {
+): Promise<PreparedUpload> {
   const { onProgress } = options ?? {};
   const label = `"${file.name}" (${formatMb(file.size)})`;
 
   if (isVideoFile(file)) {
-    if (file.size <= maxBytes) return file;
-    onProgress?.(`A preparar vídeo ${label}…`);
-    const compressed = await compressVideo(file, maxBytes, onProgress);
-    if (compressed.size > maxBytes) {
+    try {
+      return await prepareVideoPreview(file, maxBytes, onProgress);
+    } catch (err) {
+      if (
+        err instanceof Error &&
+        err.message.includes("Não foi possível preparar este vídeo")
+      ) {
+        throw err;
+      }
       throw new Error(
-        `${label} continua acima de ${limitLabel(maxBytes)} após optimização (${formatMb(compressed.size)}).`
+        "Não foi possível preparar este vídeo. Tenta novamente ou usa outro ficheiro."
       );
     }
-    onProgress?.(`Vídeo optimizado: ${formatMb(compressed.size)}. A enviar…`);
-    return compressed;
   }
 
   if (isImageFile(file)) {
@@ -449,7 +714,7 @@ export async function prepareFileForUpload(
       );
     }
     onProgress?.(`Imagem WebP pronta: ${formatMb(compressed.size)}. A enviar…`);
-    return compressed;
+    return { file: compressed };
   }
 
   throw new Error(

@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useRef, useState } from "react";
 import { ArrowDown, ArrowUp, Trash2 } from "lucide-react";
 import { MediaPickerField } from "@/components/admin/editor/fields/MediaPickerField";
 import { DropZone } from "@/components/admin/shared/DropZone";
@@ -14,9 +14,19 @@ import {
 } from "@/components/admin/shared/MediaLibrary";
 import type { HomeData, HomeStackItem, MediaFile } from "@/lib/admin/sections";
 
+type UploadMeta = {
+  posterUrl?: string;
+  duration?: number;
+  width?: number;
+  height?: number;
+};
+
 type EditorCommonProps = {
   onDirty: () => void;
-  processUpload: (file: File, onSuccess: (url: string, file: File) => void) => Promise<void>;
+  processUpload: (
+    file: File,
+    onSuccess: (url: string, file: File, meta?: UploadMeta) => void
+  ) => Promise<void>;
   showToast: (message: string, type?: "ok" | "error" | "pending") => void;
   mediaLibrary: MediaFile[];
   refreshMediaLibrary: () => Promise<void>;
@@ -37,6 +47,7 @@ export function HomeEditor({
   mediaLibrary
 }: HomeEditorProps) {
   const [uploading, setUploading] = useState(false);
+  const lastHeroPosterRef = useRef("");
   const hero = data.hero || { title: "", subtitleLines: [], videos: [{ src: "", poster: "" }, { src: "", poster: "" }] };
   const videos = hero.videos?.length
     ? hero.videos
@@ -61,13 +72,14 @@ export function HomeEditor({
       const isImage = file.type.startsWith("image/");
       if (!isVideo && !isImage) continue;
       try {
-        await processUpload(file, (url, f) => {
+        await processUpload(file, (url, f, meta) => {
           nextStack = [
             ...nextStack,
             {
               type: isVideo ? ("video" as const) : ("image" as const),
               src: url,
-              alt: f.name.replace(/\.[^.]+$/, "") || "Proimagem.pt"
+              alt: f.name.replace(/\.[^.]+$/, "") || "Proimagem.pt",
+              ...(isVideo && meta?.posterUrl ? { poster: meta.posterUrl } : {})
             }
           ];
           onChange({ ...data, homeStack: nextStack });
@@ -82,7 +94,11 @@ export function HomeEditor({
 
   async function uploadForPicker(file: File): Promise<string> {
     return new Promise((resolve, reject) => {
-      processUpload(file, (url) => resolve(url)).catch(reject);
+      processUpload(file, (url, _f, meta) => {
+        // Guarda poster do último upload de hero via closure no onChange do picker
+        lastHeroPosterRef.current = meta?.posterUrl || "";
+        resolve(url);
+      }).catch(reject);
     });
   }
 
@@ -131,7 +147,12 @@ export function HomeEditor({
               uploading={uploading}
               onChange={(url) => {
                 const next = [...videos];
-                next[i] = { ...next[i], src: url, poster: "" };
+                next[i] = {
+                  ...next[i],
+                  src: url,
+                  poster: lastHeroPosterRef.current || next[i].poster || ""
+                };
+                lastHeroPosterRef.current = "";
                 patchHero({ videos: next });
               }}
               onUpload={uploadForPicker}

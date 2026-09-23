@@ -13,7 +13,14 @@ import { ALL_SKILLS, SKILL_LABELS, type MediaFile, type TeamData, type TeamMembe
 
 type EditorCommonProps = {
   onDirty: () => void;
-  processUpload: (file: File, onSuccess: (url: string, file: File) => void) => Promise<void>;
+  processUpload: (
+    file: File,
+    onSuccess: (
+      url: string,
+      file: File,
+      meta?: { posterUrl?: string; duration?: number; width?: number; height?: number }
+    ) => void
+  ) => Promise<void>;
   showToast: (message: string, type?: "ok" | "error" | "pending") => void;
   mediaLibrary: MediaFile[];
   refreshMediaLibrary: () => Promise<void>;
