@@ -5,7 +5,7 @@
   --text: #ffffff;
   --text-muted: rgba(255, 255, 255, 0.55);
   --border: rgba(255, 255, 255, 0.12);
-  --nav-height: 48px;
+  --nav-height: 56px;
   --font-body: var(--font-inter, "Inter"), -apple-system, BlinkMacSystemFont, sans-serif;
   --ease-out: cubic-bezier(0.22, 1, 0.36, 1);
   --ease-in: cubic-bezier(0.55, 0, 1, 0.45);
@@ -84,20 +84,6 @@ body.site-theme {
   transition: background var(--transition);
 }
 
-/* Home: nav fina sobre o vídeo — sem bloco preto alto */
-.nav--home:not(.nav--scrolled):not(.nav--open) {
-  background: transparent;
-}
-
-.nav--home.nav--scrolled,
-.nav--home.nav--open {
-  background: #000000;
-}
-
-.nav--home:not(.nav--scrolled):not(.nav--open) .nav__link {
-  text-shadow: 0 1px 8px rgba(0, 0, 0, 0.55);
-}
-
 .nav--scrolled {
   background: #000000;
 }
@@ -109,8 +95,8 @@ body.site-theme {
   display: flex;
   align-items: center;
   justify-content: flex-end;
-  gap: 1.25rem;
-  padding: 0 2rem;
+  gap: 1.5rem;
+  padding: 0 2.5rem;
 }
 
 .nav__toggle {
@@ -175,7 +161,7 @@ body.site-theme {
   gap: 1.75rem;
   justify-content: flex-end;
   align-items: center;
-  flex-wrap: wrap;
+  flex-wrap: nowrap;
   margin: 0;
   padding: 0;
 }
