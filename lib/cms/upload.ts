@@ -217,6 +217,46 @@ export async function uploadMediaFile(
   };
 }
 
+/** Upload de poster/capa de vídeo → `{sectionId}/thumbnails/{uuid}.webp` */
+export async function uploadPosterFile(
+  file: File,
+  sectionId: string
+): Promise<{ url: string; storagePath: string }> {
+  const supabase = createClient();
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+  if (!user) throw new Error("Sessão expirada. Entra outra vez.");
+
+  const { data: isAdmin } = await supabase.rpc("is_admin");
+  if (!isAdmin) throw new Error("Sem permissão de administrador.");
+
+  if (!file.type.startsWith("image/") && !/\.(jpe?g|png|webp|gif|heic|heif)$/i.test(file.name)) {
+    throw new Error("O poster tem de ser uma imagem.");
+  }
+
+  const uuid = randomId();
+  const ext = extensionForMime(file.type || "image/webp", "webp");
+  const storagePath = buildStoragePath({
+    sectionId,
+    kind: "thumbnails",
+    uuid,
+    ext: ext === "jpg" || ext === "png" || ext === "webp" ? ext : "webp",
+  });
+
+  const { error } = await supabase.storage.from(MEDIA_BUCKET).upload(storagePath, file, {
+    cacheControl: "3600",
+    upsert: false,
+    contentType: file.type || "image/webp",
+  });
+  if (error) throw new Error(error.message);
+
+  return {
+    url: publicUrlForPath(storagePath),
+    storagePath,
+  };
+}
+
 export async function deleteStoragePaths(paths: string[]): Promise<void> {
   const clean = paths.filter(Boolean);
   if (clean.length === 0) return;

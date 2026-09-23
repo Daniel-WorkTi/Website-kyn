@@ -20,6 +20,11 @@ export interface MediaItem {
   alt?: string;
   poster?: string;
   featured?: boolean;
+  title?: string;
+  width?: number;
+  height?: number;
+  duration?: number;
+  size?: number;
 }
 
 export interface SiteJson {

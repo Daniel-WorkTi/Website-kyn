@@ -147,8 +147,13 @@ export async function persistGallery(
         legacy_url: src.legacy_url,
         thumbnail_path: poster?.storage_path ?? null,
         thumbnail_legacy_url: poster?.legacy_url ?? null,
-        alt_text: item.alt || null,
+        title: item.title?.trim() || null,
+        alt_text: item.alt?.trim() ? item.alt.trim() : null,
         featured: item.featured ?? false,
+        width: item.width ?? null,
+        height: item.height ?? null,
+        duration_seconds: item.duration ?? null,
+        file_size: item.size ?? null,
         sort_order: i,
       };
     });

@@ -973,13 +973,8 @@ html.site-theme[data-page="team"] body::-webkit-scrollbar {
 
 @media (max-width: 768px) {
   .nav__inner {
-    justify-content: space-between;
+    justify-content: flex-end;
     padding: 0 1.25rem;
-  }
-
-  .nav__logo {
-    height: 1.15rem;
-    max-width: min(180px, 55vw);
   }
 
   .team-featured {

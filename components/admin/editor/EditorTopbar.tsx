@@ -57,7 +57,7 @@ function SaveStatus({
       "warn",
       <>
         <Loader2 className="size-3 shrink-0 animate-spin text-amber-500/80" strokeWidth={2} />
-        <span className="text-[11px] text-amber-500/90">A guardar</span>
+        <span className="text-[11px] text-amber-500/90">Salvando…</span>
       </>
     );
   }
@@ -76,7 +76,7 @@ function SaveStatus({
     "ok",
     <>
       <Check className="size-3 shrink-0 text-emerald-500/90" strokeWidth={2.25} />
-      <span className="text-[11px] text-emerald-500/90">Guardado</span>
+      <span className="text-[11px] text-emerald-500/90">Salvo</span>
     </>
   );
 }

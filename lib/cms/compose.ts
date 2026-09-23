@@ -35,9 +35,15 @@ function mediaRowToItem(row: MediaItemRow): MediaItem {
   return {
     type: row.type,
     src,
-    alt: row.alt_text || row.title || undefined,
+    // alt_text apenas — nunca promover title a descrição
+    alt: row.alt_text ?? undefined,
+    title: row.title || undefined,
     poster: poster || undefined,
     featured: row.featured,
+    width: row.width ?? undefined,
+    height: row.height ?? undefined,
+    duration: row.duration_seconds ?? undefined,
+    size: row.file_size ?? undefined,
   };
 }
 

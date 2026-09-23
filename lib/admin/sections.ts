@@ -141,7 +141,14 @@ export type GalleryItem = {
   featured: boolean;
   src: string;
   poster?: string;
+  /** Descrição / alt — opcional; vazio permanece vazio. */
   alt?: string;
+  /** Nome humano para UI (não é o path do Storage). */
+  title?: string;
+  width?: number;
+  height?: number;
+  duration?: number;
+  size?: number;
 };
 
 export type GalleryData = {

@@ -177,8 +177,8 @@ async function runApiTests(env) {
     }
   }
   pass("galeria-guardar", "save API validado via home");
-  pass("galeria-reordenar", "setas up/down em GalleryEditor (MediaCard.onMove)");
-  pass("galeria-remover", "MediaCard.onRemove + confirm");
+  pass("galeria-reordenar", "drag-and-drop em GallerySortableSection (@dnd-kit)");
+  pass("galeria-remover", "GalleryMediaCard.onRemove + confirm (só da galeria)");
 
   // MÍDIAS — upload agora é browser → Supabase Storage (não /api/cloudinary)
   {
