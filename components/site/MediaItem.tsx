@@ -38,11 +38,18 @@ export default function MediaItem({
   }, [syncPlayback, item.src]);
 
   if (item.type === "video") {
+    const mime = (() => {
+      const path = item.src.split("?")[0].split("#")[0];
+      const ext = path.slice(path.lastIndexOf(".")).toLowerCase();
+      if (ext === ".webm") return "video/webm";
+      if (ext === ".mov") return "video/quicktime";
+      return "video/mp4";
+    })();
+
     return (
       <video
         ref={videoRef}
         className={videoClassName ?? className}
-        src={item.src}
         poster={item.poster || undefined}
         autoPlay={autoplay}
         muted
@@ -51,7 +58,9 @@ export default function MediaItem({
         preload={autoplay ? "metadata" : "none"}
         onLoadedData={syncPlayback}
         onCanPlay={syncPlayback}
-      />
+      >
+        <source src={item.src} type={mime} />
+      </video>
     );
   }
 

@@ -11,6 +11,11 @@ import { readContentJson } from "@/lib/content-store";
 import type { GalleryData } from "@/lib/admin/sections";
 import type { GalleryJson, PartnersJson, SiteJson, TeamJson } from "@/lib/types";
 
+/**
+ * Lê do Supabase quando configurado.
+ * Fallback JSON só em falha real (rede/config) — NÃO quando a galeria está
+ * intencionalmente vazia (senão o site público ignora o que o admin guardou).
+ */
 async function withJsonFallback<T>(
   supabaseFn: () => Promise<T>,
   jsonPath: string
@@ -26,48 +31,17 @@ async function withJsonFallback<T>(
   }
 }
 
-/** Conteúdo ainda não migrado → usar JSON do repositório. */
-function assertSiteHydrated(site: SiteJson): SiteJson {
-  if (!Array.isArray(site.nav) || site.nav.length === 0) {
-    throw new Error("site_config.nav vazio — migração de conteúdo pendente");
-  }
-  return site;
-}
-
-function assertGalleryHydrated(gallery: GalleryJson, slug: string): GalleryJson {
-  if (!Array.isArray(gallery.items) || gallery.items.length === 0) {
-    throw new Error(`Galeria ${slug} vazia no Supabase — fallback JSON`);
-  }
-  return gallery;
-}
-
-function assertTeamHydrated(team: TeamJson): TeamJson {
-  const count = (team.featured?.length || 0) + (team.members?.length || 0);
-  if (count === 0) {
-    throw new Error("Equipa vazia no Supabase — fallback JSON");
-  }
-  return team;
-}
-
-function assertPartnersHydrated(partners: PartnersJson): PartnersJson {
-  const count = (partners.main?.length || 0) + (partners.secondary?.length || 0);
-  if (count === 0) {
-    throw new Error("Parceiros vazios no Supabase — fallback JSON");
-  }
-  return partners;
-}
-
 export async function getSite(): Promise<SiteJson> {
   return withJsonFallback(async () => {
     const supabase = await createClient();
-    return assertSiteHydrated(await composeSite(supabase));
+    return composeSite(supabase);
   }, "content/site.json");
 }
 
 export async function getGallery(slug: string): Promise<GalleryJson> {
   const raw = await withJsonFallback(async () => {
     const supabase = await createClient();
-    return assertGalleryHydrated(await composeGallery(supabase, slug), slug);
+    return composeGallery(supabase, slug);
   }, `content/galleries/${slug}.json`);
 
   return prepareGalleryForSection(slug, raw as GalleryData) as GalleryJson;
@@ -76,13 +50,13 @@ export async function getGallery(slug: string): Promise<GalleryJson> {
 export async function getTeam(): Promise<TeamJson> {
   return withJsonFallback(async () => {
     const supabase = await createClient();
-    return assertTeamHydrated(await composeTeam(supabase));
+    return composeTeam(supabase);
   }, "content/team.json");
 }
 
 export async function getPartners(): Promise<PartnersJson> {
   return withJsonFallback(async () => {
     const supabase = await createClient();
-    return assertPartnersHydrated(await composePartners(supabase));
+    return composePartners(supabase);
   }, "content/partners.json");
 }

@@ -334,6 +334,12 @@ export function AdminProvider({ children }: { children: ReactNode }) {
           mediaCacheRef.current = null;
           await refreshMediaLibrary();
         }
+        // Garante persistência após onSuccess actualizar o estado da galeria/home.
+        if (shouldMarkDirty) {
+          window.setTimeout(() => {
+            void saveRef.current({ silent: true });
+          }, 500);
+        }
       } finally {
         setUploadCount((c) => Math.max(0, c - 1));
       }
@@ -353,25 +359,35 @@ export function AdminProvider({ children }: { children: ReactNode }) {
 
   const save = useCallback(async (options: { silent?: boolean } = {}) => {
     const { silent = false } = options;
-    if (!data || section.type === "media" || savingRef.current) return false;
+    const snapshot = dataRef.current;
+    const currentSection = getSectionById(sectionIdRef.current);
+    if (!snapshot || currentSection.type === "media" || savingRef.current) return false;
 
     savingRef.current = true;
     setSaving(true);
+    const snapshotJson = JSON.stringify(snapshot);
     try {
       const payload =
-        section.type === "gallery"
-          ? prepareGalleryForSection(section.id, data as GalleryData)
-          : data;
-      const newSha = await saveContent(section.file, payload, sha, section.label);
-      if (section.type === "gallery") {
+        currentSection.type === "gallery"
+          ? prepareGalleryForSection(currentSection.id, snapshot as GalleryData)
+          : snapshot;
+      const newSha = await saveContent(
+        currentSection.file,
+        payload,
+        sha,
+        currentSection.label
+      );
+      if (currentSection.type === "gallery") {
         setDataState((current) => {
           if (!current) return current;
-          const next = prepareGalleryForSection(section.id, current as GalleryData);
+          const next = prepareGalleryForSection(currentSection.id, current as GalleryData);
           return JSON.stringify(next) === JSON.stringify(current) ? current : next;
         });
       }
       setSha(newSha);
-      setDirty(false);
+      // Se o utilizador alterou dados durante o save (ex.: upload longo), manter dirty.
+      const changedDuringSave = JSON.stringify(dataRef.current) !== snapshotJson;
+      setDirty(changedDuringSave);
       autoSaveBlockedRef.current = false;
       mediaCacheRef.current = null;
       if (!silent) {
@@ -391,7 +407,7 @@ export function AdminProvider({ children }: { children: ReactNode }) {
       savingRef.current = false;
       setSaving(false);
     }
-  }, [data, section, sha, showToast]);
+  }, [sha, showToast]);
 
   saveRef.current = save;
 
@@ -413,7 +429,7 @@ export function AdminProvider({ children }: { children: ReactNode }) {
     }, AUTO_SAVE_DELAY_MS);
 
     return () => window.clearTimeout(timer);
-  }, [sessionChecked, authenticated, dirty, section.type, section.file]);
+  }, [sessionChecked, authenticated, dirty, data, section.type, section.file]);
 
   const togglePreview = useCallback((force?: boolean) => {
     setPreviewOpen((prev) => (typeof force === "boolean" ? force : !prev));
