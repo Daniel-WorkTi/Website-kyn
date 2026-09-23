@@ -42,25 +42,12 @@ export default function StudioGalleryView({ data }: StudioGalleryViewProps) {
   const items = (data.items || []).map((item) => normalizeGalleryItem(item));
   const videos = items.filter((i) => i.type === "video");
   const images = items.filter((i) => i.type === "image");
-  const topVideos = videos.slice(0, 2);
-  const masonryItems = [...videos.slice(2), ...images];
+  /* Vídeos primeiro, depois fotos — um só masonry sem buracos */
+  const masonryItems = [...videos, ...images];
 
   return (
     <>
       <PageHeading title={data.title} />
-
-      {topVideos.length > 0 && (
-        <div className={`studio-gallery__videos studio-gallery__videos--${Math.min(topVideos.length, 2)}`}>
-          {topVideos.map((item, i) => (
-            <MediaTile
-              key={`video-${item.src}-${i}`}
-              item={item}
-              className="studio-gallery__tile--video"
-              onOpen={open}
-            />
-          ))}
-        </div>
-      )}
 
       {masonryItems.length > 0 && (
         <div className="studio-gallery__masonry">
@@ -68,6 +55,7 @@ export default function StudioGalleryView({ data }: StudioGalleryViewProps) {
             <MediaTile
               key={`tile-${item.src}-${i}`}
               item={item}
+              className={item.type === "video" ? "studio-gallery__tile--video" : undefined}
               onOpen={open}
             />
           ))}

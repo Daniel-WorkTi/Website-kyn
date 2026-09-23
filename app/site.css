@@ -423,10 +423,9 @@ body.site-theme {
   object-fit: cover;
 }
 
-/* ── Galerias: colunas regulares, ratio original (sem crop) ── */
+/* ── Galerias: ratio original (sem crop) ── */
 
 .supd-grid,
-.studio-gallery__masonry,
 .multicam-gallery,
 .reels-gallery {
   display: grid;
@@ -447,6 +446,16 @@ body.site-theme {
   grid-template-columns: repeat(3, 1fr);
 }
 
+/* Studio: masonry em colunas — preenche sem buracos pretos */
+.studio-gallery__masonry {
+  column-count: 3;
+  column-gap: 8px;
+  width: 100%;
+  margin: 0 auto;
+  padding: 0 8px 2.5rem;
+  background: #000;
+}
+
 .supd-grid__cell,
 .studio-gallery__tile,
 .multicam-gallery__tile,
@@ -456,8 +465,15 @@ body.site-theme {
   width: 100%;
   line-height: 0;
   cursor: pointer;
-  background: #111;
+  background: #000;
   overflow: hidden;
+}
+
+.studio-gallery__masonry .studio-gallery__tile {
+  break-inside: avoid;
+  -webkit-column-break-inside: avoid;
+  page-break-inside: avoid;
+  margin: 0 0 8px;
 }
 
 .supd-grid__cell--wide {
@@ -493,25 +509,26 @@ body.site-theme {
   opacity: 0.9;
 }
 
-/* ── Studio: 2 vídeos topo (lado a lado, ratio original) ── */
+/* ── Studio: 2 vídeos topo (também em colunas, sem buraco) ── */
 
 .studio-gallery__videos {
-  display: grid;
-  grid-template-columns: 1fr;
-  gap: 8px;
+  column-count: 1;
+  column-gap: 8px;
   width: 100%;
   padding: 0 8px 8px;
   background: #000;
 }
 
 .studio-gallery__videos--2 {
-  grid-template-columns: repeat(2, 1fr);
+  column-count: 2;
 }
 
 .studio-gallery__videos .studio-gallery__tile {
-  display: block;
-  margin: 0;
-  background: #111;
+  break-inside: avoid;
+  -webkit-column-break-inside: avoid;
+  page-break-inside: avoid;
+  margin: 0 0 8px;
+  background: #000;
 }
 
 .studio-gallery__videos .studio-gallery__tile--video video {
@@ -812,10 +829,13 @@ html.site-theme[data-page="team"] body::-webkit-scrollbar {
 
 @media (max-width: 1024px) {
   .supd-grid,
-  .studio-gallery__masonry,
   .multicam-gallery,
   .reels-gallery {
     grid-template-columns: repeat(3, 1fr);
+  }
+
+  .studio-gallery__masonry {
+    column-count: 3;
   }
 
   .partners-grid--main,
@@ -924,7 +944,6 @@ html.site-theme[data-page="team"] body::-webkit-scrollbar {
   .supd-grid,
   .supd-grid--2,
   .supd-grid--3,
-  .studio-gallery__masonry,
   .multicam-gallery,
   .reels-gallery {
     grid-template-columns: repeat(2, 1fr);
@@ -932,15 +951,18 @@ html.site-theme[data-page="team"] body::-webkit-scrollbar {
     gap: 6px;
   }
 
-  .supd-grid__cell--wide {
-    grid-column: span 2;
+  .studio-gallery__masonry {
+    column-count: 2;
+    column-gap: 6px;
+    padding: 0 6px 2rem;
   }
 
-  .studio-gallery__videos,
-  .studio-gallery__videos--2 {
-    grid-template-columns: 1fr;
-    padding: 0 6px 6px;
-    gap: 6px;
+  .studio-gallery__masonry .studio-gallery__tile {
+    margin-bottom: 6px;
+  }
+
+  .supd-grid__cell--wide {
+    grid-column: span 2;
   }
 
   .partners-grid--main,
@@ -953,12 +975,21 @@ html.site-theme[data-page="team"] body::-webkit-scrollbar {
   .supd-grid,
   .supd-grid--2,
   .supd-grid--3,
-  .studio-gallery__masonry,
   .multicam-gallery,
   .reels-gallery {
     grid-template-columns: repeat(2, 1fr);
     gap: 4px;
     padding: 0 4px 1.5rem;
+  }
+
+  .studio-gallery__masonry {
+    column-count: 2;
+    column-gap: 4px;
+    padding: 0 4px 1.5rem;
+  }
+
+  .studio-gallery__masonry .studio-gallery__tile {
+    margin-bottom: 4px;
   }
 
   .supd-grid__cell--wide {
