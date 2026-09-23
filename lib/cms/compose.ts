@@ -1,6 +1,7 @@
 import type { SupabaseClient } from "@supabase/supabase-js";
 import type { Database } from "@/lib/supabase/database.types";
 import type { MediaItemRow, PartnerRow, TeamMemberRow } from "@/lib/supabase/constants";
+import { DEFAULT_SITE_NAV } from "@/lib/supabase/constants";
 import { resolveMediaUrl, resolveThumbnailUrl } from "@/lib/supabase/media-url";
 import type {
   GalleryJson,
@@ -118,11 +119,17 @@ export async function composeSite(client: Client): Promise<SiteJson> {
     titleColor: heroConfig.titleColor as string | undefined,
   };
 
+  const rawNav = Array.isArray(config?.nav) ? config.nav : [];
+  const nav =
+    rawNav.length > 0
+      ? (rawNav as unknown as SiteJson["nav"])
+      : ([...DEFAULT_SITE_NAV] as unknown as SiteJson["nav"]);
+
   return {
     brand: config?.brand || "Proimagem.pt",
     email: config?.email || undefined,
     socials: (config?.socials as SiteJson["socials"]) || {},
-    nav: (Array.isArray(config?.nav) ? config.nav : []) as unknown as SiteJson["nav"],
+    nav,
     hero: extendedHero as Hero,
     homeStack: stackMedia.map(mediaRowToItem),
   };

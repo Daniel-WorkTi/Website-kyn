@@ -2,8 +2,16 @@ import type { SupabaseClient } from "@supabase/supabase-js";
 import type { Database } from "@/lib/supabase/database.types";
 import type { Json } from "@/lib/supabase/database.types";
 import type { GalleryData, HomeData, PartnersData, TeamData } from "@/lib/admin/sections";
+import { DEFAULT_SITE_NAV } from "@/lib/supabase/constants";
 
 type Client = SupabaseClient<Database>;
+
+function resolveNavForPersist(data: HomeData): Json {
+  if (Array.isArray(data.nav) && data.nav.length > 0) {
+    return data.nav as Json;
+  }
+  return [...DEFAULT_SITE_NAV] as unknown as Json;
+}
 
 function isCloudinaryUrl(url: string): boolean {
   return url.includes("res.cloudinary.com");
@@ -44,7 +52,7 @@ export async function persistHome(client: Client, data: HomeData): Promise<void>
     brand: data.brand || "Proimagem.pt",
     email: typeof data.email === "string" ? data.email : null,
     socials: (data.socials || {}) as Json,
-    nav: (data.nav || []) as Json,
+    nav: resolveNavForPersist(data),
     hero: heroMeta as Json,
   });
 
