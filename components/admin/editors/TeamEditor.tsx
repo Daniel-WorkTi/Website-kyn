@@ -143,7 +143,7 @@ function PersonCard({
         files={mediaLibrary}
         onChange={(url) => onChange({ ...member, photo: url })}
         onUpload={uploadForPicker}
-        onRemove={() => onChange({ ...member, photo: "" })}
+        onClear={() => onChange({ ...member, photo: "" })}
       />
 
       <div className="space-y-3">

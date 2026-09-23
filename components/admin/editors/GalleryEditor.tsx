@@ -17,13 +17,24 @@ import type { GalleryData, GalleryItem, MediaFile } from "@/lib/admin/sections";
 import {
   createGalleryItemFromLibrary,
   createGalleryItemFromUpload,
+  galleryItemKey,
   normalizeGalleryItem,
   prepareGalleryForSection
 } from "@/lib/gallery-utils";
 
 type EditorCommonProps = {
   onDirty: () => void;
-  processUpload: (file: File, onSuccess: (url: string, file: File) => void) => Promise<void>;
+  processUpload: (
+    file: File,
+    onSuccess: (url: string, file: File) => void,
+    options?: {
+      markDirty?: boolean;
+      refreshLibrary?: boolean;
+      updateLibrary?: boolean;
+      showSuccessToast?: boolean;
+      successToast?: string;
+    }
+  ) => Promise<void>;
   showToast: (message: string, type?: "ok" | "error" | "pending") => void;
   mediaLibrary: MediaFile[];
   refreshMediaLibrary: () => Promise<void>;
@@ -38,18 +49,19 @@ type GalleryEditorProps = EditorCommonProps & {
 
 const LAYOUT_HINTS: Partial<Record<SidebarSectionId, string>> = {
   "studio-space":
-    "No site: vídeos aparecem lado a lado no topo; fotos preenchem o grid em baixo. Basta enviar — a ordem é ajustada ao guardar.",
+    "No site: até 2 vídeos lado a lado no topo; vídeos extra e fotos vão para o grid em baixo. A ordem dentro de cada grupo é a ordem no site.",
   multicam:
     "Esta galeria usa vídeos verticais (9:16) em 5 colunas. Adiciona apenas vídeos — a ordem aqui é a ordem no site.",
   aftermovie:
     "Esta galeria usa vídeos tipo Reels em 5 colunas. Adiciona apenas vídeos verticais.",
   photography:
-    "Fotos em grelha de 5 colunas, largura total. Marca «Destaque» para uma foto ocupar mais espaço.",
+    "Fotos em grelha de 5 colunas. Marca «Destaque» para uma foto ocupar largura total.",
   "fpv-drone": "Galeria padrão — fotos e vídeos em grelha de 5 colunas.",
   "social-media": "Galeria padrão — fotos e vídeos em grelha de 5 colunas."
 };
 
 const VIDEO_ONLY_SECTIONS = new Set<SidebarSectionId>(["multicam", "aftermovie"]);
+const FEATURED_SECTIONS = new Set<SidebarSectionId>(["photography", "fpv-drone", "social-media"]);
 
 function renderItemList(
   items: GalleryItem[],
@@ -59,15 +71,30 @@ function renderItemList(
   sectionId: SidebarSectionId,
   mediaLibrary: MediaFile[]
 ) {
+  const isStudio = sectionId === "studio-space";
+  const videoOnly = VIDEO_ONLY_SECTIONS.has(sectionId);
+  const showFeatured = FEATURED_SECTIONS.has(sectionId);
+  const videos = allItems.filter((i) => i.type === "video");
+
   return items.map((item) => {
     const index = allItems.indexOf(item);
+    const videoRank =
+      item.type === "video" ? videos.findIndex((v) => v === item) : -1;
+    const studioVideoHint =
+      isStudio && item.type === "video" && videoRank >= 2
+        ? "Este vídeo fica no grid (só os 2 primeiros aparecem no topo do site)."
+        : undefined;
+
     return (
       <MediaCard
-        key={`${item.src}-${index}`}
+        key={galleryItemKey(item, index)}
         item={item}
         index={index}
         total={allItems.length}
         files={mediaLibrary}
+        showFeatured={showFeatured}
+        acceptBoth={!videoOnly}
+        studioVideoHint={studioVideoHint}
         onChange={(i, updated) => {
           const next = [...allItems];
           next[i] =
@@ -113,12 +140,15 @@ export function GalleryEditor({
     onDirty();
   }
 
-  function addFromLibrary(url: string, type: string) {
-    if (videoOnly && type !== "video") {
+  function addFromLibrary(file: MediaFile) {
+    if (videoOnly && file.type !== "video") {
       showToast("Esta secção aceita apenas vídeos.", "error");
       return;
     }
-    updateItems([...items, createGalleryItemFromLibrary(url, type, sectionId)]);
+    updateItems([
+      ...items,
+      createGalleryItemFromLibrary(file.url, file.type, sectionId, file.name)
+    ]);
   }
 
   async function uploadForPicker(file: File): Promise<string> {
@@ -127,10 +157,34 @@ export function GalleryEditor({
     });
   }
 
-  async function uploadToLibrary(file: File): Promise<void> {
+  async function uploadAndAddToGallery(file: File): Promise<string | void> {
+    if (
+      videoOnly &&
+      !file.type.startsWith("video/") &&
+      !/\.(mp4|webm|mov|m4v)$/i.test(file.name)
+    ) {
+      showToast(`${file.name}: esta secção aceita apenas vídeos.`, "error");
+      return;
+    }
     setUploading(true);
     try {
-      await uploadForPicker(file);
+      let uploadedUrl = "";
+      await processUpload(
+        file,
+        (url, f) => {
+          uploadedUrl = url;
+          const next = [
+            ...(data.items || []),
+            createGalleryItemFromUpload(url, f, sectionId)
+          ];
+          onChange(prepareGalleryForSection(sectionId, { ...data, items: next }));
+          onDirty();
+        },
+        { showSuccessToast: false, markDirty: false }
+      );
+      setAddPickerOpen(false);
+      showToast("Ficheiro adicionado à galeria.", "ok");
+      return uploadedUrl;
     } catch (err) {
       showToast(err instanceof Error ? err.message : "Erro no envio.", "error");
       throw err;
@@ -203,14 +257,14 @@ export function GalleryEditor({
         title="Adicionar conteúdo"
         subtitle={
           isStudio
-            ? "Vídeos vão para o topo; fotos entram no grid automaticamente."
+            ? "Vídeos vão para o topo (máx. 2 em destaque visual); fotos entram no grid."
             : videoOnly
               ? "Envia ou escolhe vídeos da biblioteca."
               : "Envia ficheiros ou escolhe da biblioteca."
         }
       >
         <DropZone
-          accept={videoOnly ? "video/*" : "image/*,video/*"}
+          accept={videoOnly ? "video/*" : "image/*,.heic,.heif,video/*"}
           onFiles={handleDropFiles}
           uploading={uploading}
         />
@@ -229,12 +283,13 @@ export function GalleryEditor({
         onClose={() => setAddPickerOpen(false)}
         files={mediaLibrary}
         filterType={videoOnly ? "video" : "all"}
-        onPick={(file) => addFromLibrary(file.url, file.type)}
-        onUpload={async (file) => {
-          await uploadToLibrary(file);
+        onPick={(file) => {
+          addFromLibrary(file);
+          setAddPickerOpen(false);
         }}
+        onUpload={uploadAndAddToGallery}
         uploading={uploading}
-        title="Adicionar da biblioteca"
+        title="Adicionar à galeria"
       />
 
       {items.length === 0 ? (
@@ -246,11 +301,13 @@ export function GalleryEditor({
         </SectionBlock>
       ) : isStudio ? (
         <div className="space-y-8">
-          <SectionBlock title={`Vídeos no topo (${videos.length})`}>
+          <SectionBlock title={`Vídeos no topo (${Math.min(videos.length, 2)} de ${videos.length})`}>
             {videos.length === 0 ? (
               <p className="text-sm text-zinc-500">Ainda não há vídeos. Envia um ficheiro de vídeo.</p>
             ) : (
-              <div className="space-y-3">{renderItemList(videos, items, updateItems, uploadForPicker, sectionId, mediaLibrary)}</div>
+              <div className="space-y-3">
+                {renderItemList(videos, items, updateItems, uploadForPicker, sectionId, mediaLibrary)}
+              </div>
             )}
           </SectionBlock>
 
@@ -258,7 +315,9 @@ export function GalleryEditor({
             {images.length === 0 ? (
               <p className="text-sm text-zinc-500">Ainda não há fotos. Envia imagens para o grid.</p>
             ) : (
-              <div className="space-y-3">{renderItemList(images, items, updateItems, uploadForPicker, sectionId, mediaLibrary)}</div>
+              <div className="space-y-3">
+                {renderItemList(images, items, updateItems, uploadForPicker, sectionId, mediaLibrary)}
+              </div>
             )}
           </SectionBlock>
         </div>

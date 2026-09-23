@@ -4,6 +4,11 @@ import { useState } from "react";
 import { ArrowDown, ArrowUp, Trash2 } from "lucide-react";
 import { MediaPickerField } from "@/components/admin/editor/fields/MediaPickerField";
 import { previewUrl, type GalleryItem, type MediaFile } from "@/lib/admin/sections";
+import {
+  friendlyMediaLabel,
+  inferGalleryMediaType,
+  looksLikeUuidLabel
+} from "@/lib/gallery-utils";
 
 type MediaCardProps = {
   item: GalleryItem;
@@ -14,6 +19,12 @@ type MediaCardProps = {
   onRemove: (index: number) => void;
   onMove: (index: number, direction: "up" | "down") => void;
   uploadForPicker: (file: File) => Promise<string>;
+  /** Mostrar checkbox Destaque (só layouts que usam featured no site). */
+  showFeatured?: boolean;
+  /** Aceitar foto e vídeo no envio (galerias mistas). */
+  acceptBoth?: boolean;
+  /** Aviso Studio: vídeos acima do limite de topo. */
+  studioVideoHint?: string;
 };
 
 export function MediaCard({
@@ -24,12 +35,30 @@ export function MediaCard({
   onChange,
   onRemove,
   onMove,
-  uploadForPicker
+  uploadForPicker,
+  showFeatured = false,
+  acceptBoth = true,
+  studioVideoHint
 }: MediaCardProps) {
   const [uploading, setUploading] = useState(false);
   const url = previewUrl(item);
 
-  const badge = `${item.type === "video" ? "Vídeo" : "Foto"}${item.featured ? " · Destaque" : ""}`;
+  function applyPickedMedia(pickedUrl: string, picked?: MediaFile) {
+    const type = inferGalleryMediaType(pickedUrl, picked?.type);
+    const nextAlt =
+      item.alt && !looksLikeUuidLabel(item.alt)
+        ? item.alt
+        : friendlyMediaLabel(picked?.name || "") ||
+          friendlyMediaLabel(pickedUrl) ||
+          "";
+
+    onChange(index, {
+      ...item,
+      src: pickedUrl,
+      type,
+      alt: nextAlt
+    });
+  }
 
   return (
     <article className="overflow-hidden rounded-lg border border-white/[0.06] bg-white/[0.02]">
@@ -39,22 +68,8 @@ export function MediaCard({
           value={item.src}
           files={files}
           uploading={uploading}
-          onChange={(pickedUrl) => {
-            const picked = files.find((f) => f.url === pickedUrl);
-            const type =
-              picked?.type === "video"
-                ? "video"
-                : picked?.type === "image"
-                  ? "image"
-                  : /\.(mp4|webm|mov|m4v)(\?|$)/i.test(pickedUrl)
-                    ? "video"
-                    : item.type;
-            onChange(index, {
-              ...item,
-              src: pickedUrl,
-              type
-            });
-          }}
+          acceptBoth={acceptBoth}
+          onChange={(pickedUrl, picked) => applyPickedMedia(pickedUrl, picked)}
           onUpload={async (file) => {
             setUploading(true);
             try {
@@ -63,11 +78,11 @@ export function MediaCard({
               setUploading(false);
             }
           }}
-          onRemove={url ? () => onChange(index, { ...item, src: "" }) : undefined}
         />
         {url ? (
           <span className="pointer-events-none absolute left-2 top-2 z-10 rounded-md bg-black/70 px-2 py-0.5 text-[0.65rem] font-medium text-white backdrop-blur-sm">
-            {badge}
+            {item.type === "video" ? "Vídeo" : "Foto"}
+            {showFeatured && item.featured ? " · Destaque" : ""}
           </span>
         ) : null}
       </div>
@@ -77,24 +92,12 @@ export function MediaCard({
           Item {index + 1}
         </p>
 
-        <div className="grid gap-3 sm:grid-cols-2">
-          <div>
-            <label className="mb-1.5 block text-xs text-zinc-400">Tipo</label>
-            <select
-              value={item.type}
-              onChange={(e) =>
-                onChange(index, {
-                  ...item,
-                  type: e.target.value as "image" | "video"
-                })
-              }
-              className="w-full rounded-lg border border-white/10 bg-[#0a0a0a] px-3 py-2 text-sm text-white outline-none focus:border-accent/40"
-            >
-              <option value="image">Foto</option>
-              <option value="video">Vídeo</option>
-            </select>
-          </div>
-          <label className="flex items-end gap-2 pb-2 text-sm text-zinc-300">
+        {studioVideoHint ? (
+          <p className="text-[11px] leading-relaxed text-amber-400/90">{studioVideoHint}</p>
+        ) : null}
+
+        {showFeatured ? (
+          <label className="flex items-center gap-2 text-sm text-zinc-300">
             <input
               type="checkbox"
               checked={item.featured}
@@ -103,13 +106,13 @@ export function MediaCard({
             />
             Destaque (largura total)
           </label>
-        </div>
+        ) : null}
 
         <div>
           <label className="mb-1.5 block text-xs text-zinc-400">Descrição (opcional)</label>
           <input
             type="text"
-            value={item.alt || ""}
+            value={looksLikeUuidLabel(item.alt) ? "" : item.alt || ""}
             onChange={(e) => onChange(index, { ...item, alt: e.target.value })}
             placeholder="Ex.: Concerto ao vivo"
             className="w-full rounded-lg border border-white/10 bg-[#0a0a0a] px-3 py-2 text-sm text-white outline-none focus:border-accent/40"

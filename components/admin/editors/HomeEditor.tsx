@@ -135,7 +135,7 @@ export function HomeEditor({
                 patchHero({ videos: next });
               }}
               onUpload={uploadForPicker}
-              onRemove={() => {
+              onClear={() => {
                 const next = [...videos];
                 next[i] = { src: "", poster: "" };
                 patchHero({ videos: next });
@@ -227,7 +227,7 @@ function StackMediaCard({
           });
         }}
         onUpload={uploadForPicker}
-        onRemove={() => onChange({ ...item, src: "" })}
+        onClear={() => onChange({ ...item, src: "" })}
       />
 
       <div className="mt-3">

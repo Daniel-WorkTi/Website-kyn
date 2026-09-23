@@ -13,15 +13,49 @@ export function normalizeGalleryItemSrc(item: Pick<GalleryItem, "type" | "src">)
   return item.src;
 }
 
+const UUID_NAME_RE =
+  /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+
+/** Nome legível a partir de filename/URL — ignora UUIDs do Storage. */
+export function friendlyMediaLabel(nameOrUrl: string): string {
+  const raw = nameOrUrl.includes("/")
+    ? nameOrUrl.split("/").pop()?.split("?")[0] || ""
+    : nameOrUrl;
+  const base = raw.replace(/\.[^.]+$/, "").replace(/-optim$/i, "");
+  if (!base || UUID_NAME_RE.test(base)) return "";
+  return base;
+}
+
+export function looksLikeUuidLabel(value: string | undefined): boolean {
+  if (!value) return false;
+  return UUID_NAME_RE.test(value.trim());
+}
+
+export function inferGalleryMediaType(
+  urlOrName: string,
+  mimeOrType?: string
+): "image" | "video" {
+  if (mimeOrType === "video" || mimeOrType?.startsWith("video/")) return "video";
+  if (mimeOrType === "image" || mimeOrType?.startsWith("image/")) return "image";
+  if (/\.(mp4|webm|mov|m4v)(\?|$)/i.test(urlOrName)) return "video";
+  return "image";
+}
+
 export type GalleryItemInput = Pick<GalleryItem, "type" | "src"> &
   Partial<Omit<GalleryItem, "type" | "src">>;
 
-export function normalizeGalleryItem(item: GalleryItemInput, defaultAlt = "Studio Space"): GalleryItem {
+/**
+ * Normaliza item de galeria.
+ * Não força alt com defaults de secção — descrição vazia permanece vazia.
+ * (O site usa item.alt || "" no render.)
+ */
+export function normalizeGalleryItem(item: GalleryItemInput, _defaultAlt?: string): GalleryItem {
+  const rawAlt = item.alt ?? "";
   return {
     ...item,
     featured: item.featured ?? false,
     src: normalizeGalleryItemSrc(item),
-    alt: item.alt || defaultAlt
+    alt: looksLikeUuidLabel(rawAlt) ? "" : rawAlt
   };
 }
 
@@ -47,35 +81,33 @@ export function prepareGalleryForSection(sectionId: string, data: GalleryData): 
     return prepareStudioGallery(data);
   }
   if (data.layout === "studio") {
-    const defaultAlt = sectionId === "multicam" ? "Multicam" : data.title || "Gallery";
     return {
       ...data,
-      items: (data.items || []).map((item) => normalizeGalleryItem(item, defaultAlt))
+      items: (data.items || []).map((item) => normalizeGalleryItem(item))
     };
   }
   if (data.layout === "multicam") {
     return {
       ...data,
-      items: (data.items || []).map((item) => normalizeGalleryItem(item, "Multicam"))
+      items: (data.items || []).map((item) => normalizeGalleryItem(item))
     };
   }
   if (data.layout === "reels") {
     return {
       ...data,
-      items: (data.items || []).map((item) => normalizeGalleryItem(item, "Aftermovie"))
+      items: (data.items || []).map((item) => normalizeGalleryItem(item))
     };
   }
   if (sectionId === "photography") {
     return {
       ...data,
-      items: (data.items || []).map((item) => normalizeGalleryItem(item, "Photography"))
+      items: (data.items || []).map((item) => normalizeGalleryItem(item))
     };
   }
 
-  const defaultAlt = data.title || "Gallery";
   return {
     ...data,
-    items: (data.items || []).map((item) => normalizeGalleryItem(item, defaultAlt))
+    items: (data.items || []).map((item) => normalizeGalleryItem(item))
   };
 }
 
@@ -84,15 +116,12 @@ export function createGalleryItemFromUpload(
   file: File,
   sectionId: string
 ): GalleryItem {
-  const type =
-    file.type.startsWith("video/") || /\.(mp4|webm|mov|m4v)$/i.test(file.name)
-      ? "video"
-      : "image";
+  const type = inferGalleryMediaType(file.name || url, file.type);
   const base: GalleryItem = {
     type,
     featured: false,
     src: url,
-    alt: file.name.replace(/\.[^.]+$/, "") || "Studio Space"
+    alt: friendlyMediaLabel(file.name) || ""
   };
 
   if (sectionId === "studio-space") {
@@ -105,14 +134,15 @@ export function createGalleryItemFromUpload(
 export function createGalleryItemFromLibrary(
   url: string,
   type: string,
-  sectionId: string
+  sectionId: string,
+  displayName?: string
 ): GalleryItem {
-  const mediaType = type === "video" ? "video" : "image";
+  const mediaType = inferGalleryMediaType(url, type);
   const base: GalleryItem = {
     type: mediaType,
     featured: false,
     src: url,
-    alt: url.split("/").pop()?.replace(/\.[^.]+$/, "") || "Studio Space"
+    alt: friendlyMediaLabel(displayName || "") || friendlyMediaLabel(url) || ""
   };
 
   if (sectionId === "studio-space") {
@@ -120,4 +150,9 @@ export function createGalleryItemFromLibrary(
   }
 
   return base;
+}
+
+export function galleryItemKey(item: GalleryItem, index: number): string {
+  if (item.src) return `${item.src}::${index}`;
+  return `empty-${index}-${item.type}`;
 }

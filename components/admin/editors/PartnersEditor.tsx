@@ -136,7 +136,7 @@ function PartnerCard({
         files={mediaLibrary}
         onChange={(url) => onChange({ ...partner, logo: url })}
         onUpload={uploadForPicker}
-        onRemove={() => onChange({ ...partner, logo: "" })}
+        onClear={() => onChange({ ...partner, logo: "" })}
       />
       <div>
         <FieldLabel>Nome</FieldLabel>

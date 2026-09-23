@@ -4,20 +4,34 @@ import { useRef, useState } from "react";
 import { FolderOpen, ImageIcon, Trash2, Upload, Video } from "lucide-react";
 import { MediaPickerModal } from "@/components/admin/media/MediaPickerModal";
 import type { MediaFile } from "@/lib/admin/sections";
+import { friendlyMediaLabel } from "@/lib/gallery-utils";
 
 type MediaPickerFieldProps = {
   label?: string;
   value: string;
   type: "image" | "video";
   files: MediaFile[];
-  onChange: (url: string) => void;
+  onChange: (url: string, file?: MediaFile) => void;
   onUpload?: (file: File) => Promise<string | void>;
   uploading?: boolean;
-  onRemove?: () => void;
+  /** Aceitar ambos os tipos no input (recomendado para galerias mistas). */
+  acceptBoth?: boolean;
+  /**
+   * Limpar o valor do campo (não apagar o item da lista).
+   * Usar em home/team/partners — evitar na galeria (lá existe Remover no card).
+   */
+  onClear?: () => void;
 };
 
-function fileName(url: string): string {
-  return url.split("/").pop()?.split("?")[0] || "ficheiro";
+function displayLabel(value: string, files: MediaFile[]): string {
+  const match = files.find((f) => f.url === value);
+  if (match?.name) {
+    const friendly = friendlyMediaLabel(match.name);
+    if (friendly) return friendly;
+    // Nome original do upload (mesmo que seja longo)
+    if (!/^[0-9a-f-]{36}/i.test(match.name)) return match.name;
+  }
+  return friendlyMediaLabel(value) || "Ficheiro na biblioteca";
 }
 
 export function MediaPickerField({
@@ -28,10 +42,17 @@ export function MediaPickerField({
   onChange,
   onUpload,
   uploading,
-  onRemove
+  acceptBoth = false,
+  onClear
 }: MediaPickerFieldProps) {
   const [pickerOpen, setPickerOpen] = useState(false);
   const uploadRef = useRef<HTMLInputElement>(null);
+
+  const accept = acceptBoth
+    ? "image/*,.heic,.heif,video/*"
+    : type === "video"
+      ? "video/*"
+      : "image/*,.heic,.heif";
 
   return (
     <div className="space-y-2.5">
@@ -76,13 +97,13 @@ export function MediaPickerField({
           )}
         </div>
         <span className="absolute inset-0 flex items-center justify-center bg-black/55 text-xs text-white opacity-0 transition group-hover:opacity-100">
-          Trocar mídia
+          {value ? "Substituir" : "Escolher mídia"}
         </span>
       </button>
 
       {value ? (
-        <p className="truncate text-[10px] text-zinc-600" title={fileName(value)}>
-          {fileName(value)}
+        <p className="truncate text-[10px] text-zinc-500" title={displayLabel(value, files)}>
+          {displayLabel(value, files)}
         </p>
       ) : null}
 
@@ -92,14 +113,20 @@ export function MediaPickerField({
             <input
               ref={uploadRef}
               type="file"
-              accept={type === "video" ? "video/*" : "image/*"}
+              accept={accept}
               hidden
               onChange={(e) => {
                 const file = e.target.files?.[0];
                 e.target.value = "";
                 if (file) {
                   void onUpload(file).then((url) => {
-                    if (typeof url === "string") onChange(url);
+                    if (typeof url === "string") {
+                      onChange(url, {
+                        url,
+                        name: file.name,
+                        type: file.type.startsWith("video/") ? "video" : "image"
+                      });
+                    }
                   });
                 }
               }}
@@ -125,11 +152,11 @@ export function MediaPickerField({
           <FolderOpen className="size-3.5" strokeWidth={1.75} />
           Biblioteca
         </button>
-        {value && onRemove ? (
+        {value && onClear ? (
           <button
             type="button"
-            onClick={onRemove}
-            title="Remover"
+            onClick={onClear}
+            title="Limpar"
             className="inline-flex size-8 shrink-0 items-center justify-center rounded-lg border border-red-500/15 text-red-400/80 transition hover:bg-red-500/10 hover:text-red-300"
           >
             <Trash2 className="size-3.5" strokeWidth={1.75} />
@@ -141,8 +168,8 @@ export function MediaPickerField({
         open={pickerOpen}
         onClose={() => setPickerOpen(false)}
         files={files}
-        filterType={type}
-        onPick={(file) => onChange(file.url)}
+        filterType={acceptBoth ? "all" : type}
+        onPick={(file) => onChange(file.url, file)}
         onUpload={onUpload}
         uploading={uploading}
         title="Escolher mídia"
