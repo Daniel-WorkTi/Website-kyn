@@ -13,7 +13,7 @@ type MediaUploaderProps = {
 export function MediaUploader({
   onFiles,
   uploading = false,
-  accept = "image/*,video/*",
+  accept = "image/*,.heic,.heif,video/*",
   label = "Enviar mídia"
 }: MediaUploaderProps) {
   return (
@@ -39,8 +39,9 @@ export function MediaUploader({
         <Upload className="size-5" strokeWidth={1.75} />
       </div>
       <p className="text-sm font-medium text-white">{label}</p>
-      <p className="mt-1 text-xs text-zinc-500">
-        Imagens até {IMAGE_OPTIMIZE_MAX_MB} MB · vídeos: qualquer tamanho (comprimidos para ≤{MAX_VIDEO_UPLOAD_MB} MB — limite Free Supabase)
+      <p className="mt-1 max-w-md text-xs text-zinc-500">
+        Fotos (JPG/PNG/HEIC) → WebP ≤{IMAGE_OPTIMIZE_MAX_MB} MB · vídeos comprimidos até ≤
+        {MAX_VIDEO_UPLOAD_MB} MB
       </p>
       {uploading && <p className="mt-3 text-xs text-emerald-400 animate-pulse">A enviar…</p>}
     </label>

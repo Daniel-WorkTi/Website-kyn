@@ -44,7 +44,11 @@ export function validateUploadFile(file: File): { kind: "image" | "video" } {
     return { kind: "video" };
   }
 
-  if (!ALLOWED_IMAGE_MIME.has(file.type)) {
+  const looksLikeImage =
+    ALLOWED_IMAGE_MIME.has(file.type) ||
+    /\.(jpe?g|png|webp|gif)$/i.test(file.name);
+
+  if (!looksLikeImage) {
     throw new Error(`Tipo de imagem não suportado: ${file.type || file.name}`);
   }
   if (file.size > MAX_IMAGE_UPLOAD_BYTES) {

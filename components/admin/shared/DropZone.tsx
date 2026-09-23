@@ -12,7 +12,7 @@ type DropZoneProps = {
 };
 
 export function DropZone({
-  accept = "image/*,video/*",
+  accept = "image/*,.heic,.heif,video/*",
   multiple = true,
   uploading = false,
   onFiles,

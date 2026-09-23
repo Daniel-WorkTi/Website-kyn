@@ -17,7 +17,7 @@ export type AdminProfileRow = Database["public"]["Tables"]["admin_profiles"]["Ro
 export const MEDIA_BUCKET = "media";
 
 /** Limites de upload (Storage Supabase — ajustáveis). */
-export const MAX_IMAGE_UPLOAD_MB = 15;
+export const MAX_IMAGE_UPLOAD_MB = 4;
 /** Plano Free = 50 MB hard limit. Com Pro podes subir (e VIDEO_STORAGE_LIMIT_MB no código). */
 export const MAX_VIDEO_UPLOAD_MB = 50;
 export const MAX_IMAGE_UPLOAD_BYTES = MAX_IMAGE_UPLOAD_MB * 1024 * 1024;
@@ -25,11 +25,24 @@ export const MAX_VIDEO_UPLOAD_BYTES = MAX_VIDEO_UPLOAD_MB * 1024 * 1024;
 /** Acima deste tamanho, upload de vídeo usa TUS resumable. */
 export const RESUMABLE_UPLOAD_THRESHOLD_BYTES = 6 * 1024 * 1024;
 
+/** MIME finais após optimização (o que sobe para o Storage). */
 export const ALLOWED_IMAGE_MIME = new Set([
   "image/jpeg",
   "image/png",
   "image/webp",
   "image/gif",
+]);
+
+/** MIME de entrada aceites no admin (convertidos para WebP no browser). */
+export const INPUT_IMAGE_MIME = new Set([
+  "image/jpeg",
+  "image/png",
+  "image/webp",
+  "image/gif",
+  "image/heic",
+  "image/heif",
+  "image/heic-sequence",
+  "image/heif-sequence",
 ]);
 
 export const ALLOWED_VIDEO_MIME = new Set([

@@ -1,10 +1,13 @@
 import type { SidebarSectionId } from "@/components/admin/AdminSidebar";
 import { buildSitePreviewUrl } from "@/lib/admin/preview";
 
-/** Limite de compressão de imagem antes do upload. */
-export const IMAGE_OPTIMIZE_MAX_MB = 15;
+/** Limite de compressão de imagem antes do upload (WebP). */
+export const IMAGE_OPTIMIZE_MAX_MB = 4;
 export const IMAGE_OPTIMIZE_MAX_BYTES = IMAGE_OPTIMIZE_MAX_MB * 1024 * 1024;
-export const IMAGE_OPTIMIZE_TARGET_BYTES = Math.floor(14 * 1024 * 1024);
+/** Alvo leve para o site — qualidade boa sem pesar. */
+export const IMAGE_OPTIMIZE_TARGET_BYTES = Math.floor(2 * 1024 * 1024);
+/** Lado máximo da imagem (px) após resize. */
+export const IMAGE_MAX_EDGE_PX = 2400;
 
 /**
  * Vídeos: aceitar qualquer tamanho no input.

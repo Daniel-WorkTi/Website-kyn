@@ -1,4 +1,4 @@
-import { IMAGE_OPTIMIZE_MAX_MB } from "@/lib/admin/sections";
+import { IMAGE_MAX_EDGE_PX } from "@/lib/admin/sections";
 
 function formatMb(bytes: number): string {
   return `${(bytes / (1024 * 1024)).toFixed(1)} MB`;
@@ -13,9 +13,52 @@ function isVideoFile(file: File): boolean {
   return /\.(mp4|webm|mov|m4v|avi|mkv)$/i.test(file.name);
 }
 
+function isHeicFile(file: File): boolean {
+  if (/heic|heif/i.test(file.type)) return true;
+  return /\.(heic|heif)$/i.test(file.name);
+}
+
 function isImageFile(file: File): boolean {
+  if (isHeicFile(file)) return true;
   if (file.type.startsWith("image/")) return true;
-  return /\.(jpe?g|png|webp|gif|bmp|heic|heif|avif)$/i.test(file.name);
+  return /\.(jpe?g|png|webp|gif|bmp|avif)$/i.test(file.name);
+}
+
+async function decodeImageToBitmap(file: File): Promise<ImageBitmap> {
+  if (isHeicFile(file)) {
+    try {
+      const heic2any = (await import("heic2any")).default;
+      const converted = await heic2any({
+        blob: file,
+        toType: "image/jpeg",
+        quality: 0.92
+      });
+      const blob = Array.isArray(converted) ? converted[0] : converted;
+      return await createImageBitmap(blob as Blob);
+    } catch {
+      throw new Error(
+        `"${file.name}": não foi possível ler HEIC/HEIF. Exporta em JPEG no iPhone ou usa Chrome actualizado.`
+      );
+    }
+  }
+
+  try {
+    return await createImageBitmap(file);
+  } catch {
+    throw new Error(
+      `"${file.name}" (${formatMb(file.size)}) — formato não suportado para optimização automática.`
+    );
+  }
+}
+
+function fitWithinMaxEdge(width: number, height: number, maxEdge: number): { width: number; height: number } {
+  const longest = Math.max(width, height);
+  if (longest <= maxEdge) return { width, height };
+  const scale = maxEdge / longest;
+  return {
+    width: Math.max(1, Math.floor(width * scale)),
+    height: Math.max(1, Math.floor(height * scale))
+  };
 }
 
 function pickVideoMimeType(): string {
@@ -253,27 +296,22 @@ async function compressVideo(
   }
 }
 
+/**
+ * Converte qualquer imagem (incl. HEIC) para WebP leve.
+ * Sempre produz WebP — mesmo ficheiros pequenos — para uniformizar o Storage.
+ */
 async function compressImage(file: File, maxBytes: number): Promise<File> {
-  if (file.size <= maxBytes) return file;
+  const bitmap = await decodeImageToBitmap(file);
 
-  let bitmap: ImageBitmap;
-  try {
-    bitmap = await createImageBitmap(file);
-  } catch {
-    throw new Error(
-      `"${file.name}" (${formatMb(file.size)}) — formato não suportado para optimização automática.`
-    );
-  }
+  let { width, height } = fitWithinMaxEdge(bitmap.width, bitmap.height, IMAGE_MAX_EDGE_PX);
+  let quality = 0.86;
 
-  let width = bitmap.width;
-  let height = bitmap.height;
-  let quality = 0.88;
-
-  const sizeRatio = file.size / maxBytes;
-  if (sizeRatio > 1) {
-    const scale = Math.min(0.95, 1 / Math.sqrt(sizeRatio * 1.05));
-    width = Math.max(800, Math.floor(width * scale));
-    height = Math.max(600, Math.floor(height * scale));
+  // Se o original é enorme, começa já mais agressivo
+  if (file.size > maxBytes * 3) {
+    const fitted = fitWithinMaxEdge(width, height, Math.floor(IMAGE_MAX_EDGE_PX * 0.75));
+    width = fitted.width;
+    height = fitted.height;
+    quality = 0.8;
   }
 
   const canvas = document.createElement("canvas");
@@ -283,29 +321,40 @@ async function compressImage(file: File, maxBytes: number): Promise<File> {
     throw new Error(`"${file.name}": não foi possível optimizar a imagem neste browser.`);
   }
 
+  const base = file.name.replace(/\.[^.]+$/, "") || "image";
+
   try {
-    for (let attempt = 0; attempt < 10; attempt++) {
+    for (let attempt = 0; attempt < 12; attempt++) {
       canvas.width = width;
       canvas.height = height;
       ctx.drawImage(bitmap, 0, 0, width, height);
 
       const blob = await new Promise<Blob | null>((resolve) => {
-        canvas.toBlob(resolve, "image/jpeg", quality);
+        canvas.toBlob(resolve, "image/webp", quality);
       });
 
-      if (!blob) break;
+      // Fallback JPEG se o browser não exportar WebP
+      const finalBlob =
+        blob ||
+        (await new Promise<Blob | null>((resolve) => {
+          canvas.toBlob(resolve, "image/jpeg", quality);
+        }));
 
-      if (blob.size <= maxBytes) {
-        const base = file.name.replace(/\.[^.]+$/, "");
-        return new File([blob], `${base}.jpg`, { type: "image/jpeg" });
+      if (!finalBlob) break;
+
+      const mime = finalBlob.type || "image/webp";
+      const ext = mime.includes("jpeg") ? "jpg" : "webp";
+
+      if (finalBlob.size <= maxBytes) {
+        return new File([finalBlob], `${base}.${ext}`, { type: mime });
       }
 
-      if (quality > 0.45) {
-        quality -= 0.08;
+      if (quality > 0.5) {
+        quality -= 0.07;
       } else {
-        width = Math.floor(width * 0.85);
-        height = Math.floor(height * 0.85);
-        quality = 0.82;
+        width = Math.max(640, Math.floor(width * 0.82));
+        height = Math.max(480, Math.floor(height * 0.82));
+        quality = Math.min(0.78, quality + 0.05);
       }
     }
 
@@ -317,18 +366,17 @@ async function compressImage(file: File, maxBytes: number): Promise<File> {
   }
 }
 
-/** Reduz ficheiros grandes antes do envio (vídeo e imagem). */
+/** Reduz ficheiros grandes antes do envio (vídeo e imagem → WebP). */
 export async function prepareFileForUpload(
   file: File,
   maxBytes: number,
   options?: { onProgress?: (message: string) => void }
 ): Promise<File> {
-  if (file.size <= maxBytes) return file;
-
   const { onProgress } = options ?? {};
   const label = `"${file.name}" (${formatMb(file.size)})`;
 
   if (isVideoFile(file)) {
+    if (file.size <= maxBytes) return file;
     onProgress?.(`A preparar vídeo ${label}…`);
     const compressed = await compressVideo(file, maxBytes, onProgress);
     if (compressed.size > maxBytes) {
@@ -341,18 +389,22 @@ export async function prepareFileForUpload(
   }
 
   if (isImageFile(file)) {
-    onProgress?.(`A optimizar imagem ${label}…`);
+    onProgress?.(
+      isHeicFile(file)
+        ? `A converter HEIC → WebP ${label}…`
+        : `A converter para WebP ${label}…`
+    );
     const compressed = await compressImage(file, maxBytes);
     if (compressed.size > maxBytes) {
       throw new Error(
         `${label} continua acima de ${limitLabel(maxBytes)} após optimização (${formatMb(compressed.size)}).`
       );
     }
-    onProgress?.(`Imagem optimizada: ${formatMb(compressed.size)}. A enviar…`);
+    onProgress?.(`Imagem WebP pronta: ${formatMb(compressed.size)}. A enviar…`);
     return compressed;
   }
 
   throw new Error(
-    `${label} excede o máximo de ${IMAGE_OPTIMIZE_MAX_MB} MB e este tipo de ficheiro não pode ser optimizado automaticamente.`
+    `${label} — tipo de ficheiro não suportado. Usa JPG, PNG, WebP, HEIC ou vídeo MP4/MOV.`
   );
 }
