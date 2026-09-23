@@ -1,22 +1,34 @@
-export const PROIMAGEM_LOGO_SRC =
-  "https://res.cloudinary.com/zk5df6k0/image/upload/v1783721421/proimagem/avuve9px3olbytlqhset.png";
+export const PROIMAGEM_LOGO_SRC = "/brand/proimagem-logo.webp";
+export const PROIMAGEM_MARK_SRC = "/brand/proimagem-mark.webp";
+export const PROIMAGEM_LOGO_PNG = "/brand/proimagem-logo.png";
+export const PROIMAGEM_MARK_PNG = "/brand/proimagem-mark.png";
 
 type ProimagemLogoProps = {
   className?: string;
   alt?: string;
+  /** `logo` = horizontal; `mark` = versão quadrada */
+  variant?: "logo" | "mark";
 };
 
 export function ProimagemLogo({
   className = "h-10 w-auto object-contain",
-  alt = "Proimagem.pt"
+  alt = "Proimagem.pt",
+  variant = "logo"
 }: ProimagemLogoProps) {
+  const webp = variant === "mark" ? PROIMAGEM_MARK_SRC : PROIMAGEM_LOGO_SRC;
+  const png = variant === "mark" ? PROIMAGEM_MARK_PNG : PROIMAGEM_LOGO_PNG;
+
   return (
-    <img
-      src={PROIMAGEM_LOGO_SRC}
-      alt={alt}
-      className={className}
-      decoding="async"
-      draggable={false}
-    />
+    <picture>
+      <source srcSet={webp} type="image/webp" />
+      {/* eslint-disable-next-line @next/next/no-img-element */}
+      <img
+        src={png}
+        alt={alt}
+        className={className}
+        decoding="async"
+        draggable={false}
+      />
+    </picture>
   );
 }

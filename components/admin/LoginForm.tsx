@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import { useSearchParams } from "next/navigation";
+import { ProimagemLogo } from "@/components/admin/ProimagemLogo";
 import { useAdmin } from "@/hooks/useAdmin";
 import { requestPasswordReset } from "@/lib/admin/api";
 
@@ -52,9 +53,7 @@ export function LoginForm() {
     <div className="flex min-h-screen items-center justify-center bg-black px-6">
       <div className="w-full max-w-lg text-center">
         <div className="mb-10 flex flex-col items-center">
-          <h1 className="mb-6 text-2xl font-bold uppercase tracking-[0.28em] text-white sm:text-3xl">
-            Proimagem.pt
-          </h1>
+          <ProimagemLogo className="mb-6 h-10 w-auto max-w-[280px] object-contain sm:h-12" />
 
           <div className="inline-flex items-center gap-2 rounded-full border border-white/[0.08] bg-white/[0.03] px-4 py-1.5">
             <span className="size-1.5 shrink-0 rounded-full bg-emerald-400/90 shadow-[0_0_8px_rgba(74,222,128,0.5)]" />

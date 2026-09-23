@@ -101,14 +101,14 @@ function BrandMark({ collapsed }: { collapsed: boolean }) {
   if (collapsed) {
     return (
       <div className="flex size-10 items-center justify-center overflow-hidden rounded-xl border border-white/10 bg-black">
-        <ProimagemLogo className="h-5 w-auto max-w-[2rem] object-contain" />
+        <ProimagemLogo variant="mark" className="h-6 w-6 object-contain" />
       </div>
     );
   }
 
   return (
     <div className="min-w-0">
-      <ProimagemLogo className="h-6 w-auto max-w-[140px] object-contain object-left" />
+      <ProimagemLogo className="h-6 w-auto max-w-[160px] object-contain object-left" />
       <span className="mt-1.5 inline-flex rounded-full bg-white/[0.06] px-2 py-0.5 text-[10px] text-zinc-400">
         Gestão
       </span>

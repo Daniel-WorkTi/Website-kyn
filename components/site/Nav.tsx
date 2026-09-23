@@ -3,6 +3,7 @@
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useCallback, useEffect, useState } from "react";
+import { ProimagemLogo } from "@/components/admin/ProimagemLogo";
 import type { NavItem } from "@/lib/types";
 
 interface NavProps {
@@ -13,6 +14,7 @@ export default function Nav({ items }: NavProps) {
   const pathname = usePathname();
   const [menuOpen, setMenuOpen] = useState(false);
   const [scrolled, setScrolled] = useState(false);
+  const navItems = items?.length ? items : [];
 
   const closeMenu = useCallback(() => {
     setMenuOpen(false);
@@ -62,6 +64,10 @@ export default function Nav({ items }: NavProps) {
 
       <nav className={`nav${scrolled ? " nav--scrolled" : ""}`}>
         <div className="nav__inner">
+          <Link href="/" className="nav__brand" onClick={closeMenu} aria-label="Proimagem.pt — início">
+            <ProimagemLogo className="nav__logo" />
+          </Link>
+
           <button
             type="button"
             className={`nav__toggle${menuOpen ? " is-active" : ""}`}
@@ -73,7 +79,7 @@ export default function Nav({ items }: NavProps) {
           </button>
 
           <ul className={`nav__menu${menuOpen ? " is-open" : ""}`}>
-            {items.map((item) => (
+            {navItems.map((item) => (
               <li key={item.href} className="nav__item">
                 <Link
                   href={item.href}
