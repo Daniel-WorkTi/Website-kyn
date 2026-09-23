@@ -24,27 +24,75 @@ function isImageFile(file: File): boolean {
   return /\.(jpe?g|png|webp|gif|bmp|avif)$/i.test(file.name);
 }
 
+async function heicViaServer(file: File): Promise<ImageBitmap> {
+  const form = new FormData();
+  form.append("file", file, file.name || "photo.heic");
+
+  const res = await fetch("/api/admin/convert-heic", {
+    method: "POST",
+    body: form,
+    credentials: "same-origin",
+  });
+
+  if (!res.ok) {
+    let detail = `HTTP ${res.status}`;
+    try {
+      const json = (await res.json()) as { error?: string };
+      if (json.error) detail = json.error;
+    } catch {
+      /* ignore */
+    }
+    throw new Error(detail);
+  }
+
+  const blob = await res.blob();
+  return createImageBitmap(blob);
+}
+
+async function heicFileToBitmap(file: File): Promise<ImageBitmap> {
+  // 1) Safari / browsers com suporte nativo a HEIC
+  try {
+    return await createImageBitmap(file);
+  } catch {
+    /* fall through */
+  }
+
+  // 2) heic-to no browser (libheif actualizado — iOS 18+)
+  try {
+    const { heicTo } = await import("heic-to");
+    const converted = await heicTo({
+      blob: file,
+      type: "image/jpeg",
+      quality: 0.92,
+    });
+    return await createImageBitmap(converted as Blob);
+  } catch {
+    /* fall through to server */
+  }
+
+  // 3) Fallback no servidor (heic-convert)
+  try {
+    return await heicViaServer(file);
+  } catch (err) {
+    const detail = err instanceof Error ? err.message : "erro desconhecido";
+    throw new Error(
+      `"${file.name}": não foi possível ler HEIC/HEIF (${detail}). Tenta Chrome/Edge ou exporta JPEG no iPhone.`
+    );
+  }
+}
+
 async function decodeImageToBitmap(file: File): Promise<ImageBitmap> {
   if (isHeicFile(file)) {
-    try {
-      const heic2any = (await import("heic2any")).default;
-      const converted = await heic2any({
-        blob: file,
-        toType: "image/jpeg",
-        quality: 0.92
-      });
-      const blob = Array.isArray(converted) ? converted[0] : converted;
-      return await createImageBitmap(blob as Blob);
-    } catch {
-      throw new Error(
-        `"${file.name}": não foi possível ler HEIC/HEIF. Exporta em JPEG no iPhone ou usa Chrome actualizado.`
-      );
-    }
+    return heicFileToBitmap(file);
   }
 
   try {
     return await createImageBitmap(file);
   } catch {
+    // Alguns browsers reportam type vazio mas o ficheiro é HEIC
+    if (/\.(heic|heif)$/i.test(file.name) || /heic|heif/i.test(file.type)) {
+      return heicFileToBitmap(file);
+    }
     throw new Error(
       `"${file.name}" (${formatMb(file.size)}) — formato não suportado para optimização automática.`
     );

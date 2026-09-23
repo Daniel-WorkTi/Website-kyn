@@ -46,7 +46,7 @@ export function validateUploadFile(file: File): { kind: "image" | "video" } {
 
   const looksLikeImage =
     ALLOWED_IMAGE_MIME.has(file.type) ||
-    /\.(jpe?g|png|webp|gif)$/i.test(file.name);
+    /\.(jpe?g|png|webp|gif|heic|heif)$/i.test(file.name);
 
   if (!looksLikeImage) {
     throw new Error(`Tipo de imagem não suportado: ${file.type || file.name}`);
