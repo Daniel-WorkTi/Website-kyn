@@ -417,10 +417,17 @@ body.site-theme {
 }
 
 .stack__item--viewport img,
-.stack__item--viewport video {
+.stack__item--viewport video,
+.stack__item--viewport .media-video,
+.stack__item--viewport .media-video__poster,
+.stack__item--viewport .media-video__el {
   width: 100%;
   height: 70vh;
   object-fit: cover;
+}
+
+.stack__item--viewport .media-video {
+  min-height: 70vh;
 }
 
 /* ── Galerias: ratio original (sem crop) ── */
@@ -492,21 +499,93 @@ body.site-theme {
   height: auto;
   max-width: 100%;
   display: block;
-  object-fit: contain;
+  object-fit: cover;
   object-position: center;
   vertical-align: top;
-  transition: opacity 0.35s var(--ease-out);
 }
 
-.supd-grid__cell:hover img,
-.supd-grid__cell:hover video,
-.studio-gallery__tile:hover img,
-.studio-gallery__tile:hover video,
-.multicam-gallery__tile:hover img,
-.multicam-gallery__tile:hover video,
-.reels-gallery__tile:hover img,
-.reels-gallery__tile:hover video {
-  opacity: 0.9;
+/* Card de vídeo: poster estático por cima; vídeo só visível a tocar */
+.media-video {
+  position: relative;
+  width: 100%;
+  line-height: 0;
+  background: #000;
+  overflow: hidden;
+}
+
+.media-video__poster {
+  position: relative;
+  z-index: 2;
+  width: 100%;
+  height: auto;
+  display: block;
+  object-fit: cover;
+  object-position: center;
+  pointer-events: none;
+}
+
+.media-video__el {
+  display: block;
+  width: 100%;
+  height: auto;
+  object-fit: cover;
+  object-position: center;
+  background: #000;
+}
+
+/* Com poster: vídeo preenche o mesmo rectângulo e fica escondido até play */
+.media-video:has(.media-video__poster) .media-video__el {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  z-index: 1;
+  opacity: 0;
+  pointer-events: none;
+}
+
+.media-video.is-playing:has(.media-video__poster) .media-video__el {
+  opacity: 1;
+  z-index: 3;
+}
+
+.media-video.is-playing:has(.media-video__poster) .media-video__poster {
+  opacity: 0;
+}
+
+/* Admin aspect-video box */
+.media-video.aspect-video .media-video__poster,
+.media-video.aspect-video .media-video__el {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.media-video.aspect-video .media-video__poster {
+  z-index: 2;
+}
+
+.media-video.aspect-video .media-video__el {
+  z-index: 1;
+  opacity: 0;
+}
+
+.media-video.aspect-video.is-playing .media-video__el {
+  opacity: 1;
+  z-index: 3;
+}
+
+.media-video.aspect-video.is-playing .media-video__poster {
+  opacity: 0;
+}
+
+.supd-grid__cell:hover .media-video:not(.is-playing) .media-video__poster,
+.studio-gallery__tile:hover .media-video:not(.is-playing) .media-video__poster,
+.multicam-gallery__tile:hover .media-video:not(.is-playing) .media-video__poster,
+.reels-gallery__tile:hover .media-video:not(.is-playing) .media-video__poster {
+  opacity: 0.92;
 }
 
 /* ── Studio: 2 vídeos topo (também em colunas, sem buraco) ── */

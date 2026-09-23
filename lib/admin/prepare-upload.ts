@@ -237,7 +237,49 @@ async function seekVideo(video: HTMLVideoElement, time: number): Promise<void> {
   });
 }
 
-async function extractFirstFramePoster(
+/** Tempo preferido para captura da capa (segundos). */
+export const VIDEO_POSTER_TIME_SEC = 0.5;
+
+async function waitRaf(): Promise<void> {
+  await new Promise<void>((resolve) => {
+    requestAnimationFrame(() => requestAnimationFrame(() => resolve()));
+  });
+}
+
+function sampleBrightness(
+  ctx: CanvasRenderingContext2D,
+  width: number,
+  height: number
+): number {
+  // Amostra grelha 5×5 para detectar frame quase preto
+  let sum = 0;
+  let n = 0;
+  for (let y = 0; y < 5; y++) {
+    for (let x = 0; x < 5; x++) {
+      const px = Math.min(width - 1, Math.floor(((x + 0.5) / 5) * width));
+      const py = Math.min(height - 1, Math.floor(((y + 0.5) / 5) * height));
+      const d = ctx.getImageData(px, py, 1, 1).data;
+      sum += (d[0] + d[1] + d[2]) / 3;
+      n++;
+    }
+  }
+  return n ? sum / n : 0;
+}
+
+function posterSeekTimes(duration: number): number[] {
+  const safeMax = Math.max(0, (Number.isFinite(duration) ? duration : 10) - 0.05);
+  const primary = Math.min(VIDEO_POSTER_TIME_SEC, safeMax);
+  const candidates = [primary, 0.75, 1.0]
+    .map((t) => Math.min(t, safeMax))
+    .filter((t) => t >= 0);
+  // únicos, ordenados
+  return [...new Set(candidates.map((t) => Math.round(t * 1000) / 1000))];
+}
+
+/**
+ * Capa automática = frame em ~0.5s (com seeked + fallback se preto).
+ */
+async function extractPosterFrame(
   video: HTMLVideoElement,
   width: number,
   height: number,
@@ -253,36 +295,58 @@ async function extractFirstFramePoster(
     );
   }
 
-  const tryTimes = [0.05, 0.1, 0.2, 0];
-  for (const t of tryTimes) {
+  // Garante metadata pronta
+  if (video.readyState < 1) {
+    await new Promise<void>((resolve, reject) => {
+      video.onloadedmetadata = () => resolve();
+      video.onerror = () => reject(new Error("metadata"));
+    });
+  }
+
+  const times = posterSeekTimes(video.duration);
+  let accepted = false;
+
+  for (let i = 0; i < times.length; i++) {
+    const t = times[i];
     try {
       await seekVideo(video, t);
     } catch {
       continue;
     }
+    // Espera frame decodificado após seeked
+    if (video.readyState < 2) {
+      await new Promise<void>((resolve) => {
+        const onData = () => {
+          video.removeEventListener("loadeddata", onData);
+          resolve();
+        };
+        video.addEventListener("loadeddata", onData);
+        window.setTimeout(resolve, 400);
+      });
+    }
+    await waitRaf();
     ctx.drawImage(video, 0, 0, width, height);
-    const sample = ctx.getImageData(
-      Math.floor(width / 2),
-      Math.floor(height / 2),
-      1,
-      1
-    ).data;
-    const brightness = (sample[0] + sample[1] + sample[2]) / 3;
-    // Aceita se não for quase preto puro; no último try aceita sempre
-    if (brightness > 8 || t === tryTimes[tryTimes.length - 1]) {
+    const brightness = sampleBrightness(ctx, width, height);
+    const isLast = i === times.length - 1;
+    if (brightness > 12 || isLast) {
+      accepted = true;
       break;
     }
   }
 
+  if (!accepted) {
+    ctx.drawImage(video, 0, 0, width, height);
+  }
+
   const blob =
     (await new Promise<Blob | null>((resolve) => {
-      canvas.toBlob(resolve, "image/webp", 0.9);
+      canvas.toBlob(resolve, "image/webp", 0.92);
     })) ||
     (await new Promise<Blob | null>((resolve) => {
-      canvas.toBlob(resolve, "image/jpeg", 0.9);
+      canvas.toBlob(resolve, "image/jpeg", 0.92);
     }));
 
-  if (!blob || blob.size <= 0) {
+  if (!blob || blob.size <= 0 || width <= 0 || height <= 0) {
     throw new Error(
       "Não foi possível preparar este vídeo. Tenta novamente ou usa outro ficheiro."
     );
@@ -554,14 +618,11 @@ async function prepareVideoPreview(
     const validated = await validatePreparedVideo(best.blob, clipSeconds);
     const outFile = blobToVideoFile(best.blob, file, best.container);
 
-    onProgress?.("A gerar capa (first frame)…");
-    // Reusa o elemento source para extrair frame (mais fiável que o blob re-encoded em alguns browsers)
+    onProgress?.("A gerar capa (frame 0.5s)…");
     let posterFile: File;
     try {
-      await seekVideo(video, 0.05);
-      posterFile = await extractFirstFramePoster(video, tw, th, file.name);
+      posterFile = await extractPosterFrame(video, tw, th, file.name);
     } catch {
-      // Fallback: carregar o blob final
       const tmpUrl = URL.createObjectURL(best.blob);
       const tmpVideo = document.createElement("video");
       tmpVideo.src = tmpUrl;
@@ -572,7 +633,7 @@ async function prepareVideoPreview(
         tmpVideo.onerror = () => reject(new Error("poster"));
       });
       try {
-        posterFile = await extractFirstFramePoster(
+        posterFile = await extractPosterFrame(
           tmpVideo,
           validated.width,
           validated.height,

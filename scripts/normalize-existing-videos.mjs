@@ -3,6 +3,10 @@
  *
  * POR DEFEITO: --dry-run (não altera Storage nem DB).
  *
+ * Poster no backfill (quando --apply for aprovado):
+ *   ffmpeg -ss 0.5 -i normalized.mp4 -frames:v 1 poster.webp
+ * Fallback se frame preto: 0.75s → 1.0s
+ *
  * Uso:
  *   node scripts/normalize-existing-videos.mjs
  *   node scripts/normalize-existing-videos.mjs --dry-run
