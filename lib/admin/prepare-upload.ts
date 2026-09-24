@@ -269,7 +269,8 @@ function sampleBrightness(
 function posterSeekTimes(duration: number): number[] {
   const safeMax = Math.max(0, (Number.isFinite(duration) ? duration : 10) - 0.05);
   const primary = Math.min(VIDEO_POSTER_TIME_SEC, safeMax);
-  const candidates = [primary, 0.75, 1.0]
+  // Se o início for preto (comum em fades), avança até ~2.5s
+  const candidates = [primary, 0.75, 1.0, 1.5, 2.0, 2.5]
     .map((t) => Math.min(t, safeMax))
     .filter((t) => t >= 0);
   // únicos, ordenados
@@ -277,7 +278,7 @@ function posterSeekTimes(duration: number): number[] {
 }
 
 /**
- * Capa automática = frame em ~0.5s (com seeked + fallback se preto).
+ * Capa automática = frame em ~0.5s (com seeked + fallback se preto até ~2.5s).
  */
 async function extractPosterFrame(
   video: HTMLVideoElement,

@@ -20,7 +20,8 @@ interface MediaItemProps {
   autoplay?: boolean;
 }
 
-const POSTER_FALLBACK_TIME = 0.5;
+/** Vídeos sem thumbnail: frame idle mais à frente (0.5s costuma ser preto). */
+const POSTER_FALLBACK_TIME = 2.5;
 
 export default function MediaItem({
   item,
@@ -44,7 +45,7 @@ export default function MediaItem({
     };
   }, [item.type, item.src]);
 
-  // Vídeos antigos sem thumbnail: freeze no frame 0.5s (sem play)
+  // Vídeos antigos sem thumbnail: freeze no frame ~2.5s (sem play)
   useEffect(() => {
     const video = videoRef.current;
     if (!video || item.type !== "video" || hasPoster) return;

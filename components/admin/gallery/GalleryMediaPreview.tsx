@@ -62,8 +62,8 @@ export function GalleryMediaPreview({
           );
         });
         if (cancelled) return;
-        const dur = Number.isFinite(video.duration) ? video.duration : 0.5;
-        const t = Math.min(0.5, Math.max(0, dur - 0.05));
+        const dur = Number.isFinite(video.duration) ? video.duration : 2.5;
+        const t = Math.min(2.5, Math.max(0, dur - 0.05));
         await new Promise<void>((resolve) => {
           const onSeeked = () => resolve();
           video.addEventListener("seeked", onSeeked, { once: true });
