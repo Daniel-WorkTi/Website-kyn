@@ -38,59 +38,8 @@ export function GalleryMediaPreview({
     };
   }, [type, src]);
 
-  useEffect(() => {
-    const video = videoRef.current;
-    if (!video || type !== "video" || hasPoster) return;
-    let cancelled = false;
-    const timeouts: number[] = [];
-
-    const freeze = async () => {
-      try {
-        video.preload = "metadata";
-        await new Promise<void>((resolve) => {
-          if (video.readyState >= 1) {
-            resolve();
-            return;
-          }
-          const onMeta = () => resolve();
-          video.addEventListener("loadedmetadata", onMeta, { once: true });
-          timeouts.push(
-            window.setTimeout(() => {
-              video.removeEventListener("loadedmetadata", onMeta);
-              resolve();
-            }, 1500)
-          );
-        });
-        if (cancelled) return;
-        const dur = Number.isFinite(video.duration) ? video.duration : 2.5;
-        const t = Math.min(2.5, Math.max(0, dur - 0.05));
-        await new Promise<void>((resolve) => {
-          const onSeeked = () => resolve();
-          video.addEventListener("seeked", onSeeked, { once: true });
-          try {
-            video.currentTime = t;
-          } catch {
-            resolve();
-            return;
-          }
-          timeouts.push(
-            window.setTimeout(() => {
-              video.removeEventListener("seeked", onSeeked);
-              resolve();
-            }, 800)
-          );
-        });
-        if (!cancelled) video.pause();
-      } catch {
-        /* */
-      }
-    };
-    void freeze();
-    return () => {
-      cancelled = true;
-      for (const id of timeouts) window.clearTimeout(id);
-    };
-  }, [type, src, hasPoster]);
+  // Sem poster: não seek no mount — evita download pesado no first paint do admin.
+  // Hover/lightbox cobrem o preview; preload fica none.
 
   const onEnter = () => {
     const video = videoRef.current;
@@ -140,7 +89,7 @@ export function GalleryMediaPreview({
               muted
               loop
               playsInline
-              preload={hasPoster ? "none" : "metadata"}
+              preload="none"
             />
           </>
         ) : (

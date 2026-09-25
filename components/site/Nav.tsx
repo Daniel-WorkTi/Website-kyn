@@ -78,6 +78,7 @@ export default function Nav({ items }: NavProps) {
               <li key={item.href} className="nav__item">
                 <Link
                   href={item.href}
+                  prefetch={false}
                   className={`nav__link${isActive(item.href) ? " is-active" : ""}`}
                   onClick={closeMenu}
                 >
