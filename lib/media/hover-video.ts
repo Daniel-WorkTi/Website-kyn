@@ -1,7 +1,10 @@
 /**
  * Controlo exclusivo de preview por hover/click (site + admin).
  * Garante que só um <video> toca de cada vez.
+ * Idle = frame congelado aos ~3s (capa automática).
  */
+import { idleFrameTime, VIDEO_IDLE_FRAME_SEC } from "@/lib/media/video-idle-frame";
+
 let activeVideo: HTMLVideoElement | null = null;
 const playingListeners = new WeakMap<HTMLVideoElement, (playing: boolean) => void>();
 
@@ -27,6 +30,15 @@ function notifyPlaying(video: HTMLVideoElement, playing: boolean): void {
   playingListeners.get(video)?.(playing);
 }
 
+function seekToIdleFrame(video: HTMLVideoElement): void {
+  try {
+    const dur = Number.isFinite(video.duration) ? video.duration : VIDEO_IDLE_FRAME_SEC;
+    video.currentTime = idleFrameTime(dur);
+  } catch {
+    /* ignore */
+  }
+}
+
 function stopVideoImmediate(video: HTMLVideoElement): void {
   try {
     video.pause();
@@ -34,11 +46,7 @@ function stopVideoImmediate(video: HTMLVideoElement): void {
     /* ignore */
   }
   notifyPlaying(video, false);
-  try {
-    video.currentTime = 0;
-  } catch {
-    /* ignore */
-  }
+  seekToIdleFrame(video);
 }
 
 export async function playHoverPreview(video: HTMLVideoElement): Promise<void> {
@@ -88,17 +96,12 @@ export async function playHoverPreview(video: HTMLVideoElement): Promise<void> {
 }
 
 export function pauseHoverPreview(video: HTMLVideoElement): void {
-  // Poster primeiro (via notify), depois pause/reset — evita flash preto
   notifyPlaying(video, false);
   try {
     video.pause();
   } catch {
     /* ignore */
   }
-  try {
-    video.currentTime = 0;
-  } catch {
-    /* ignore */
-  }
+  seekToIdleFrame(video);
   if (activeVideo === video) activeVideo = null;
 }

@@ -504,7 +504,7 @@ body.site-theme {
   vertical-align: top;
 }
 
-/* Card de vídeo: poster estático por cima; vídeo só visível a tocar */
+/* Card de vídeo: capa = frame congelado aos ~3s (sem imagem poster manual) */
 .media-video {
   position: relative;
   width: 100%;
@@ -513,13 +513,18 @@ body.site-theme {
   overflow: hidden;
 }
 
-/* Sem poster: o <video> com preload=none ainda não tem tamanho intrínseco —
-   o aspect-ratio inline (ou 16/9) impede o tile preto colapsado no first paint. */
-.media-video:not(:has(.media-video__poster)) .media-video__el {
+.media-video--freeze-cover .media-video__el {
   position: absolute;
   inset: 0;
   width: 100%;
   height: 100%;
+  opacity: 0;
+  transition: opacity 0.2s ease;
+}
+
+.media-video--freeze-cover.is-ready .media-video__el,
+.media-video--freeze-cover.is-playing .media-video__el {
+  opacity: 1;
 }
 
 .media-video__poster {
@@ -542,7 +547,7 @@ body.site-theme {
   background: #000;
 }
 
-/* Com poster: vídeo preenche o mesmo rectângulo e fica escondido até play */
+/* Legado: se ainda houver <img> poster (admin antigo), esconde vídeo até play */
 .media-video:has(.media-video__poster) .media-video__el {
   position: absolute;
   inset: 0;

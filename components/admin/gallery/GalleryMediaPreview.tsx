@@ -8,6 +8,10 @@ import {
   prefersReducedMotion,
   setPlayingListener,
 } from "@/lib/media/hover-video";
+import {
+  enqueueVideoIdleFreeze,
+  freezeVideoAtIdleFrame,
+} from "@/lib/media/video-idle-frame";
 
 type GalleryMediaPreviewProps = {
   src: string;
@@ -20,13 +24,13 @@ type GalleryMediaPreviewProps = {
 export function GalleryMediaPreview({
   src,
   type,
-  poster,
   title,
   onReplace,
 }: GalleryMediaPreviewProps) {
   const videoRef = useRef<HTMLVideoElement>(null);
+  const rootRef = useRef<HTMLDivElement>(null);
   const [playing, setPlaying] = useState(false);
-  const hasPoster = Boolean(poster);
+  const [ready, setReady] = useState(false);
 
   useEffect(() => {
     const video = videoRef.current;
@@ -38,8 +42,44 @@ export function GalleryMediaPreview({
     };
   }, [type, src]);
 
-  // Sem poster: não seek no mount — evita download pesado no first paint do admin.
-  // Hover/lightbox cobrem o preview; preload fica none.
+  // Capa automática = freeze aos ~3s (mesmo regra do site).
+  useEffect(() => {
+    const video = videoRef.current;
+    const root = rootRef.current;
+    if (!video || !root || type !== "video") return;
+
+    let cancelled = false;
+    let started = false;
+    setReady(false);
+
+    const run = () =>
+      enqueueVideoIdleFreeze(async () => {
+        if (cancelled) return;
+        await freezeVideoAtIdleFrame(video);
+        if (!cancelled) setReady(true);
+      });
+
+    let observer: IntersectionObserver | null = null;
+    if (typeof IntersectionObserver !== "undefined") {
+      observer = new IntersectionObserver(
+        (entries) => {
+          if (!entries.some((e) => e.isIntersecting) || started || cancelled) return;
+          started = true;
+          observer?.disconnect();
+          void run();
+        },
+        { rootMargin: "120px 0px", threshold: 0.01 }
+      );
+      observer.observe(root);
+    } else {
+      void run();
+    }
+
+    return () => {
+      cancelled = true;
+      observer?.disconnect();
+    };
+  }, [type, src]);
 
   const onEnter = () => {
     const video = videoRef.current;
@@ -71,27 +111,20 @@ export function GalleryMediaPreview({
       aria-label={`Substituir ${title}`}
       className="group relative block w-full overflow-hidden bg-zinc-950 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-white/40"
     >
-      <div className={`media-video aspect-video w-full${playing ? " is-playing" : ""}`}>
+      <div
+        ref={rootRef}
+        className={`media-video media-video--freeze-cover aspect-video w-full${playing ? " is-playing" : ""}${ready ? " is-ready" : ""}`}
+      >
         {type === "video" ? (
-          <>
-            {hasPoster ? (
-              <img
-                className="media-video__poster"
-                src={poster}
-                alt=""
-                draggable={false}
-              />
-            ) : null}
-            <video
-              ref={videoRef}
-              src={src}
-              className="media-video__el"
-              muted
-              loop
-              playsInline
-              preload="none"
-            />
-          </>
+          <video
+            ref={videoRef}
+            src={src}
+            className="media-video__el"
+            muted
+            loop
+            playsInline
+            preload="none"
+          />
         ) : (
           <img src={src} alt="" className="h-full w-full object-cover" />
         )}

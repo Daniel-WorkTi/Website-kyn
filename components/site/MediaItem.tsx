@@ -9,6 +9,10 @@ import {
   prefersReducedMotion,
   setPlayingListener,
 } from "@/lib/media/hover-video";
+import {
+  enqueueVideoIdleFreeze,
+  freezeVideoAtIdleFrame,
+} from "@/lib/media/video-idle-frame";
 
 interface MediaItemProps {
   item: MediaItemType;
@@ -20,7 +24,7 @@ interface MediaItemProps {
   autoplay?: boolean;
 }
 
-function aspectFromItem(item: MediaItemType): string | undefined {
+function aspectFromItem(item: MediaItemType): string {
   if (item.width && item.height && item.width > 0 && item.height > 0) {
     return `${item.width} / ${item.height}`;
   }
@@ -33,10 +37,10 @@ export default function MediaItem({
   videoClassName,
 }: MediaItemProps) {
   const videoRef = useRef<HTMLVideoElement>(null);
+  const rootRef = useRef<HTMLDivElement>(null);
   const [playing, setPlaying] = useState(false);
+  const [ready, setReady] = useState(false);
   const reactId = useId();
-
-  const hasPoster = Boolean(item.poster);
 
   useEffect(() => {
     const video = videoRef.current;
@@ -46,6 +50,46 @@ export default function MediaItem({
     return () => {
       setPlayingListener(video, null);
       pauseHoverPreview(video);
+    };
+  }, [item.type, item.src]);
+
+  // Capa automática: freeze aos ~3s quando o tile entra no viewport (fila serial).
+  useEffect(() => {
+    const video = videoRef.current;
+    const root = rootRef.current;
+    if (!video || !root || item.type !== "video") return;
+
+    let cancelled = false;
+    let started = false;
+    setReady(false);
+
+    const runFreeze = () =>
+      enqueueVideoIdleFreeze(async () => {
+        if (cancelled) return;
+        await freezeVideoAtIdleFrame(video);
+        if (!cancelled) setReady(true);
+      });
+
+    let observer: IntersectionObserver | null = null;
+    if (typeof IntersectionObserver !== "undefined") {
+      observer = new IntersectionObserver(
+        (entries) => {
+          const visible = entries.some((e) => e.isIntersecting);
+          if (!visible || started || cancelled) return;
+          started = true;
+          observer?.disconnect();
+          void runFreeze();
+        },
+        { rootMargin: "200px 0px", threshold: 0.01 }
+      );
+      observer.observe(root);
+    } else {
+      void runFreeze();
+    }
+
+    return () => {
+      cancelled = true;
+      observer?.disconnect();
     };
   }, [item.type, item.src]);
 
@@ -78,28 +122,22 @@ export default function MediaItem({
 
     return (
       <div
-        className={["media-video", playing ? "is-playing" : "", className]
+        ref={rootRef}
+        className={[
+          "media-video",
+          "media-video--freeze-cover",
+          playing ? "is-playing" : "",
+          ready ? "is-ready" : "",
+          className,
+        ]
           .filter(Boolean)
           .join(" ")}
-        style={
-          !hasPoster
-            ? { aspectRatio: aspectFromItem(item) }
-            : undefined
-        }
+        style={{ aspectRatio: aspectFromItem(item) }}
         onMouseEnter={onEnter}
         onMouseLeave={stopPreview}
         onFocus={onEnter}
         onBlur={stopPreview}
       >
-        {hasPoster ? (
-          <img
-            className="media-video__poster"
-            src={item.poster}
-            alt={item.alt || ""}
-            loading="lazy"
-            draggable={false}
-          />
-        ) : null}
         <video
           ref={videoRef}
           id={`media-video-${reactId}`}
@@ -108,7 +146,6 @@ export default function MediaItem({
           loop
           playsInline
           preload="none"
-          // Sem atributo poster nativo — usamos <img> overlay para evitar flash preto
           aria-label={item.alt || "Vídeo"}
         >
           <source src={item.src} type={mime} />
