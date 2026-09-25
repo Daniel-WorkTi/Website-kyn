@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useEffect, useId, useRef, useState } from "react";
+import { useCallback, useEffect, useId, useRef, useState, type MouseEvent } from "react";
 import type { MediaItem as MediaItemType } from "@/lib/types";
 import {
   canHoverFine,
@@ -24,11 +24,9 @@ interface MediaItemProps {
   autoplay?: boolean;
 }
 
-function aspectFromItem(item: MediaItemType): string {
-  if (item.width && item.height && item.width > 0 && item.height > 0) {
-    return `${item.width} / ${item.height}`;
-  }
-  return "16 / 9";
+function aspectFromDims(w?: number, h?: number): string | undefined {
+  if (w && h && w > 0 && h > 0) return `${w} / ${h}`;
+  return undefined;
 }
 
 export default function MediaItem({
@@ -40,6 +38,9 @@ export default function MediaItem({
   const rootRef = useRef<HTMLDivElement>(null);
   const [playing, setPlaying] = useState(false);
   const [ready, setReady] = useState(false);
+  const [aspectRatio, setAspectRatio] = useState<string | undefined>(() =>
+    aspectFromDims(item.width, item.height)
+  );
   const reactId = useId();
 
   useEffect(() => {
@@ -53,7 +54,7 @@ export default function MediaItem({
     };
   }, [item.type, item.src]);
 
-  // Capa automática: freeze aos ~3s quando o tile entra no viewport (fila serial).
+  // Capa automática: freeze aos ~3s + ratio real (portrait/landscape).
   useEffect(() => {
     const video = videoRef.current;
     const root = rootRef.current;
@@ -62,12 +63,17 @@ export default function MediaItem({
     let cancelled = false;
     let started = false;
     setReady(false);
+    setAspectRatio(aspectFromDims(item.width, item.height));
 
     const runFreeze = () =>
       enqueueVideoIdleFreeze(async () => {
         if (cancelled) return;
         await freezeVideoAtIdleFrame(video);
-        if (!cancelled) setReady(true);
+        if (cancelled) return;
+        if (video.videoWidth > 0 && video.videoHeight > 0) {
+          setAspectRatio(`${video.videoWidth} / ${video.videoHeight}`);
+        }
+        setReady(true);
       });
 
     let observer: IntersectionObserver | null = null;
@@ -91,7 +97,7 @@ export default function MediaItem({
       cancelled = true;
       observer?.disconnect();
     };
-  }, [item.type, item.src]);
+  }, [item.type, item.src, item.width, item.height]);
 
   const startPreview = useCallback(() => {
     const video = videoRef.current;
@@ -120,6 +126,12 @@ export default function MediaItem({
       startPreview();
     };
 
+    const onPlayClick = (e: MouseEvent) => {
+      e.preventDefault();
+      e.stopPropagation();
+      startPreview();
+    };
+
     return (
       <div
         ref={rootRef}
@@ -132,7 +144,7 @@ export default function MediaItem({
         ]
           .filter(Boolean)
           .join(" ")}
-        style={{ aspectRatio: aspectFromItem(item) }}
+        style={aspectRatio ? { aspectRatio } : undefined}
         onMouseEnter={onEnter}
         onMouseLeave={stopPreview}
         onFocus={onEnter}
@@ -150,6 +162,16 @@ export default function MediaItem({
         >
           <source src={item.src} type={mime} />
         </video>
+        {!playing ? (
+          <button
+            type="button"
+            className="media-video__play"
+            aria-label="Reproduzir vídeo"
+            onClick={onPlayClick}
+          >
+            <img src="/brand/video-play.png" alt="" draggable={false} />
+          </button>
+        ) : null}
       </div>
     );
   }

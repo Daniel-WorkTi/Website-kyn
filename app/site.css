@@ -504,6 +504,14 @@ body.site-theme {
   vertical-align: top;
 }
 
+/* Vídeos: nunca cortar portrait/landscape — ratio do contentor = ratio do vídeo */
+.studio-gallery__tile .media-video__el,
+.multicam-gallery__tile .media-video__el,
+.reels-gallery__tile .media-video__el,
+.supd-grid__cell .media-video__el {
+  object-fit: contain;
+}
+
 /* Card de vídeo: capa = frame congelado aos ~3s (sem imagem poster manual) */
 .media-video {
   position: relative;
@@ -513,18 +521,55 @@ body.site-theme {
   overflow: hidden;
 }
 
+.media-video--freeze-cover {
+  min-height: 120px;
+}
+
 .media-video--freeze-cover .media-video__el {
   position: absolute;
   inset: 0;
   width: 100%;
   height: 100%;
   opacity: 0;
+  object-fit: contain;
   transition: opacity 0.2s ease;
 }
 
 .media-video--freeze-cover.is-ready .media-video__el,
 .media-video--freeze-cover.is-playing .media-video__el {
   opacity: 1;
+}
+
+/* Badge play — redondo, pequeno, centro do vídeo */
+.media-video__play {
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  z-index: 5;
+  width: 42px;
+  height: 42px;
+  padding: 0;
+  margin: 0;
+  border: none;
+  border-radius: 50%;
+  overflow: hidden;
+  background: transparent;
+  cursor: pointer;
+  transform: translate(-50%, -50%);
+  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.35);
+}
+
+.media-video__play img {
+  display: block;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  border-radius: 50%;
+  pointer-events: none;
+}
+
+.media-video.is-playing .media-video__play {
+  display: none;
 }
 
 .media-video__poster {
