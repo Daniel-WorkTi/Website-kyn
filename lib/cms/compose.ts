@@ -165,11 +165,21 @@ export async function composeGallery(
 
   if (mediaError) throw new Error(mediaError.message);
 
+  const items = (media || [])
+    .filter((row) => {
+      // QuickTime .mov falha em Chrome/Edge — não expor no portfolio
+      const path = (row.storage_path || row.legacy_url || "").toLowerCase();
+      const mime = (row.mime_type || "").toLowerCase();
+      if (path.endsWith(".mov") || mime.includes("quicktime")) return false;
+      return true;
+    })
+    .map(mediaRowToItem);
+
   return {
     title: section.title,
     layout: (section.layout as GalleryJson["layout"]) || undefined,
     note: section.note || undefined,
-    items: (media || []).map(mediaRowToItem),
+    items,
   };
 }
 
