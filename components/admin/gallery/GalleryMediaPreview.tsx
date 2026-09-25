@@ -116,15 +116,22 @@ export function GalleryMediaPreview({
         className={`media-video media-video--freeze-cover aspect-video w-full${playing ? " is-playing" : ""}${ready ? " is-ready" : ""}`}
       >
         {type === "video" ? (
-          <video
-            ref={videoRef}
-            src={src}
-            className="media-video__el"
-            muted
-            loop
-            playsInline
-            preload="none"
-          />
+          <>
+            <video
+              ref={videoRef}
+              src={src}
+              className="media-video__el"
+              muted
+              loop
+              playsInline
+              preload="none"
+            />
+            {!playing ? (
+              <span className="media-video__play" aria-hidden="true">
+                <img src="/brand/video-play.png" alt="" draggable={false} />
+              </span>
+            ) : null}
+          </>
         ) : (
           <img src={src} alt="" className="h-full w-full object-cover" />
         )}
