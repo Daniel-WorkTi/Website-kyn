@@ -24,11 +24,6 @@ interface MediaItemProps {
   autoplay?: boolean;
 }
 
-function aspectFromDims(w?: number, h?: number): string | undefined {
-  if (w && h && w > 0 && h > 0) return `${w} / ${h}`;
-  return undefined;
-}
-
 export default function MediaItem({
   item,
   className,
@@ -38,9 +33,6 @@ export default function MediaItem({
   const rootRef = useRef<HTMLDivElement>(null);
   const [playing, setPlaying] = useState(false);
   const [ready, setReady] = useState(false);
-  const [aspectRatio, setAspectRatio] = useState<string | undefined>(() =>
-    aspectFromDims(item.width, item.height)
-  );
   const reactId = useId();
 
   useEffect(() => {
@@ -54,7 +46,7 @@ export default function MediaItem({
     };
   }, [item.type, item.src]);
 
-  // Capa automática: freeze aos ~3s + ratio real (portrait/landscape).
+  // Capa = freeze ~3s. Ratio = intrínseco do <video> (sem caixa artificial).
   useEffect(() => {
     const video = videoRef.current;
     const root = rootRef.current;
@@ -63,17 +55,12 @@ export default function MediaItem({
     let cancelled = false;
     let started = false;
     setReady(false);
-    setAspectRatio(aspectFromDims(item.width, item.height));
 
     const runFreeze = () =>
       enqueueVideoIdleFreeze(async () => {
         if (cancelled) return;
         await freezeVideoAtIdleFrame(video);
-        if (cancelled) return;
-        if (video.videoWidth > 0 && video.videoHeight > 0) {
-          setAspectRatio(`${video.videoWidth} / ${video.videoHeight}`);
-        }
-        setReady(true);
+        if (!cancelled) setReady(true);
       });
 
     let observer: IntersectionObserver | null = null;
@@ -97,7 +84,7 @@ export default function MediaItem({
       cancelled = true;
       observer?.disconnect();
     };
-  }, [item.type, item.src, item.width, item.height]);
+  }, [item.type, item.src]);
 
   const startPreview = useCallback(() => {
     const video = videoRef.current;
@@ -144,7 +131,6 @@ export default function MediaItem({
         ]
           .filter(Boolean)
           .join(" ")}
-        style={aspectRatio ? { aspectRatio } : undefined}
         onMouseEnter={onEnter}
         onMouseLeave={stopPreview}
         onFocus={onEnter}
@@ -158,6 +144,8 @@ export default function MediaItem({
           loop
           playsInline
           preload="none"
+          controls={false}
+          disablePictureInPicture
           aria-label={item.alt || "Vídeo"}
         >
           <source src={item.src} type={mime} />
