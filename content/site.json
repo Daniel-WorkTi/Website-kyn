@@ -32,10 +32,6 @@
       "href": "/fpv-drone"
     },
     {
-      "label": "Social Media",
-      "href": "/social-media"
-    },
-    {
       "label": "Meet the Team",
       "href": "/team"
     }
@@ -44,7 +40,7 @@
     "title": "PROIMAGEM.PTs",
     "subtitleLines": [
       "MULTICAM | AFTERMOVIE | PHOTOGRAPHY",
-      "FPV/DRONE | SOCIAL MEDIA | STUDIO SPACE"
+      "FPV/DRONE | STUDIO SPACE"
     ],
     "videos": [
       {

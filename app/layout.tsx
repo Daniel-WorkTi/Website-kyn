@@ -13,7 +13,7 @@ export const metadata: Metadata = {
     default: "Proimagem.pt",
     template: "%s — Proimagem.pt"
   },
-  description: "Multicam · Aftermovie · Photography · FPV/Drone · Social Media · Studio Space"
+  description: "Multicam · Aftermovie · Photography · FPV/Drone · Studio Space"
 };
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {

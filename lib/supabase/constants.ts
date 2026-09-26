@@ -59,6 +59,9 @@ export const DEFAULT_SITE_NAV = [
   { label: "Aftermovie", href: "/aftermovie" },
   { label: "Photography", href: "/photography" },
   { label: "FPV/Drone", href: "/fpv-drone" },
-  { label: "Social Media", href: "/social-media" },
   { label: "Meet the Team", href: "/team" },
 ] as const;
+
+/** Rotas de galeria ocultas do menu/site público (código mantido). */
+export const HIDDEN_PUBLIC_NAV_HREFS = new Set(["/social-media"]);
+

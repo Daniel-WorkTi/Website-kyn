@@ -1,7 +1,7 @@
 import type { SupabaseClient } from "@supabase/supabase-js";
 import type { Database } from "@/lib/supabase/database.types";
 import type { MediaItemRow, PartnerRow, TeamMemberRow } from "@/lib/supabase/constants";
-import { DEFAULT_SITE_NAV } from "@/lib/supabase/constants";
+import { DEFAULT_SITE_NAV, HIDDEN_PUBLIC_NAV_HREFS } from "@/lib/supabase/constants";
 import { resolveMediaUrl, resolveThumbnailUrl } from "@/lib/supabase/media-url";
 import type {
   GalleryJson,
@@ -94,11 +94,24 @@ export async function composeSite(client: Client): Promise<SiteJson> {
   const stackMedia = (media || []).filter((m) => m.slot === "home_stack");
 
   const heroConfig = (config?.hero || {}) as Record<string, unknown>;
+  const rawSubtitle = Array.isArray(heroConfig.subtitleLines)
+    ? (heroConfig.subtitleLines as string[])
+    : [];
+  const subtitleLines = rawSubtitle
+    .map((line) =>
+      String(line)
+        .replace(/\s*\|\s*SOCIAL MEDIA\s*/gi, " | ")
+        .replace(/\s*SOCIAL MEDIA\s*\|\s*/gi, "")
+        .replace(/\s*\|\s*$/g, "")
+        .replace(/^\s*\|\s*/g, "")
+        .replace(/\s*\|\s*\|/g, " | ")
+        .trim()
+    )
+    .filter(Boolean);
+
   const hero: Hero = {
     title: typeof heroConfig.title === "string" ? heroConfig.title : config?.brand,
-    subtitleLines: Array.isArray(heroConfig.subtitleLines)
-      ? (heroConfig.subtitleLines as string[])
-      : [],
+    subtitleLines,
     videos: heroMedia.map((row) => ({
       src: resolveMediaUrl({ storagePath: row.storage_path, legacyUrl: row.legacy_url }),
       poster:
@@ -126,10 +139,13 @@ export async function composeSite(client: Client): Promise<SiteJson> {
   };
 
   const rawNav = Array.isArray(config?.nav) ? config.nav : [];
-  const nav =
+  const baseNav =
     rawNav.length > 0
       ? (rawNav as unknown as SiteJson["nav"])
       : ([...DEFAULT_SITE_NAV] as unknown as SiteJson["nav"]);
+  const nav = baseNav.filter(
+    (item) => !HIDDEN_PUBLIC_NAV_HREFS.has(item.href)
+  );
 
   return {
     brand: config?.brand || "Proimagem.pt",

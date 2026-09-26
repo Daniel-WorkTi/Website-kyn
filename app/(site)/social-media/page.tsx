@@ -1,7 +1,6 @@
-import GalleryView from "@/components/site/GalleryView";
-import { getGallery } from "@/lib/content";
+import { notFound } from "next/navigation";
 
-export default async function SocialMediaPage() {
-  const data = await getGallery("social-media");
-  return <GalleryView data={data} />;
+/** Social Media oculta por agora — rota desactivada no site público. */
+export default function SocialMediaPage() {
+  notFound();
 }
