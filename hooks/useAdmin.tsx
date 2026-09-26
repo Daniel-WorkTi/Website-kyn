@@ -35,6 +35,8 @@ export type ProcessUploadOptions = {
   updateLibrary?: boolean;
   showSuccessToast?: boolean;
   successToast?: string;
+  /** Hero/home: maior resolução e bitrate (ou original sem re-comprimir). */
+  videoQuality?: "gallery" | "hero";
 };
 
 type AdminContextValue = {
@@ -293,7 +295,8 @@ export function AdminProvider({ children }: { children: ReactNode }) {
         refreshLibrary = true,
         updateLibrary = true,
         showSuccessToast = true,
-        successToast = "Ficheiro enviado."
+        successToast = "Ficheiro enviado.",
+        videoQuality = "gallery"
       } = options;
 
       const isVideo =
@@ -313,7 +316,8 @@ export function AdminProvider({ children }: { children: ReactNode }) {
       let prepared;
       try {
         prepared = await prepareFileForUpload(file, optimizeTarget, {
-          onProgress: (message) => showToast(message, "pending")
+          onProgress: (message) => showToast(message, "pending"),
+          videoQuality
         });
       } catch (err) {
         throw err instanceof Error

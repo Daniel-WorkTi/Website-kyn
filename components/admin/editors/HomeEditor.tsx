@@ -25,7 +25,8 @@ type EditorCommonProps = {
   onDirty: () => void;
   processUpload: (
     file: File,
-    onSuccess: (url: string, file: File, meta?: UploadMeta) => void
+    onSuccess: (url: string, file: File, meta?: UploadMeta) => void,
+    options?: { videoQuality?: "gallery" | "hero" }
   ) => Promise<void>;
   showToast: (message: string, type?: "ok" | "error" | "pending") => void;
   mediaLibrary: MediaFile[];
@@ -72,18 +73,22 @@ export function HomeEditor({
       const isImage = file.type.startsWith("image/");
       if (!isVideo && !isImage) continue;
       try {
-        await processUpload(file, (url, f, meta) => {
-          nextStack = [
-            ...nextStack,
-            {
-              type: isVideo ? ("video" as const) : ("image" as const),
-              src: url,
-              alt: f.name.replace(/\.[^.]+$/, "") || "Proimagem.pt",
-              ...(isVideo && meta?.posterUrl ? { poster: meta.posterUrl } : {})
-            }
-          ];
-          onChange({ ...data, homeStack: nextStack });
-        });
+        await processUpload(
+          file,
+          (url, f, meta) => {
+            nextStack = [
+              ...nextStack,
+              {
+                type: isVideo ? ("video" as const) : ("image" as const),
+                src: url,
+                alt: f.name.replace(/\.[^.]+$/, "") || "Proimagem.pt",
+                ...(isVideo && meta?.posterUrl ? { poster: meta.posterUrl } : {})
+              }
+            ];
+            onChange({ ...data, homeStack: nextStack });
+          },
+          { videoQuality: "hero" }
+        );
       } catch (err) {
         showToast(`${file.name}: ${err instanceof Error ? err.message : "Erro"}`, "error");
       }
@@ -94,11 +99,14 @@ export function HomeEditor({
 
   async function uploadForPicker(file: File): Promise<string> {
     return new Promise((resolve, reject) => {
-      processUpload(file, (url, _f, meta) => {
-        // Guarda poster do último upload de hero via closure no onChange do picker
-        lastHeroPosterRef.current = meta?.posterUrl || "";
-        resolve(url);
-      }).catch(reject);
+      processUpload(
+        file,
+        (url, _f, meta) => {
+          lastHeroPosterRef.current = meta?.posterUrl || "";
+          resolve(url);
+        },
+        { videoQuality: "hero" }
+      ).catch(reject);
     });
   }
 

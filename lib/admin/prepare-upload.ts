@@ -4,8 +4,34 @@ import { IMAGE_MAX_EDGE_PX } from "@/lib/admin/sections";
 export const VIDEO_PREVIEW_MAX_SECONDS = 10;
 /** Tolerância de encoding na validação. */
 export const VIDEO_PREVIEW_DURATION_TOLERANCE = 0.15;
-/** Aresta máxima (portrait ou landscape). */
+/** Aresta máxima (portrait ou landscape) — galerias. */
 export const VIDEO_PREVIEW_MAX_EDGE = 1080;
+/** Hero / home: full-bleed no ecrã — permite até 1920. */
+export const VIDEO_HERO_MAX_EDGE = 1920;
+
+export type VideoPrepareQuality = "gallery" | "hero";
+
+type VideoEncodePreset = {
+  maxEdge: number;
+  minBitrate: number;
+  maxBitrate: number;
+  fps: number;
+};
+
+const VIDEO_ENCODE_PRESETS: Record<VideoPrepareQuality, VideoEncodePreset> = {
+  gallery: {
+    maxEdge: VIDEO_PREVIEW_MAX_EDGE,
+    minBitrate: 800_000,
+    maxBitrate: 12_000_000,
+    fps: 30,
+  },
+  hero: {
+    maxEdge: VIDEO_HERO_MAX_EDGE,
+    minBitrate: 6_000_000,
+    maxBitrate: 28_000_000,
+    fps: 30,
+  },
+};
 
 function formatMb(bytes: number): string {
   return `${(bytes / (1024 * 1024)).toFixed(1)} MB`;
@@ -196,8 +222,10 @@ function startCanvasDraw(
   width: number,
   height: number
 ): () => void {
-  const ctx = canvas.getContext("2d");
+  const ctx = canvas.getContext("2d", { alpha: false });
   if (!ctx) return () => {};
+  ctx.imageSmoothingEnabled = true;
+  ctx.imageSmoothingQuality = "high";
 
   let raf = 0;
   const draw = () => {
@@ -370,20 +398,21 @@ async function recordPreviewPass(
   targetHeight: number,
   clipSeconds: number,
   maxBytes: number,
-  bitrateScale: number
+  bitrateScale: number,
+  preset: VideoEncodePreset
 ): Promise<{ blob: Blob; container: "webm" | "mp4" }> {
   const { mimeType, container } = pickVideoMimeType();
   const targetBytes = maxBytes * 0.94;
   const totalBps = Math.floor((targetBytes * 8) / Math.max(clipSeconds, 0.5));
   const videoBps = Math.max(
-    800_000,
-    Math.min(12_000_000, Math.floor(totalBps * 0.95 * bitrateScale))
+    preset.minBitrate,
+    Math.min(preset.maxBitrate, Math.floor(totalBps * 0.95 * bitrateScale))
   );
 
   const canvas = document.createElement("canvas");
   canvas.width = targetWidth;
   canvas.height = targetHeight;
-  const canvasStream = canvas.captureStream(30);
+  const canvasStream = canvas.captureStream(preset.fps);
   // Sem áudio — só tracks de vídeo do canvas
   const stream = new MediaStream(canvasStream.getVideoTracks());
 
@@ -550,30 +579,54 @@ async function validatePreparedVideo(
 }
 
 /**
- * Pipeline definitivo: trim ≤10s, ≤1080p, sem áudio, poster first-frame.
- * O original longo NÃO é devolvido — só o preview final.
+ * Pipeline: trim ≤10s, escala por preset, sem áudio, poster.
+ * Hero: até 1920p + bitrate alto; se o ficheiro já cumpre, não re-encode.
  */
 async function prepareVideoPreview(
   file: File,
   maxBytes: number,
-  onProgress?: (message: string) => void
+  onProgress?: (message: string) => void,
+  quality: VideoPrepareQuality = "gallery"
 ): Promise<PreparedUpload> {
+  const preset = VIDEO_ENCODE_PRESETS[quality];
   onProgress?.(`A analisar vídeo…`);
   const { video, objectUrl, duration, width, height } = await loadVideoMetadata(file);
 
   try {
     const clipSeconds = Math.min(duration, VIDEO_PREVIEW_MAX_SECONDS);
-    const { width: tw, height: th } = fitWithinMaxEdge(width, height, VIDEO_PREVIEW_MAX_EDGE);
+    const longest = Math.max(width, height);
+    const webFriendly = /\.(mp4|webm)$/i.test(file.name) || /mp4|webm/i.test(file.type);
+
+    // Hero: preservar qualidade do original quando já está dentro dos limites
+    if (
+      quality === "hero" &&
+      webFriendly &&
+      duration <= VIDEO_PREVIEW_MAX_SECONDS + VIDEO_PREVIEW_DURATION_TOLERANCE &&
+      longest <= preset.maxEdge &&
+      file.size <= maxBytes
+    ) {
+      onProgress?.("Original OK para hero — a manter qualidade (sem re-comprimir)…");
+      onProgress?.("A gerar capa…");
+      const posterFile = await extractPosterFrame(video, width, height, file.name);
+      return {
+        file,
+        posterFile,
+        duration,
+        width,
+        height,
+      };
+    }
+
+    const { width: tw, height: th } = fitWithinMaxEdge(width, height, preset.maxEdge);
 
     onProgress?.(
-      `A gerar preview ${clipSeconds.toFixed(1)}s (${tw}×${th})…`
+      `A gerar preview ${quality} ${clipSeconds.toFixed(1)}s (${tw}×${th})…`
     );
 
     let best: { blob: Blob; container: "webm" | "mp4" } | null = null;
     let bitrateScale = 1;
 
     for (let pass = 0; pass < 8; pass++) {
-      // Reinicia no início de cada passe
       try {
         video.pause();
         await seekVideo(video, 0);
@@ -582,7 +635,7 @@ async function prepareVideoPreview(
       }
 
       onProgress?.(
-        `A gerar preview (passe ${pass + 1}/8, ${tw}×${th})…`
+        `A gerar preview ${quality} (passe ${pass + 1}/8, ${tw}×${th})…`
       );
 
       const result = await recordPreviewPass(
@@ -592,7 +645,8 @@ async function prepareVideoPreview(
         th,
         clipSeconds,
         maxBytes,
-        bitrateScale
+        bitrateScale,
+        preset
       );
 
       if (!best || result.blob.size < best.blob.size) best = result;
@@ -648,7 +702,7 @@ async function prepareVideoPreview(
     }
 
     onProgress?.(
-      `Preview pronto: ${validated.duration.toFixed(1)}s · ${validated.width}×${validated.height} · ${formatMb(outFile.size)}`
+      `Preview pronto: ${formatMb(outFile.size)} · ${validated.width}×${validated.height} · ${validated.duration.toFixed(1)}s`
     );
 
     return {
@@ -742,14 +796,17 @@ export type PreparedUpload = {
 export async function prepareFileForUpload(
   file: File,
   maxBytes: number,
-  options?: { onProgress?: (message: string) => void }
+  options?: {
+    onProgress?: (message: string) => void;
+    videoQuality?: VideoPrepareQuality;
+  }
 ): Promise<PreparedUpload> {
-  const { onProgress } = options ?? {};
+  const { onProgress, videoQuality = "gallery" } = options ?? {};
   const label = `"${file.name}" (${formatMb(file.size)})`;
 
   if (isVideoFile(file)) {
     try {
-      return await prepareVideoPreview(file, maxBytes, onProgress);
+      return await prepareVideoPreview(file, maxBytes, onProgress, videoQuality);
     } catch (err) {
       if (
         err instanceof Error &&
